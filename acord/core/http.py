@@ -162,8 +162,6 @@ class HTTPClient(object):
             **kwargs
         )
 
-        print(await resp.json())
-
         return resp
         
     @property
