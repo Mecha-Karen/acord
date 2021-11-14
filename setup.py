@@ -26,7 +26,7 @@ classifiers = [
     "Development Status :: 1 - Planning",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
-    "License :: OSI Approved :: GNU License",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
     
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: 3",
