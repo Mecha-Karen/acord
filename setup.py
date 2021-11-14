@@ -41,7 +41,7 @@ packages = [
 setup(
     name="ACord",
     version=version,
-    description="An object orientated math library",
+    description="An API wrapper for discord",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/Mecha-Karen/acord",
