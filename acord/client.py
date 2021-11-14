@@ -1,7 +1,10 @@
 # A simple base client for handling responses from discord
 import asyncio
+import typing
 import warnings
 import acord
+import sys
+import traceback
 
 from .core.http import HTTPClient
 from .errors import *
@@ -65,7 +68,28 @@ class Client(object):
 
         return func
 
+    def on_error(self, event_method):
+        acord.logger.error('Failed to run event "{}".'.format(event_method))
+
+        print(f'Ignoring exception in {event_method}', file=sys.stderr)
+        traceback.print_exc()
+
+    def dispatch(self, event_name: str, *args, **kwargs) -> None:
+        if not event_name.startswith('on_'):
+            event_name = 'on_' + event_name
+        acord.logger.info('Dispatching event: {}'.format(event_name))
+
+        events = self._events.get(event_name, [])
+        acord.logger.info('Total of {} events found for {}'.format(len(events), event_name))
+        for event in events:
+            try:
+                fut = event(*args, **kwargs)
+            except Exception:
+                self.on_error(event)
+
     async def handle_websocket(self, ws):
+        self.dispatch('ready')
+
         async for message in ws:
             print(message)
             # Il do some actual stuff later
