@@ -13,6 +13,8 @@ import typing
 import aiohttp
 
 from . import coreABC
+from .respDecoders import *
+from .signals import gateway
 
 class HTTPClient(object):
     """
@@ -53,37 +55,40 @@ class HTTPClient(object):
         else:
             self.startingPayloadData = {**self.startingPayloadData, **newData}
 
-    async def _fetchGatewayURL(self):
-        uri = coreABC.buildURL('gateway')
+    async def _fetchGatewayURL(self, token):
+        uri = coreABC.buildURL('gateway', 'bot')
         
-        async with self._session.get(uri) as resp:
+        async with self._session.get(uri, headers={'Authorization': f"Bot {token}"}) as resp:
             data = await resp.json()
 
-            return data['url']
+            return data
 
-    async def _connect(self, encoding: coreABC.GATEWAY_ENCODING, compress: bool = False) -> None:
-        GATEWAY_WEBHOOK_URL = await self._fetchGatewayURL()
-
-        if compress:
-            GATEWAY_WEBHOOK_URL += "&compress=zlib-stream"
+    async def _connect(self, token: str, *, 
+        encoding: coreABC.GATEWAY_ENCODING, compress: bool = False
+    ) -> None:
+        respData = await self._fetchGatewayURL(token)
+        GATEWAY_WEBHOOK_URL = respData['url']
 
         if encoding == "JSON":
-            handler = ...
+            handler = JSON
         elif encoding == "ETF":
-            handler = ...
+            handler = ETF
         else:
             raise ValueError('Unknown encoding: %s' % encoding)
 
+        GATEWAY_WEBHOOK_URL += f'?v={coreABC.API_VERSION}'
         GATEWAY_WEBHOOK_URL += f'&encoding={encoding.lower()}'
+
+        if compress:
+            GATEWAY_WEBHOOK_URL += "&compress=zlib-stream"
 
         async with self._session.ws_connect(GATEWAY_WEBHOOK_URL) as ws:
             self._ws = ws
 
             async for message in ws:
-                ...
+                msg = message.data
+                if compress:
+                    msg = decompressResponse(msg)
+                msg = handler(msg)
 
-    def getPayload(self):
-        return {
-            'op': self._ws.HEARTBEAT,
-            'd': self._ws.sequence
-        }
+                print(msg)

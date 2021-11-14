@@ -38,6 +38,8 @@ class Client(object):
     def __init__(self, *,
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
         token: str = None,
+        encoding: str = "JSON",
+        compress: bool = False,
         commandHandler: Callable = None,
     ) -> None:
 
@@ -46,6 +48,10 @@ class Client(object):
 
         self._events = dict()
         self.commandHandler = commandHandler
+
+        # Gateway connection stuff
+        self.encoding = encoding
+        self.compress = compress
 
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
@@ -69,4 +75,10 @@ class Client(object):
 
         self.http = HTTPClient(loop=self.loop, reconnect=reconnect)
 
-        self.loop.run_until_complete(self.http._connect())
+        coro = self.http._connect(
+            token,
+            encoding=self.encoding, 
+            compress=self.compress
+        )
+
+        self.loop.run_until_complete(coro)
