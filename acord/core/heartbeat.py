@@ -4,12 +4,15 @@ from .signals import gateway
 
 
 class KeepAlive(object):
-    def __init__(self, ws, helloPacket: dict):
+    def __init__(self, identity, ws, helloPacket: dict):
         self._ws = ws
         self.packet = helloPacket
+        self.identity = identity
 
     async def run(self):
         packet = self.packet
+
+        await self._ws.send_json(self.identity)
 
         while True:
             if packet['op'] != gateway.HELLO:

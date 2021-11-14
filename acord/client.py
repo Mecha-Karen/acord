@@ -2,9 +2,14 @@
 import asyncio
 import typing
 import warnings
+from zlib import compress
 import acord
 import sys
 import traceback
+from inspect import iscoroutinefunction
+
+from acord.core.decoders import ETF, JSON, decompressResponse
+from acord.core.signals import gateway
 
 from .core.http import HTTPClient
 from .errors import *
@@ -13,6 +18,8 @@ from functools import wraps
 from typing import (
     Union, Callable
 )
+
+from acord.models import User
 
 
 class Client(object):
@@ -56,10 +63,18 @@ class Client(object):
         self.encoding = encoding
         self.compress = compress
 
+        # Others
+        self.session_id = None
+        self.gateway_version = None
+        self.user = None
+
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
 
     def event(self, func):
+        if not iscoroutinefunction(func):
+            raise ValueError('Provided function was not a coroutine')
+        
         eventName = func.__qualname__
         if eventName in self._events:
             self._events[eventName].append(func)
@@ -74,7 +89,7 @@ class Client(object):
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
-    def dispatch(self, event_name: str, *args, **kwargs) -> None:
+    async def dispatch(self, event_name: str, *args, **kwargs) -> None:
         if not event_name.startswith('on_'):
             event_name = 'on_' + event_name
         acord.logger.info('Dispatching event: {}'.format(event_name))
@@ -83,16 +98,36 @@ class Client(object):
         acord.logger.info('Total of {} events found for {}'.format(len(events), event_name))
         for event in events:
             try:
-                fut = event(*args, **kwargs)
+                await event(*args, **kwargs)
             except Exception:
                 self.on_error(event)
 
     async def handle_websocket(self, ws):
-        self.dispatch('ready')
-
         async for message in ws:
-            print(message)
-            # Il do some actual stuff later
+            data = message.data
+            if type(data) is bytes:
+                data = decompressResponse(data)
+            
+            if not data:
+                continue
+
+            if not data.startswith('{'):
+                data = ETF(data)
+            else:
+                data = JSON(data)
+
+            if data['op'] == gateway.INVALIDSESSION:
+                acord.logger.error('Invalid Session - Reconnecting Shortly')
+            if data['op'] == gateway.DISPATCH:
+                await self.dispatch('ready')
+
+                self.session_id = data['d']['session_id']
+                self.gateway_version = data['d']['v']
+                self.user = User(**data['d']['user'])
+
+                continue
+
+            print(data)
 
     def run(self, token: str = None, *, reconnect: bool = True):
         if (token or self.token) and getattr(self, '_lruPermanent', False):
@@ -103,6 +138,7 @@ class Client(object):
             raise ValueError('No token provided')
 
         self.http = HTTPClient(loop=self.loop)
+        self.token = token
 
         client = self.loop.run_until_complete(self.http.login(token=token))
 

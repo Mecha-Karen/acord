@@ -35,7 +35,8 @@ classifiers = [
 packages = [
     "acord",
     "acord.core",
-    "acord.core.signals"
+    "acord.core.signals",
+    "acord.models"
 ]
 
 setup(

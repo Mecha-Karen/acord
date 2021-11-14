@@ -12,13 +12,13 @@ import asyncio
 import typing
 import aiohttp
 import acord
-
-from sys import path, version
+import sys
 
 from acord.errors import GatewayConnectionRefused, HTTPException
 from . import helpers
 from .heartbeat import KeepAlive
 from .decoders import *
+from .signals import gateway
 
 class HTTPClient(object):
     """
@@ -60,8 +60,22 @@ class HTTPClient(object):
 
         user_agent = "ACord - https://github.com/Mecha-Karen/ACord {0} Python{1[0]}.{1[1]} aiohttp/{2}"
         self.user_agent = user_agent.format(
-            acord.__version__, version, aiohttp.__version__
+            acord.__version__, sys.version, aiohttp.__version__
         )
+
+    def getIdentityPacket(self, intents = 0): 
+        return {
+            "op": gateway.IDENTIFY,
+            "d": {
+                "token": self.token,
+                "intents": intents,
+                "properties": {
+                    "$os": sys.platform,
+                    "$browser": "acord",
+                    "$device": "acord"
+                }
+            }
+        }
 
     def updatePayloadData(self, overwrite: bool = False, **newData) -> None:
         if overwrite:
@@ -97,11 +111,15 @@ class HTTPClient(object):
             return data
 
     async def _connect(self, token: str, *, 
-        encoding: helpers.GATEWAY_ENCODING, compress: int = 0
+        encoding: helpers.GATEWAY_ENCODING, compress: int = 0,
+        **identityPacketKwargs
     ) -> None:
         if not getattr(self, '_session', False):
             acord.logger.warn('Session not defined, user not logged in. Called login manually')
             await self.login(token=(token or self.token))
+
+        self.encoding = encoding
+        self.compress = compress
 
         respData = await self._fetchGatewayURL(token)
         GATEWAY_WEBHOOK_URL = respData['url']
@@ -140,7 +158,7 @@ class HTTPClient(object):
         self._ws_connected = True
         self.ws = ws
 
-        self.loop.create_task(KeepAlive(ws, data).run())
+        self.loop.create_task(KeepAlive(self.getIdentityPacket(**identityPacketKwargs), ws, data).run())
 
         return ws
 
