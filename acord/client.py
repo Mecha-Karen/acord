@@ -111,6 +111,8 @@ class Client(object):
                 data = ETF(data)
             else:
                 data = JSON(data)
+            
+            print(data)
 
             if data['op'] == gateway.INVALIDSESSION:
                 acord.logger.error('Invalid Session - Reconnecting Shortly')
