@@ -9,16 +9,19 @@ except ImportError:
     __import__('warnings').warn('Failed to import UVLoop, it is recommended to install this library\npip install uvloop', ImportWarning)
 
 import asyncio
-import typing
-import aiohttp
-import acord
 import sys
+import typing
 
+import aiohttp
+
+import acord
 from acord.errors import GatewayConnectionRefused, HTTPException
+
 from . import helpers
-from .heartbeat import KeepAlive
 from .decoders import *
+from .heartbeat import KeepAlive
 from .signals import gateway
+
 
 class HTTPClient(object):
     """

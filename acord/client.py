@@ -1,25 +1,21 @@
 # A simple base client for handling responses from discord
 import asyncio
-import typing
-import warnings
-from zlib import compress
-import acord
 import sys
 import traceback
+import typing
+import warnings
+from functools import wraps
 from inspect import iscoroutinefunction
+from typing import Callable, Union
+from zlib import compress
 
+import acord
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
+from acord.models import User
 
 from .core.http import HTTPClient
 from .errors import *
-from functools import wraps
-
-from typing import (
-    Union, Callable
-)
-
-from acord.models import User
 
 
 class Client(object):

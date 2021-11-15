@@ -1,8 +1,9 @@
 """
 All version related info for connecting to the gateway.
 """
+from typing import Literal, Optional
+
 import yarl
-from typing import Optional, Literal
 
 API_VERSION = 9
 BASE_API_URL = "https://discord.com/api"
