@@ -9,11 +9,11 @@ class User(pydantic.BaseModel):
     discriminator: str # the user's 4-digit discord-tag
     avatar: Optional[str] # the user's avatar hash
     bot: bool # whether the user belongs to an OAuth2 application
-    system: bool # 	whether the user is an Official Discord System user (part of the urgent message system)
+    system: Optional[bool] # whether the user is an Official Discord System user (part of the urgent message system)
     mfa_enabled: bool # whether the user has two factor enabled on their account
     banner: Optional[str] # the user's banner hash
     accent_color: Optional[int] # the user's banner color encoded as an integer representation of hexadecimal color code
-    locale: str # the user's chosen language option
+    locale: Optional[str] # the user's chosen language option
     verified: bool # whether the email on this account has been verified
     email: Optional[str] # the user's email
     flags: Optional[int] # the flags on a user's account
