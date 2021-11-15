@@ -6,8 +6,10 @@ Created by Mecha Karen, and is licensed under the GNU GENERAL PUBLIC LICENSE.
 from typing import NamedTuple, Literal
 import logging
 
+from .bases import Intents
+from .models import User
+
 from .client import Client
-from .bases import *
 
 
 logger = logging.getLogger("ACord")
