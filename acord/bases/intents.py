@@ -1,24 +1,38 @@
-""" Simple wrapper for handler intents """
-DEFAULT_INTENT_VALUES = {
-    "guilds": 1 << 0,
-    "members": 1 << 1,
-    "bans": 1 << 2,
-    "emojis": 1 << 3,
-    "integrations": 1 << 4,
-    "webhooks": 1 << 5,
-    "invites": 1 << 6,
-    "voice": 1 << 7,
-    "presence": 1 << 8,
-    "messages": 1 << 9,
-    "reactions": 1 << 10,
-    "typing": 1 << 11,
-    "dm_messages": 1 << 12,
-    "dm_reactions": 1 << 13,
-    "dm_typing": 1 << 14
-}
+from enum import Flag
 
 
-class Intents(object):
-    def __init__(self, **intents) -> None:
-        values = [DEFAULT_INTENT_VALUES[k] for k, v in intents.items() if (v == True and v in DEFAULT_INTENT_VALUES)]
-        print(values)
+class Intents(Flag):
+    NONE                        = 0
+    GUILDS                      = 1 << 0
+    GUILD_MEMBERS               = 1 << 1
+    GUILD_BANS                  = 1 << 2
+    GUILD_EMOJIS_AND_STICKERS   = 1 << 3
+    GUILD_INTEGRATIONS          = 1 << 4
+    GUILD_WEBHOOKS              = 1 << 5
+    GUILD_INVITES               = 1 << 6
+    GUILD_VOICE_STATES          = 1 << 7
+    GUILD_PRESENCES             = 1 << 8
+    GUILD_MESSAGES              = 1 << 9
+    GUILD_MESSAGE_REACTIONS     = 1 << 10
+    GUILD_MESSAGE_TYPING        = 1 << 11
+    DM_MESSAGES                 = 1 << 12
+    DM_REACTIONS                = 1 << 13
+    DM_TYPING                   = 1 << 14
+
+    ALL = (
+        GUILDS                      |
+        GUILD_MEMBERS               |
+        GUILD_BANS                  |
+        GUILD_EMOJIS_AND_STICKERS   |
+        GUILD_INTEGRATIONS          |
+        GUILD_WEBHOOKS              |
+        GUILD_INVITES               |
+        GUILD_VOICE_STATES          |
+        GUILD_PRESENCES             |
+        GUILD_MESSAGES              |
+        GUILD_MESSAGE_REACTIONS     |
+        GUILD_MESSAGE_TYPING        |
+        DM_MESSAGES                 |
+        DM_REACTIONS                |
+        DM_TYPING
+    )
