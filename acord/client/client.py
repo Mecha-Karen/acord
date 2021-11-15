@@ -1,19 +1,17 @@
 # A simple base client for handling responses from discord
 import asyncio
-import typing
 import warnings
-from zlib import compress
 import acord
 import sys
 import traceback
 from inspect import iscoroutinefunction
+from functools import wraps
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
 
-from .core.http import HTTPClient
-from .errors import *
-from functools import wraps
+from ..core.http import HTTPClient
+from ..errors import *
 
 from typing import (
     Union, Callable
@@ -104,6 +102,8 @@ class Client(object):
 
     async def handle_websocket(self, ws):
         async for message in ws:
+            await self.dispatch('socket_recieve')
+
             data = message.data
             if type(data) is bytes:
                 data = decompressResponse(data)
@@ -118,7 +118,9 @@ class Client(object):
 
             if data['op'] == gateway.INVALIDSESSION:
                 acord.logger.error('Invalid Session - Reconnecting Shortly')
-            if data['op'] == gateway.DISPATCH:
+                raise GatewayConnectionRefused('Invalid session data, currently not handled in this version')
+
+            if data['t'] == 'READY':
                 await self.dispatch('ready')
 
                 self.session_id = data['d']['session_id']
@@ -127,7 +129,11 @@ class Client(object):
 
                 continue
 
-            print(data)
+            if data['op'] == gateway.HEARTBEATACK:
+                await self.dispatch('heartbeat')
+
+    def resume(self):
+        """ Resumes a closed gateway connection """
 
     def run(self, token: str = None, *, reconnect: bool = True):
         if (token or self.token) and getattr(self, '_lruPermanent', False):
@@ -140,7 +146,8 @@ class Client(object):
         self.http = HTTPClient(loop=self.loop)
         self.token = token
 
-        client = self.loop.run_until_complete(self.http.login(token=token))
+        # Login to create session
+        self.loop.run_until_complete(self.http.login(token=token))
 
         coro = self.http._connect(
             token,
@@ -148,7 +155,10 @@ class Client(object):
             compress=self.compress
         )
 
+        # Connect to discord, send identity packet + start heartbeat
         ws = self.loop.run_until_complete(coro)
+        
+        self.loop.run_until_complete(self.dispatch('connect'))
         acord.logger.info('Connected to websocket')
 
         self.loop.run_until_complete(self.handle_websocket(ws))

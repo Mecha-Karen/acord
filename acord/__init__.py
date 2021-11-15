@@ -7,6 +7,7 @@ from typing import NamedTuple, Literal
 import logging
 
 from .client import Client
+from .bases import *
 
 
 logger = logging.getLogger("ACord")
