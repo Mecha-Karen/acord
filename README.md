@@ -1,4 +1,4 @@
-<img src="./docs/_static/logo.png" height="150" width="150" align="center">
+<img src="./docs/_static/logo.png" height="50" width="50" class="center">
 <h1 align="center">ACord</h1>
 <div align="center">
     <a href='https://acord.readthedocs.io/en/latest/'>
