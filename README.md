@@ -1,13 +1,9 @@
-<img src="/docs/_static/logo.png" height="300" width="300">
+<img src="./docs/_static/logo.png" height="150" width="150" align="center">
 <h1 align="center">ACord</h1>
-<div>
-    <ul>
-        <li>
-            <a href='https://acord.readthedocs.io/en/latest/'>
-                <img src='https://readthedocs.org/projects/acord/badge/?version=latest' alt='Documentation Status' />
-            </a>
-        </li>
-    </ul>
+<div align="center">
+    <a href='https://acord.readthedocs.io/en/latest/'>
+        <img src='https://readthedocs.org/projects/acord/badge/?version=latest' alt='Documentation Status' />
+    </a>
 </div>
 <h4 align="center">A simple API wrapper for the discord API</h4>
 
