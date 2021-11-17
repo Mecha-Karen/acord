@@ -11,6 +11,7 @@ except ImportError:
 import asyncio
 import typing
 import aiohttp
+from attr import astuple
 import acord
 import sys
 
@@ -62,6 +63,7 @@ class HTTPClient(object):
         self.user_agent = user_agent.format(
             acord.__version__, sys.version, aiohttp.__version__
         )
+        self._lock = asyncio.Lock(loop=self.loop)
 
     def getIdentityPacket(self, intents = 0): 
         return {
@@ -110,8 +112,19 @@ class HTTPClient(object):
 
             return data
 
+    async def decodeResponse(self, resp):
+        data = resp.data
+
+        if isinstance(data, bytes) or self.compress:
+            data = decompressResponse(data)
+
+        if not data.startswith('{'):
+            data = ETF(data)
+        else:
+            data = JSON(data)
+
     async def _connect(self, token: str, *, 
-        encoding: helpers.GATEWAY_ENCODING, compress: int = 0,
+        encoding, compress = 0,
         **identityPacketKwargs
     ) -> None:
         if not getattr(self, '_session', False):
@@ -136,7 +149,7 @@ class HTTPClient(object):
             'proxy_auth': self.proxy_auth,
             'proxy': self.proxy,
             'max_msg_size': 0,
-            'timeout': self.wsTimeout.total,
+            'timeout': self.wsTimeout,
             'autoclose': False,
             'headers': {
                 'User-Agent': self.user_agent,
@@ -148,12 +161,6 @@ class HTTPClient(object):
 
         helloRecv = await ws.receive()
         data = helloRecv.data
-        if compress:
-            data = decompressResponse(data)
-        if not data.startswith('{'):
-            data = ETF(data)
-        else:
-            data = JSON(data)
 
         self._ws_connected = True
         self.ws = ws
@@ -179,6 +186,22 @@ class HTTPClient(object):
             url=url,
             **kwargs
         )
+        respData = await self.decodeResponse()
+
+        if resp.status == 429:
+            retryAfter = respData['retry_after']
+            if respData['global']:
+                async with self._lock.acquire():
+                    await asyncio.sleep(retryAfter)
+
+                    self._lock.release()
+            
+            else:
+                await asyncio.sleep(retryAfter)
+            
+            return await self.request(route, data, **payload)
+
+        
 
         return resp
         
