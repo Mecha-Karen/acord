@@ -1,6 +1,6 @@
 from typing import TypeVar, Type
 
-H = TypeVar('H', 'Hashable')
+H = TypeVar('H', bound='Hashable')
 class Hashable:
     __slots__ = ()
 
