@@ -11,7 +11,6 @@ except ImportError:
 import asyncio
 import typing
 import aiohttp
-from attr import astuple
 import acord
 import sys
 
@@ -63,9 +62,18 @@ class HTTPClient(object):
         self.user_agent = user_agent.format(
             acord.__version__, sys.version, aiohttp.__version__
         )
-        self._lock = asyncio.Lock(loop=self.loop)
 
-    def getIdentityPacket(self, intents = 0): 
+        try:
+            self._lock = asyncio.Lock(loop=self.loop)
+        except TypeError:
+            # Legacy support as loop parameter was dropped in 3.10
+            self._lock = asyncio.Lock()
+
+    def getIdentityPacket(self, intents = 0):
+        if hasattr(intents, 'value'):
+            # enum.Flag cleanup
+            intents = intents.value
+
         return {
             "op": gateway.IDENTIFY,
             "d": {
@@ -113,15 +121,22 @@ class HTTPClient(object):
             return data
 
     async def decodeResponse(self, resp):
-        data = resp.data
+        if isinstance(resp, aiohttp.WSMessage):
+            data = resp.data
+        elif isinstance(resp, aiohttp.ClientResponse):
+            data = await resp.text()
+        else:
+            raise TypeError('Invalid response provided')
 
-        if isinstance(data, bytes) or self.compress:
+        if isinstance(data, bytes) or getattr(self, 'compress', False):
             data = decompressResponse(data)
 
         if not data.startswith('{'):
             data = ETF(data)
         else:
             data = JSON(data)
+
+        return data
 
     async def _connect(self, token: str, *, 
         encoding, compress = 0,
@@ -160,7 +175,7 @@ class HTTPClient(object):
         ws = await self._session.ws_connect(GATEWAY_WEBHOOK_URL, **kwargs)
 
         helloRecv = await ws.receive()
-        data = helloRecv.data
+        data = await self.decodeResponse(helloRecv)
 
         self._ws_connected = True
         self.ws = ws
@@ -186,7 +201,7 @@ class HTTPClient(object):
             url=url,
             **kwargs
         )
-        respData = await self.decodeResponse()
+        respData = await self.decodeResponse(resp)
 
         if resp.status == 429:
             retryAfter = respData['retry_after']
@@ -200,8 +215,6 @@ class HTTPClient(object):
                 await asyncio.sleep(retryAfter)
             
             return await self.request(route, data, **payload)
-
-        
 
         return resp
         
