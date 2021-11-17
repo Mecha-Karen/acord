@@ -27,7 +27,7 @@ pip install -U acord
 ```
 ### Development
 ```sh
-# Install directly from githib
+# Install directly from github
 
 ## Linux/Mac OS
 pip3 install -U git+https://github.com/Mecha-Karen/acord
