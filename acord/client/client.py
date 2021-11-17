@@ -5,19 +5,18 @@ import acord
 import sys
 import traceback
 from inspect import iscoroutinefunction
-from functools import wraps
 
-from acord.core.decoders import ETF, JSON, decompressResponse
-from acord.core.signals import gateway
-
-from ..core.http import HTTPClient
-from ..errors import *
+from acord.core.http import HTTPClient
+from acord.errors import *
 
 from typing import (
-    Union, Callable
+    Literal, Union, Callable, Optional
 )
 
-from acord.models import User
+from acord import Intents
+
+# Cleans up client class
+from .handler import handle_websocket
 
 
 class Client(object):
@@ -44,8 +43,12 @@ class Client(object):
         * UpdatedCache: :class:`bool`
     """
     def __init__(self, *,
-        loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
         token: str = None,
+
+        # IDENTITY PACKET ARGS
+        intents: Optional[Union[Intents, int]] = 0,
+
+        loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: str = "JSON",
         compress: bool = False,
         commandHandler: Callable = None,
@@ -53,6 +56,8 @@ class Client(object):
 
         self.loop = loop
         self.token = token
+
+        self.intents = intents
 
         self._events = dict()
         self.commandHandler = commandHandler
@@ -92,7 +97,10 @@ class Client(object):
             event_name = 'on_' + event_name
         acord.logger.info('Dispatching event: {}'.format(event_name))
 
-        events = self._events.get(event_name, [])
+        events = self._events.get(event_name, []) or getattr(self, event_name, [])
+
+        events = events if isinstance(events, list) else [events]
+
         acord.logger.info('Total of {} events found for {}'.format(len(events), event_name))
         for event in events:
             try:
@@ -100,40 +108,10 @@ class Client(object):
             except Exception:
                 self.on_error(event)
 
-    async def handle_websocket(self, ws):
-        async for message in ws:
-            await self.dispatch('socket_recieve')
-
-            data = message.data
-            if type(data) is bytes:
-                data = decompressResponse(data)
-            
-            if not data:
-                continue
-
-            if not data.startswith('{'):
-                data = ETF(data)
-            else:
-                data = JSON(data)
-
-            if data['op'] == gateway.INVALIDSESSION:
-                acord.logger.error('Invalid Session - Reconnecting Shortly')
-                raise GatewayConnectionRefused('Invalid session data, currently not handled in this version')
-
-            if data['t'] == 'READY':
-                await self.dispatch('ready')
-
-                self.session_id = data['d']['session_id']
-                self.gateway_version = data['d']['v']
-                self.user = User(**data['d']['user'])
-
-                continue
-
-            if data['op'] == gateway.HEARTBEATACK:
-                await self.dispatch('heartbeat')
-
     def resume(self):
         """ Resumes a closed gateway connection """
+        raise NotImplementedError()
+
 
     def run(self, token: str = None, *, reconnect: bool = True):
         if (token or self.token) and getattr(self, '_lruPermanent', False):
@@ -147,12 +125,24 @@ class Client(object):
         self.token = token
 
         # Login to create session
-        self.loop.run_until_complete(self.http.login(token=token))
+        try:
+            self.loop.run_until_complete(self.http.login(token=token))
+        except HTTPException:
+            if reconnect:
+                # Prevent recursion
+                # If cannot login, tries to revert token
+                # Logins in again
+                # If fails again raises error
+                return self.run(token=token, reconnect=False)
+            raise
 
         coro = self.http._connect(
             token,
             encoding=self.encoding, 
-            compress=self.compress
+            compress=self.compress,
+
+            # for identity
+            intents=self.intents,
         )
 
         # Connect to discord, send identity packet + start heartbeat
@@ -161,4 +151,4 @@ class Client(object):
         self.loop.run_until_complete(self.dispatch('connect'))
         acord.logger.info('Connected to websocket')
 
-        self.loop.run_until_complete(self.handle_websocket(ws))
+        self.loop.run_until_complete(handle_websocket(self, ws))
