@@ -27,6 +27,7 @@ INVALID_INTENTS     = 4013
 DISALLOWED_INTENT   = 4014
 
 SEQUENCE = None
+CURRENT_CONNECTIONS = dict()
 
 def heartbeatPacket():
     return {
