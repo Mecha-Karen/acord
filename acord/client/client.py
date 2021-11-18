@@ -1,5 +1,6 @@
 # A simple base client for handling responses from discord
 import asyncio
+from asyncio.events import get_event_loop
 import warnings
 import acord
 import sys
@@ -7,10 +8,11 @@ import traceback
 from inspect import iscoroutinefunction
 
 from acord.core.http import HTTPClient
+from acord.core.signals import gateway
 from acord.errors import *
 
 from typing import (
-    Literal, Union, Callable, Optional
+    Union, Callable, Optional
 )
 
 from acord import Intents
@@ -151,4 +153,8 @@ class Client(object):
         self.loop.run_until_complete(self.dispatch('connect'))
         acord.logger.info('Connected to websocket')
 
-        self.loop.run_until_complete(handle_websocket(self, ws))
+        try:
+            gateway.CURRENT_CONNECTIONS[get_event_loop()] = self.http
+            self.loop.run_until_complete(handle_websocket(self, ws))
+        finally:
+            gateway.CURRENT_CONNECTIONS.pop(get_event_loop(), None)
