@@ -6,17 +6,19 @@ from typing import Any, Optional
 
 
 class User(pydantic.BaseModel, Hashable):
+    conn: Any                   # Connection Object - For internal use
+
     id: int                     # TODO: Change this to ~acord.types.UserSnowflake~ later
     username: str               # the user's username, not unique across the platform
     discriminator: str          # the user's 4-digit discord-tag
     avatar: Optional[str]       # the user's avatar hash
-    bot: bool                   # whether the user belongs to an OAuth2 application
+    bot: Optional[bool]         # whether the user belongs to an OAuth2 application
     system: Optional[str]       # whether the user is an Official Discord System user (part of the urgent message system)
-    mfa_enabled: bool           # whether the user has two factor enabled on their account
+    mfa_enabled: Optional[bool] # whether the user has two factor enabled on their account
     banner: Optional[str]       # the user's banner hash
     accent_color: Optional[int] # the user's banner color encoded as an integer representation of hexadecimal color code
     locale: Optional[str]       # the user's chosen language option
-    verified: bool              # whether the email on this account has been verified
+    verified: Optional[bool]    # whether the email on this account has been verified
     flags: Optional[int]        # the flags on a user's account
     premium_type: Optional[int] # the type of Nitro subscription on a user's account
     public_flags: Optional[int] # the public flags on a user's account
@@ -28,8 +30,5 @@ class User(pydantic.BaseModel, Hashable):
 
         return f'https://cdn.discordapp.com/avatars/{id}/{av}.png'
 
-    def __init__(self, conn, **data: Any) -> None:
-        # Over ride pydantic setattr
-        self.__dict__['_conn'] = conn
-
+    def __init__(self, **data: Any) -> None:
         super().__init__(**data)
