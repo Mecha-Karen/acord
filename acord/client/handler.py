@@ -1,11 +1,13 @@
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
-from acord import User
 
 from acord.errors import *
+from ..models import User, Message
 
 
 async def handle_websocket(self, ws):
+    
+
     async for message in ws:
         await self.dispatch('socket_recieve')
 
@@ -21,26 +23,33 @@ async def handle_websocket(self, ws):
         else:
             data = JSON(data)
 
-        print(data)
+        EVENT = data['t']
+        OPERATION = data['op']
+        DATA = data['d']
+        SEQUENCE = data['s']
 
-        if data['op'] == gateway.INVALIDSESSION:
+        gateway.SEQUENCE = SEQUENCE
+
+        if OPERATION == gateway.INVALIDSESSION:
             raise GatewayConnectionRefused(
                 'Invalid session data, currently not handled in this version'
                 '\nCommon causes can include:'
                 '\n* Invalid intents'
-                '\n* '
             )
 
-        if data['t'] == 'READY':
+        if OPERATION == gateway.HEARTBEATACK:
+            await self.dispatch('heartbeat')
+
+        if EVENT == 'READY':
             await self.dispatch('ready')
 
-            self.session_id = data['d']['session_id']
-            self.gateway_version = data['d']['v']
-            self.user = User(conn=self.http, **data['d']['user'])
+            self.session_id = DATA['session_id']
+            self.gateway_version = DATA['v']
+            self.user = User(conn=self.http, **DATA['user'])
 
             continue
 
-        if data['op'] == gateway.HEARTBEATACK:
-            await self.dispatch('heartbeat')
+        if EVENT == 'MESSAGE_CREATE':
+            message = Message(conn=self.http, **DATA)
 
-        
+            await self.dispatch('message', message)
