@@ -50,7 +50,7 @@ def cacheit(section: str, store = INTERNAL_STORAGE, maxItems = 1000):
 
 class Route(object):
     """ Simple object representing a route """
-    def __init__(self, method: str = "GET", *paths, path="/", **parameters):
+    def __init__(self, method: str = "GET", bucket: dict = dict(), *paths, path="/", **parameters):
         if path:
             paths = path.split('/')
         
@@ -60,10 +60,10 @@ class Route(object):
         self.method = method
         self.url = buildURL(*paths, **parameters)
 
-        self.channel_id: Optional[int] = parameters.get('channel_id')
-        self.guild_id: Optional[int] = parameters.get('guild_id')
-        self.webhook_id: Optional[int] = parameters.get('webhook_id')
-        self.webhook_token: Optional[str] = parameters.get('webhook_token')
+        self.channel_id: Optional[int] = bucket.get('channel_id')
+        self.guild_id: Optional[int] = bucket.get('guild_id')
+        self.webhook_id: Optional[int] = bucket.get('webhook_id')
+        self.webhook_token: Optional[str] = bucket.get('webhook_token')
 
     @property
     def bucket(self):
