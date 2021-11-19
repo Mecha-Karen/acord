@@ -1,9 +1,19 @@
+from __future__ import annotations
 from enum import Flag
 
 
 class UserFlags(Flag):
     """
-    TODO: do the docstring
+    User flags allow you to identify users based on there badges given by discord
+
+    .. rubric:: Usage
+
+    .. codeblock:: py
+
+        from acord import UserFlags
+        someFlag = User.flag
+
+        isStaff = someFlag & UserFlags.STAFF == UserFlags.STAFF
     """
 
     NONE = 0
@@ -24,3 +34,11 @@ class UserFlags(Flag):
     VERIFIED_BOT = 1 << 15
     VERIFIED_DEVELOPER = 1 << 17
     CERTIFIED_MODERATOR = 1 << 18
+
+    @classmethod
+    def isStaff(cls, O: UserFlags) -> bool:
+        return O & cls.STAFF == cls.STAFF
+
+    @classmethod
+    def isPartner(cls, O: UserFlags) -> bool:
+        return O & cls.PARTNER == cls.PARTNER
