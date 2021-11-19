@@ -26,8 +26,10 @@ INVALID_GATEWAY_VER = 4012
 INVALID_INTENTS     = 4013
 DISALLOWED_INTENT   = 4014
 
-SEQUENCE = None
+# GLOBAL STORES
+SEQUENCE            = None
 CURRENT_CONNECTIONS = dict()
+INTERNAL_STORAGE    = dict()
 
 def heartbeatPacket():
     return {
