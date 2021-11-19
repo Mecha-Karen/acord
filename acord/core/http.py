@@ -14,7 +14,7 @@ import aiohttp
 import acord
 import sys
 
-from acord.errors import GatewayConnectionRefused, HTTPException
+from acord.errors import Forbidden, GatewayConnectionRefused, HTTPException
 from . import helpers
 from .heartbeat import KeepAlive
 from .decoders import *
@@ -68,6 +68,7 @@ class HTTPClient(object):
         except TypeError:
             # Legacy support as loop parameter was dropped in 3.10
             self._lock = asyncio.Lock()
+        self.trappedBuckets = dict()
 
     def getIdentityPacket(self, intents = 0):
         if hasattr(intents, 'value'):
@@ -184,10 +185,13 @@ class HTTPClient(object):
 
         return ws
 
-    async def request(self, route: helpers.Route, data: dict = None, **payload) -> None:
-        url = route.url
+    async def request(self, route: helpers.Route, data: dict = None, headers: dict = dict()) -> aiohttp.ClientResponse:
+        trapped = self.trappedBuckets.get(route)
 
-        headers = payload
+        if trapped:
+            await asyncio.sleep(trapped)
+        
+        url = route.url
 
         headers['Authorization'] = "Bot " + self.token
         headers['User-Agent'] = self.user_agent
@@ -201,6 +205,11 @@ class HTTPClient(object):
             url=url,
             **kwargs
         )
+
+        if resp.status in [204]:
+            # Returned nothing - No need to decode anything
+            return resp
+
         respData = await self.decodeResponse(resp)
 
         if resp.status == 429:
@@ -212,9 +221,14 @@ class HTTPClient(object):
                     self._lock.release()
             
             else:
+                self.trappedBuckets.update({route.bucket: retryAfter})
                 await asyncio.sleep(retryAfter)
+                self.trappedBuckets.pop(route.bucket)
             
-            return await self.request(route, data, **payload)
+            return await self.request(route, data, headers)
+
+        if resp.status == 403:
+            raise Forbidden(f'403: {respData}')
 
         return resp
         
