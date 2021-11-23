@@ -29,7 +29,6 @@ DISALLOWED_INTENT   = 4014
 # GLOBAL STORES
 SEQUENCE            = None
 CURRENT_CONNECTIONS = dict()
-INTERNAL_STORAGE    = dict()
 
 def heartbeatPacket():
     return {
