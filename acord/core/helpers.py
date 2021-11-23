@@ -2,7 +2,6 @@
 All version related info for connecting to the gateway.
 """
 from functools import wraps
-from ..core.signals.gateway import INTERNAL_STORAGE
 import yarl
 from typing import Optional, Literal
 
@@ -28,7 +27,7 @@ def buildURL(*paths, **parameters) -> str:
 
 
 # Should be used for caching response objects which return on call
-def cacheit(section: str, store = INTERNAL_STORAGE, maxItems = 1000):
+def cacheit(section: str, store: dict, maxItems = 1000):
     def inner(func):
         if section not in store:
             store[section] = set()
