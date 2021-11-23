@@ -12,7 +12,7 @@ async def handle_websocket(self, ws):
     self.INTERNAL_STORAGE['users'] = dict()
 
     async for message in ws:
-        await self.dispatch('socket_recieve')
+        await self.dispatch('socket_recieve', message)
 
         data = message.data
         if type(data) is bytes:
