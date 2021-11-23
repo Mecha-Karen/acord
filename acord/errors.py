@@ -1,7 +1,6 @@
 """ Exceptions raised by the module """
 class BaseResponseException(Exception):
-    def __new__(cls, *args, **kwargs):
-        return super(BaseResponseException, cls).__new__(BaseResponseException)
+    ...
 
 class HTTPException(BaseResponseException):
     def __init__(self, code, message):
