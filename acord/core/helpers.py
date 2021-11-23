@@ -26,6 +26,13 @@ def buildURL(*paths, **parameters) -> str:
     return yarl.URL(URI)
 
 
+def isInt(snowflake) -> bool:
+    try:
+        int(snowflake)
+    except ValueError:
+        return False
+    return True
+
 # Should be used for caching response objects which return on call
 def cacheit(section: str, store: dict, maxItems = 1000):
     def inner(func):
