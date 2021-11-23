@@ -112,6 +112,10 @@ class HTTPClient(object):
 
         return data
 
+    async def logout(self):
+        """ Logs client out from session """
+        await self.request(helpers.Route("POST", path="/auth/logout"))
+
 
     async def _fetchGatewayURL(self, token):
         uri = helpers.buildURL('gateway', 'bot')
@@ -179,11 +183,18 @@ class HTTPClient(object):
         data = await self.decodeResponse(helloRecv)
 
         self._ws_connected = True
+
         self.ws = ws
+
+        # Keep links for API_OBJECTS
+        self.ws.client = self
 
         self.loop.create_task(KeepAlive(self.getIdentityPacket(**identityPacketKwargs), ws, data).run())
 
         return ws
+
+    async def disconnect(self) -> None:
+        await self._session.close()
 
     async def request(self, route: helpers.Route, data: dict = None, headers: dict = dict()) -> aiohttp.ClientResponse:
         trapped = self.trappedBuckets.get(route)
