@@ -138,7 +138,10 @@ class Client(object):
         if not token:
             raise ValueError('No token provided')
 
-        self.http = HTTPClient(loop=self.loop)
+        self.http = HTTPClient(loop=self.loop, token=self.token)
+
+        self.http.client = self
+
         self.token = token
 
         # Login to create session
