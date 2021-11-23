@@ -16,6 +16,7 @@ from typing import (
 )
 
 from acord import Intents
+from acord.models import Message, User
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -76,19 +77,20 @@ class Client(object):
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
 
-    def event(self, func):
-        if not iscoroutinefunction(func):
-            raise ValueError('Provided function was not a coroutine')
-        
-        eventName = func.__qualname__
-        if eventName in self._events:
-            self._events[eventName].append(func)
-        else:
-            self._events.update({eventName: [func]})
+    def on(self, name: str, *, once: bool = False):
+        def inner(func):
 
-        return func
+            if name in self._events:
+                self._events[name].append(func)
+            else:
+                self._events.update({name: [(func, once)]})
 
-    def on_error(self, event_method):
+            func.__event_name__ = name
+
+            return func
+        return inner
+
+    async def on_error(self, event_method):
         acord.logger.error('Failed to run event "{}".'.format(event_method))
 
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
@@ -99,16 +101,29 @@ class Client(object):
             event_name = 'on_' + event_name
         acord.logger.info('Dispatching event: {}'.format(event_name))
 
-        events = self._events.get(event_name, []) or getattr(self, event_name, [])
+        _events = self._events.get(event_name, []) or getattr(self, event_name, [])
 
-        events = events if isinstance(events, list) else [events]
+        events = _events if isinstance(_events, list) else [_events]
 
         acord.logger.info('Total of {} events found for {}'.format(len(events), event_name))
+        toPop = list()
         for event in events:
+            if isinstance(event, tuple):
+                _event = event
+                event, once = event
             try:
                 await event(*args, **kwargs)
             except Exception:
                 self.on_error(event)
+
+            if once:
+                toPop.append(events.index(_event))
+        
+        events = [v for i, v in enumerate(events) if i not in toPop]
+        if events:
+            self._events.update({events[0].__event_name__: events})
+        else:
+            self._events.pop(event_name, None)
 
     def resume(self):
         """ Resumes a closed gateway connection """
@@ -156,5 +171,14 @@ class Client(object):
         try:
             gateway.CURRENT_CONNECTIONS[get_event_loop()] = self.http
             self.loop.run_until_complete(handle_websocket(self, ws))
+        except KeyboardInterrupt:
+            # Kill connection
+            self.loop.run_until_complete(self.http.disconnect())
         finally:
             gateway.CURRENT_CONNECTIONS.pop(get_event_loop(), None)
+
+    def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
+        return self.INTERNAL_STORAGE.get('messages', dict()).get(f'{channel_id}:{message_id}')
+
+    def get_user(self, user_id: int) -> Optional[User]:
+        return self.INTERNAL_STORAGE.get('users', dict()).get(user_id)
