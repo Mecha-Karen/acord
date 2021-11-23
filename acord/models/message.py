@@ -5,7 +5,7 @@ import datetime
 
 from acord.bases import Hashable, File
 from acord.core.helpers import Route
-from acord.models import User, Emoji
+from acord.models import User, Emoji, emoji
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Type, Union
@@ -17,10 +17,10 @@ async def _clean_reaction(string):
         # UNICODE chars are only 1 character long
         if string.isascii():
             raise ValueError('Incorrect unicode emoji provided')
+    elif isinstance(emoji, Emoji):
+        string = emoji.discord_string()
     else:
-        # Reaction object
-        # TODO: support for reaction object
-        raise NotImplemented
+        raise ValueError('Unknown emoji')
 
     return string
 
@@ -198,4 +198,4 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def reply(self, verify: Optional[bool] = True, **data) -> Message:
         """ Shortcut for `Message.Channel.send(..., reference=self, verify=verify)` """
-        return self.conn.client.gof_channel(self.id).send(verify=verify, **data)
+        return await (await self.conn.client.gof_channel(self.id)).send(verify=verify, **data)
