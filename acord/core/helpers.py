@@ -8,6 +8,7 @@ from typing import Optional, Literal
 API_VERSION = 9
 BASE_API_URL = "https://discord.com/api"
 GATEWAY_ENCODING = Literal["JSON", "ETF"]
+DISCORD_EPOCH = 1420070400000
 
 
 def buildURL(*paths, **parameters) -> str:
