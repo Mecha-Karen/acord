@@ -46,21 +46,19 @@ pip3 install .
 
 ### Client
 ```py
-from acord import Client, Context, Message
+from acord import Client, Message
 
 class MyClient(Client):
-    commands = [ping]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def on_ready(self) -> None:
-        # WARNING: may be triggered more then once!
-        # For a more controlled event use `on_connect`
-        print(f'{self.user} is now ready!')
+        print(f"{self.user} is online!")
 
-    async def ping(self, event: Context) -> Message:
-        return event.respond(f"Ping: {self.latency()}")
+    async def on_message(self, message: Message) -> None:
+        if message.content == '.ping':
+            return message.reply("Pong!") 
 ```
 
 ## Links
