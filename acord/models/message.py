@@ -18,7 +18,7 @@ async def _clean_reaction(string):
         if string.isascii():
             raise ValueError('Incorrect unicode emoji provided')
     elif isinstance(string, Emoji):
-        string = string.discord_string()
+        string = str(string)
     else:
         raise ValueError('Unknown emoji')
 
