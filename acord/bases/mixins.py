@@ -1,6 +1,11 @@
-from typing import TypeVar, Type
+# TYPEVARS and mixin classes
 
-H = TypeVar('H', bound='Hashable')
+from typing import TypeVar, Type, Callable, Coroutine
+
+H = TypeVar('H', bound='Hashable')  # Hashable object
+_C = Callable[..., Coroutine]
+T = TypeVar('T')
+
 class Hashable:
     __slots__ = ()
 
