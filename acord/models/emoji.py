@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 import pydantic
 import datetime
 
-from acord.core.helpers import Route, isInt
+from acord.core.abc import Route, isInt, DISCORD_EPOCH
 from acord.bases import Hashable
 from acord.models import User
 
@@ -41,16 +41,11 @@ class Emoji(pydantic.BaseModel, Hashable):
         if _:
             raise ValueError('Time provided, not able to parse')
 
-        toS = format(kwargs['values']['id'], 'b')
-        # Discord timestamp number of bits
-        deT = toS[:42]
-
-        timestamp = int(deT, 2)
-        timestamp += 1420070400000
+        timestamp = ((kwargs['values']['id'] >> 22) + DISCORD_EPOCH) / 1000
 
         return datetime.datetime.fromtimestamp(timestamp)
 
-    def discord_string(self):
+    def __str__(self) -> str:
         """ Returns the emoji as a string that discord identifies as an emoji """
         if self.is_unicode:
             return self.name
@@ -97,3 +92,9 @@ class Emoji(pydantic.BaseModel, Hashable):
             },
             headers={'X-Audit-Log-Reason': reason}
         )
+
+    def is_useable(self):
+        """
+        Checks whether the client is able to use this emoji
+        """
+        return self.conn.client.user in self.roles

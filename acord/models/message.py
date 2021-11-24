@@ -4,8 +4,8 @@ import pydantic
 import datetime
 
 from acord.bases import Hashable, File
-from acord.core.helpers import Route
-from acord.models import User, Emoji, emoji
+from acord.core.abc import Route
+from acord.models import User, Emoji, Snowflake
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Type, Union
@@ -17,8 +17,8 @@ async def _clean_reaction(string):
         # UNICODE chars are only 1 character long
         if string.isascii():
             raise ValueError('Incorrect unicode emoji provided')
-    elif isinstance(emoji, Emoji):
-        string = emoji.discord_string()
+    elif isinstance(string, Emoji):
+        string = string.discord_string()
     else:
         raise ValueError('Unknown emoji')
 
@@ -39,7 +39,7 @@ class Message(pydantic.BaseModel, Hashable):
     ]
     embeds: List[Any]                         # List of embeds TODO: Embed object  
     flags: int                                # Message flags
-    id: int                                   # Message ID
+    id: Snowflake                             # Message ID
     interaction: Optional[Any]                # Message interactin TODO: Interaction object
     guild_id: Optional[int]                   # Guild of were message was sent
     member: Optional[Any]                     # Member object of who sent the message TODO: Member object

@@ -15,7 +15,7 @@ import acord
 import sys
 
 from acord.errors import Forbidden, GatewayConnectionRefused, HTTPException
-from . import helpers
+from . import abc
 from .heartbeat import KeepAlive
 from .decoders import *
 from .signals import gateway
@@ -103,7 +103,7 @@ class HTTPClient(object):
 
         try:
             data = await self.request(
-                helpers.Route("GET", path="/users/@me")
+                abc.Route("GET", path="/users/@me")
             )
         except HTTPException as exc:
             self.token = ot
@@ -114,11 +114,11 @@ class HTTPClient(object):
 
     async def logout(self):
         """ Logs client out from session """
-        await self.request(helpers.Route("POST", path="/auth/logout"))
+        await self.request(abc.Route("POST", path="/auth/logout"))
 
 
     async def _fetchGatewayURL(self, token):
-        uri = helpers.buildURL('gateway', 'bot')
+        uri = abc.buildURL('gateway', 'bot')
         
         async with self._session.get(uri, headers={'Authorization': f"Bot {token}"}) as resp:
             data = await resp.json()
@@ -157,7 +157,7 @@ class HTTPClient(object):
         respData = await self._fetchGatewayURL(token)
         GATEWAY_WEBHOOK_URL = respData['url']
 
-        GATEWAY_WEBHOOK_URL += f'?v={helpers.API_VERSION}'
+        GATEWAY_WEBHOOK_URL += f'?v={abc.API_VERSION}'
         GATEWAY_WEBHOOK_URL += f'&encoding={encoding.lower()}'
 
         if compress:
@@ -196,7 +196,7 @@ class HTTPClient(object):
     async def disconnect(self) -> None:
         await self._session.close()
 
-    async def request(self, route: helpers.Route, data: dict = None, headers: dict = dict()) -> aiohttp.ClientResponse:
+    async def request(self, route: abc.Route, data: dict = None, headers: dict = dict()) -> aiohttp.ClientResponse:
         trapped = self.trappedBuckets.get(route)
 
         if trapped:
