@@ -1,6 +1,6 @@
 # A simple base client for handling responses from discord
 import asyncio
-from asyncio.events import get_event_loop
+from asyncio.events import AbstractEventLoop, get_event_loop
 import warnings
 import acord
 import sys
@@ -12,10 +12,11 @@ from acord.core.signals import gateway
 from acord.errors import *
 
 from typing import (
-    Union, Callable, Optional
+    Any, Coroutine, Union, Callable, Optional
 )
 
 from acord import Intents
+from acord.bases.mixins import _C, T
 from acord.models import Message, User
 
 # Cleans up client class
@@ -45,16 +46,20 @@ class Client(object):
         * Message: :class:`~acord.Message`
         * UpdatedCache: :class:`bool`
     """
+
+    # SHOULD BE OVERWRITTEN
+    INTERNAL_STORAGE: dict
+
     def __init__(self, *,
-        token: str = None,
+        token: Optional[str] = None,
 
         # IDENTITY PACKET ARGS
         intents: Optional[Union[Intents, int]] = 0,
 
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
-        encoding: str = "JSON",
-        compress: bool = False,
-        commandHandler: Callable = None,
+        encoding: Optional[str] = "JSON",
+        compress: Optional[bool] = False,
+        commandHandler: Optional[_C] = None,
     ) -> None:
 
         self.loop = loop
@@ -74,16 +79,26 @@ class Client(object):
         self.gateway_version = None
         self.user = None
 
+        self.INTERNAL_STORAGE = dict()
+
+        self.INTERNAL_STORAGE['messages'] = dict()
+        self.INTERNAL_STORAGE['users'] = dict()
+        self.INTERNAL_STORAGE['guilds'] = dict()
+
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False):
         def inner(func):
+            data = {
+                "func": func,
+                "once": once
+            }
 
             if name in self._events:
-                self._events[name].append(func)
+                self._events[name].append(data)
             else:
-                self._events.update({name: [(func, once)]})
+                self._events.update({name: [data]})
 
             func.__event_name__ = name
 
@@ -98,32 +113,34 @@ class Client(object):
 
     async def dispatch(self, event_name: str, *args, **kwargs) -> None:
         if not event_name.startswith('on_'):
-            event_name = 'on_' + event_name
+            func_name = 'on_' + event_name
         acord.logger.info('Dispatching event: {}'.format(event_name))
 
-        _events = self._events.get(event_name, []) or getattr(self, event_name, [])
+        events = self._events.get(event_name, list())
+        func: Callable[..., Coroutine] = getattr(self, func_name, None)
 
-        events = _events if isinstance(_events, list) else [_events]
-
-        acord.logger.info('Total of {} events found for {}'.format(len(events), event_name))
-        toPop = list()
-        for event in events:
-            if isinstance(event, tuple):
-                _event = event
-                event, once = event
-            try:
-                await event(*args, **kwargs)
-            except Exception:
-                self.on_error(event)
-
-            if once:
-                toPop.append(events.index(_event))
+        if func:
+            events.append({'func': func, 'once': getattr(func, False)})
         
-        events = [v for i, v in enumerate(events) if i not in toPop]
+        to_rmv = list()
+        for event in events:
+            func = event['func']
+            try:
+                self.loop.create_task(func(*args, **kwargs), name=f'Acord event dispatch: {event_name}')
+            except Exception:
+                self.on_error()
+            else:
+                if event.get('once', False):
+                    to_rmv.append(event)
+        
+        for x in to_rmv:
+            events.remove(x)
+
         if events:
-            self._events.update({events[0].__event_name__: events})
+            self._events[event_name] = events
         else:
-            self._events.pop(event_name, None)
+            if event_name in self._events:
+                self._events.pop(event_name)
 
     def resume(self):
         """ Resumes a closed gateway connection """
@@ -185,3 +202,6 @@ class Client(object):
 
     def get_user(self, user_id: int) -> Optional[User]:
         return self.INTERNAL_STORAGE.get('users', dict()).get(user_id)
+
+    def get_guild(self, guild_id: int) -> Optional[Any]:
+        return self.INTENRAL_STORAGE.get('guilds', dict()).get(guild_id)
