@@ -6,10 +6,6 @@ from ..models import User, Message
 
 
 async def handle_websocket(self, ws):
-    self.INTERNAL_STORAGE = dict()
-
-    self.INTERNAL_STORAGE['messages'] = dict()
-    self.INTERNAL_STORAGE['users'] = dict()
 
     async for message in ws:
         await self.dispatch('socket_recieve', message)
@@ -66,8 +62,9 @@ async def handle_websocket(self, ws):
             # TODO: guild object
             if DATA['id'] in UNAVAILABLE:
                 UNAVAILABLE.remove(DATA['id'])
+                await self.dispatch('guild_recv', DATA)
             else:
-                self.dispatch('guild_create', DATA)
+                await self.dispatch('guild_create', DATA)
 
             self.INTERNAL_STORAGE['guilds'].update({int(DATA['id']): DATA})
 
