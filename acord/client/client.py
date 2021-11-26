@@ -5,14 +5,13 @@ import warnings
 import acord
 import sys
 import traceback
-from inspect import iscoroutinefunction
 
 from acord.core.http import HTTPClient
 from acord.core.signals import gateway
 from acord.errors import *
 
 from typing import (
-    Any, Coroutine, Union, Callable, Optional
+    Any, Coroutine, Dict, List, Union, Callable, Optional
 )
 
 from acord import Intents
@@ -59,7 +58,7 @@ class Client(object):
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
-        commandHandler: Optional[_C] = None,
+        commandHandler: Optional[_C[T]] = None,
     ) -> None:
 
         self.loop = loop
@@ -111,7 +110,7 @@ class Client(object):
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         traceback.print_exc()
 
-    async def dispatch(self, event_name: str, *args, **kwargs) -> None:
+    def dispatch(self, event_name: str, *args, **kwargs) -> None:
         if not event_name.startswith('on_'):
             func_name = 'on_' + event_name
         acord.logger.info('Dispatching event: {}'.format(event_name))
@@ -122,7 +121,7 @@ class Client(object):
         if func:
             events.append({'func': func, 'once': getattr(func, False)})
         
-        to_rmv = list()
+        to_rmv: List[Dict] = list()
         for event in events:
             func = event['func']
             try:
@@ -185,7 +184,7 @@ class Client(object):
         # Connect to discord, send identity packet + start heartbeat
         ws = self.loop.run_until_complete(coro)
         
-        self.loop.run_until_complete(self.dispatch('connect'))
+        self.dispatch('connect')
         acord.logger.info('Connected to websocket')
 
         try:
@@ -198,10 +197,17 @@ class Client(object):
             gateway.CURRENT_CONNECTIONS.pop(get_event_loop(), None)
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
+        """ Returns the message stored in the internal cache, may be outdated """
         return self.INTERNAL_STORAGE.get('messages', dict()).get(f'{channel_id}:{message_id}')
 
     def get_user(self, user_id: int) -> Optional[User]:
+        """ Returns the user stored in the internal cache, may be outdated """
         return self.INTERNAL_STORAGE.get('users', dict()).get(user_id)
 
     def get_guild(self, guild_id: int) -> Optional[Any]:
+        """ Returns the guild stored in the internal cache, may be outdated """
         return self.INTENRAL_STORAGE.get('guilds', dict()).get(guild_id)
+
+    async def gof_channel(self, guild_id: int, channel_id: int) -> Optional[Any]:
+        """ Attempts to get a channel, if not found fetches and adds to cache. Raises :class:`NotFound` if cannot be fetched """
+        raise NotImplemented
