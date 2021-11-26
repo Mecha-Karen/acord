@@ -1,3 +1,4 @@
+from typing import Dict
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
 
@@ -8,7 +9,7 @@ from ..models import User, Message
 async def handle_websocket(self, ws):
 
     async for message in ws:
-        await self.dispatch('socket_recieve', message)
+        self.dispatch('socket_recieve', message)
 
         data = message.data
         if type(data) is bytes:
@@ -38,10 +39,10 @@ async def handle_websocket(self, ws):
             )
 
         if OPERATION == gateway.HEARTBEATACK:
-            await self.dispatch('heartbeat')
+            self.dispatch('heartbeat')
 
         if EVENT == 'READY':
-            await self.dispatch('ready')
+            self.dispatch('ready')
 
             self.session_id = DATA['session_id']
             self.gateway_version = DATA['v']
@@ -56,15 +57,23 @@ async def handle_websocket(self, ws):
             message = Message(conn=self.http, **DATA)
             self.INTERNAL_STORAGE['messages'].update({f'{message.channel_id}:{message.id}': message})
 
-            await self.dispatch('message', message)
+            self.dispatch('message', message)
 
         if EVENT == 'GUILD_CREATE':
             # TODO: guild object
             if DATA['id'] in UNAVAILABLE:
                 UNAVAILABLE.remove(DATA['id'])
-                await self.dispatch('guild_recv', DATA)
+                self.dispatch('guild_recv', DATA)
             else:
-                await self.dispatch('guild_create', DATA)
+                self.dispatch('guild_create', DATA)
 
             self.INTERNAL_STORAGE['guilds'].update({int(DATA['id']): DATA})
 
+        if EVENT == 'GUILD_DELETE':
+            # TODO: guild object
+            if DATA['id'] in UNAVAILABLE:
+                UNAVAILABLE.remove(DATA['id'])
+                self.dispatch('guild_outage', DATA)
+            else:
+                self.dispatch('guild_remove')
+                
