@@ -12,10 +12,10 @@ class Hashable:
     id: int
 
     def __eq__(self, O: Type[H]) -> bool:
-        return self.id == O.id
+        return self.id == getattr(O, 'id', O)
 
     def __ne__(self, O: Type[H]) -> bool:
-        return self.id != O.id
+        return self.id != getattr(O, 'id', O)
 
     def __hash__(self) -> int:
         return self.id >> 22
