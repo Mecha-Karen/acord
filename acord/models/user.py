@@ -6,6 +6,52 @@ from typing import Any, Optional
 
 
 class User(pydantic.BaseModel, Hashable):
+    """
+    Represents a Discord user.
+
+    .. rubric:: Sections
+    
+    * `Attributes <#Userattr>`_
+    * `Methods <#Usermeth>`_
+
+    .. raw:: html
+
+        <p id="Userattr" class="rubric">Attributes</p>
+    
+
+    Attributes
+    ----------
+    id: :class:`acord.Snowflake`
+        the user's id
+    username: :class:`str`
+        the user's username
+    discriminator: :class:`str`
+        the user's 4-digit discord-tag
+    avatar: :class:`str`
+        the url of the user's avatar
+    bot: :class:`bool`
+        The user is a bot or not
+    system: :class:`bool`
+        whether the user is an Official Discord System user
+    mfa_enabled: :class:`bool`
+        whether the user has two factor enabled on their account
+    banner: :class:`str`
+        the url of the user's banner, if they have one
+    accent_colour: :class:`int`
+        the user's banner color
+    locale: :class:`str`
+        the user's chosen language option
+    verified: :class:`bool`
+        whether the email on this account has been verified
+    email: :class:`str`
+        the user's email
+    flags: :class:`acord.UserFlags`
+        the user's account flags
+    premium_type: :class:`int`
+        the type of Nitro subscription on a user's account
+    public_flags: :class:`acord.UserFlags`
+        the public flags on a user's account
+    """
     conn: Any                   # Connection Object - For internal use
 
     id: int                     # TODO: Change this to ~acord.types.UserSnowflake~ later
@@ -13,7 +59,7 @@ class User(pydantic.BaseModel, Hashable):
     discriminator: str          # the user's 4-digit discord-tag
     avatar: Optional[str]       # the user's avatar hash
     bot: Optional[bool]         # whether the user belongs to an OAuth2 application
-    system: Optional[str]       # whether the user is an Official Discord System user (part of the urgent message system)
+    system: Optional[bool]       # whether the user is an Official Discord System user (part of the urgent message system)
     mfa_enabled: Optional[bool] # whether the user has two factor enabled on their account
     banner: Optional[str]       # the user's banner hash
     accent_color: Optional[int] # the user's banner color encoded as an integer representation of hexadecimal color code
@@ -29,6 +75,12 @@ class User(pydantic.BaseModel, Hashable):
         id = kwargs['values']['id']
 
         return f'https://cdn.discordapp.com/avatars/{id}/{av}.png'
+
+    @pydantic.validator('banner')
+    def _validateBanner(cls, banner: str, **kwargs) -> str:
+        id = kwargs['values']['id']
+
+        return f'https://cdn.discordapp.com/banners/{id}/{banner}.png'
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
