@@ -198,4 +198,4 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def reply(self, verify: Optional[bool] = True, **data) -> Message:
         """ Shortcut for `Message.Channel.send(..., reference=self, verify=verify)` """
-        return await (await self.conn.client.gof_channel(self.id)).send(verify=verify, **data)
+        return await (await self.channel).send(verify=verify, **data)
