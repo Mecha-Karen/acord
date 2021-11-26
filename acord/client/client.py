@@ -58,7 +58,7 @@ class Client(object):
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
-        commandHandler: Optional[_C[T]] = None,
+        commandHandler: Optional[_C] = None,
     ) -> None:
 
         self.loop = loop
