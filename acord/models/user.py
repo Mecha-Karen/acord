@@ -9,16 +9,6 @@ class User(pydantic.BaseModel, Hashable):
     """
     Represents a Discord user.
 
-    .. rubric:: Sections
-    
-    * `Attributes <#Userattr>`_
-    * `Methods <#Usermeth>`_
-
-    .. raw:: html
-
-        <p id="Userattr" class="rubric">Attributes</p>
-    
-
     Attributes
     ----------
     id: :class:`acord.Snowflake`
