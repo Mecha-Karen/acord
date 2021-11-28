@@ -10,9 +10,7 @@ from acord.core.http import HTTPClient
 from acord.core.signals import gateway
 from acord.errors import *
 
-from typing import (
-    Any, Coroutine, Dict, List, Union, Callable, Optional
-)
+from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
 
 from acord import Intents
 from acord.bases.mixins import _C, T
@@ -39,7 +37,7 @@ class Client(object):
             If BEARER, do not use the `run` method. Your able to access data normally.
     commandHandler: :class:`~typing.Callable`
         An optional command handler, defaults to the built-in handler at :class:`~acord.DefaultCommandHandler`.
-        
+
         **Parameters passed though:**
 
         * Message: :class:`~acord.Message`
@@ -49,12 +47,12 @@ class Client(object):
     # SHOULD BE OVERWRITTEN
     INTERNAL_STORAGE: dict
 
-    def __init__(self, *,
+    def __init__(
+        self,
+        *,
         token: Optional[str] = None,
-
         # IDENTITY PACKET ARGS
         intents: Optional[Union[Intents, int]] = 0,
-
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
@@ -80,19 +78,16 @@ class Client(object):
 
         self.INTERNAL_STORAGE = dict()
 
-        self.INTERNAL_STORAGE['messages'] = dict()
-        self.INTERNAL_STORAGE['users'] = dict()
-        self.INTERNAL_STORAGE['guilds'] = dict()
+        self.INTERNAL_STORAGE["messages"] = dict()
+        self.INTERNAL_STORAGE["users"] = dict()
+        self.INTERNAL_STORAGE["guilds"] = dict()
 
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False):
         def inner(func):
-            data = {
-                "func": func,
-                "once": once
-            }
+            data = {"func": func, "once": once}
 
             if name in self._events:
                 self._events[name].append(data)
@@ -102,36 +97,39 @@ class Client(object):
             func.__event_name__ = name
 
             return func
+
         return inner
 
     async def on_error(self, event_method):
         acord.logger.error('Failed to run event "{}".'.format(event_method))
 
-        print(f'Ignoring exception in {event_method}', file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
     def dispatch(self, event_name: str, *args, **kwargs) -> None:
-        if not event_name.startswith('on_'):
-            func_name = 'on_' + event_name
-        acord.logger.info('Dispatching event: {}'.format(event_name))
+        if not event_name.startswith("on_"):
+            func_name = "on_" + event_name
+        acord.logger.info("Dispatching event: {}".format(event_name))
 
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
 
         if func:
-            events.append({'func': func, 'once': getattr(func, False)})
-        
+            events.append({"func": func, "once": getattr(func, False)})
+
         to_rmv: List[Dict] = list()
         for event in events:
-            func = event['func']
+            func = event["func"]
             try:
-                self.loop.create_task(func(*args, **kwargs), name=f'Acord event dispatch: {event_name}')
+                self.loop.create_task(
+                    func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+                )
             except Exception:
                 self.on_error()
             else:
-                if event.get('once', False):
+                if event.get("once", False):
                     to_rmv.append(event)
-        
+
         for x in to_rmv:
             events.remove(x)
 
@@ -142,17 +140,19 @@ class Client(object):
                 self._events.pop(event_name)
 
     def resume(self):
-        """ Resumes a closed gateway connection """
+        """Resumes a closed gateway connection"""
         raise NotImplementedError()
 
-
     def run(self, token: str = None, *, reconnect: bool = True):
-        if (token or self.token) and getattr(self, '_lruPermanent', False):
-            warnings.warn("Cannot use current token as another token was binded to the client", CannotOverideTokenWarning)
-        token = getattr(self, '_lruPermanent', None) or (token or self.token)
+        if (token or self.token) and getattr(self, "_lruPermanent", False):
+            warnings.warn(
+                "Cannot use current token as another token was binded to the client",
+                CannotOverideTokenWarning,
+            )
+        token = getattr(self, "_lruPermanent", None) or (token or self.token)
 
         if not token:
-            raise ValueError('No token provided')
+            raise ValueError("No token provided")
 
         self.http = HTTPClient(loop=self.loop, token=self.token)
 
@@ -174,18 +174,17 @@ class Client(object):
 
         coro = self.http._connect(
             token,
-            encoding=self.encoding, 
+            encoding=self.encoding,
             compress=self.compress,
-
             # for identity
             intents=self.intents,
         )
 
         # Connect to discord, send identity packet + start heartbeat
         ws = self.loop.run_until_complete(coro)
-        
-        self.dispatch('connect')
-        acord.logger.info('Connected to websocket')
+
+        self.dispatch("connect")
+        acord.logger.info("Connected to websocket")
 
         try:
             self.loop.run_until_complete(handle_websocket(self, ws))
@@ -194,17 +193,19 @@ class Client(object):
             self.loop.run_until_complete(self.http.disconnect())
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
-        """ Returns the message stored in the internal cache, may be outdated """
-        return self.INTERNAL_STORAGE.get('messages', dict()).get(f'{channel_id}:{message_id}')
+        """Returns the message stored in the internal cache, may be outdated"""
+        return self.INTERNAL_STORAGE.get("messages", dict()).get(
+            f"{channel_id}:{message_id}"
+        )
 
     def get_user(self, user_id: int) -> Optional[User]:
-        """ Returns the user stored in the internal cache, may be outdated """
-        return self.INTERNAL_STORAGE.get('users', dict()).get(user_id)
+        """Returns the user stored in the internal cache, may be outdated"""
+        return self.INTERNAL_STORAGE.get("users", dict()).get(user_id)
 
     def get_guild(self, guild_id: int) -> Optional[Any]:
-        """ Returns the guild stored in the internal cache, may be outdated """
-        return self.INTENRAL_STORAGE.get('guilds', dict()).get(guild_id)
+        """Returns the guild stored in the internal cache, may be outdated"""
+        return self.INTENRAL_STORAGE.get("guilds", dict()).get(guild_id)
 
     async def gof_channel(self, guild_id: int, channel_id: int) -> Optional[Any]:
-        """ Attempts to get a channel, if not found fetches and adds to cache. Raises :class:`NotFound` if cannot be fetched """
+        """Attempts to get a channel, if not found fetches and adds to cache. Raises :class:`NotFound` if cannot be fetched"""
         raise NotImplemented

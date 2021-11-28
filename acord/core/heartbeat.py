@@ -1,6 +1,6 @@
 # Basic heartbeat controller
 import asyncio
-from .signals import gateway
+from .signals import gateway  # type: ignore
 
 
 class KeepAlive(object):
@@ -15,15 +15,12 @@ class KeepAlive(object):
         await self._ws.send_json(self.identity)
 
         while True:
-            if packet['op'] != gateway.HELLO:
-                raise ValueError('Invalid hello packet provided')
+            if packet["op"] != gateway.HELLO:
+                raise ValueError("Invalid hello packet provided")
 
-            await asyncio.sleep((packet['d']['heartbeat_interval'] / 1000))
+            await asyncio.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
             await self._ws.send_json(await self.get_payload())
 
     async def get_payload(self):
-        return {
-            "op": gateway.HEARTBEAT,
-            "d": gateway.SEQUENCE
-        }
+        return {"op": gateway.HEARTBEAT, "d": gateway.SEQUENCE}

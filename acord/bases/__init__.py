@@ -7,4 +7,4 @@ from .mixins import Hashable, _C, T, H
 
 
 class MISSING(object):
-    """ Identifer class, used to represent a value which doesn't exist, or should be set to 0 """
+    """Identifer class, used to represent a value which doesn't exist, or should be set to 0"""

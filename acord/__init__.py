@@ -18,11 +18,12 @@ __doc__ = "An API wrapper for the discord API"
 __version__ = "0.0.1a"
 __author__ = "Mecha Karen"
 
+
 class VersionInfo(NamedTuple):
     major: int
     minor: int
     micro: int
-    level: Literal["Alpha", "Beta", "Stable", "Final"]
+    level: Literal["Pre-Alpha", "Alpha", "Beta", "Stable", "Final"]
 
 
 version_info: VersionInfo = VersionInfo(major=0, minor=0, micro=1, level="Pre-Alpha")

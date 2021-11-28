@@ -5,28 +5,28 @@ import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]
+    fp: Union[Type[str], Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
     position: Optional[int] = 0
     filename: Optional[str]
     spoiler: Optional[bool] = False
     is_closed: Optional[bool] = False
 
-    @pydantic.validator('fp')
+    @pydantic.validator("fp")
     def _validate_fp(cls, fp, **kwargs):
         if not isinstance(fp, io.BufferedIOBase):
-            fp = open(fp, 'rb')
+            fp = open(fp, "rb")
         else:
-            kwargs['values']['position'] = fp.tell()
-        
+            kwargs["values"]["position"] = fp.tell()
+
         return fp
 
-    @pydantic.validator('spoiler')
+    @pydantic.validator("spoiler")
     def _validate_spoiler(cls, spoiler, **kwargs):
-        filename = kwargs['values']['filename']
-        
-        if filename and filename is not None and not filename.startswith('SPOILER_'):
+        filename = kwargs["values"]["filename"]
+
+        if filename and filename is not None and not filename.startswith("SPOILER_"):
             filename = "SPOILER_" + filename
-            kwargs['values']['filename'] = filename
+            kwargs["values"]["filename"] = filename
 
         return spoiler
 

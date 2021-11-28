@@ -15,32 +15,36 @@ from .__main__ import Channel
 
 # Standard text channel in a guild
 class GuildTextChannel(Channel):
-    guild_id: int                                   # ID of guild which it belongs to
-    position: int                                   # Position of channel
-    permission_overwrites: List[Any]                # Permissions of channel
-    name: str                                       # Name of channel
-    topic: Optional[str]                            # Channel topic
-    nsfw: Optional[bool]                            # Channel is marked as NSFW
-    last_message_id: Optional[int]                  # Last message in channel, may or may not be valid
-    parent_id: Optional[int]                        # Category to which the channel belongs to
-    last_pin_timestamp: Optional[int]               # Last pinned message in channel, may be None
-    permissions: Optional[str]                      # String of user permissions
-    rate_limit_per_user: Optional[int]              # Channel ratelimit 
-    default_auto_archive_duration: Optional[int]    # Default time for threads to be archived       
+    guild_id: int  # ID of guild which it belongs to
+    position: int  # Position of channel
+    permission_overwrites: List[Any]  # Permissions of channel
+    name: str  # Name of channel
+    topic: Optional[str]  # Channel topic
+    nsfw: Optional[bool]  # Channel is marked as NSFW
+    last_message_id: Optional[int]  # Last message in channel, may or may not be valid
+    parent_id: Optional[int]  # Category to which the channel belongs to
+    last_pin_timestamp: Optional[int]  # Last pinned message in channel, may be None
+    permissions: Optional[str]  # String of user permissions
+    rate_limit_per_user: Optional[int]  # Channel ratelimit
+    default_auto_archive_duration: Optional[
+        int
+    ]  # Default time for threads to be archived
 
     created_at: Optional[datetime.datetime]
 
-    @pydantic.validator('created_at')
+    @pydantic.validator("created_at")
     def _validate_snowflake(cls, _, **kwargs) -> Optional[datetime.datetime]:
         if _:
-            raise ValueError('Time provided, not able to parse')
+            raise ValueError("Time provided, not able to parse")
 
-        timestamp = ((kwargs['values']['id'] >> 22) + DISCORD_EPOCH) / 1000
+        timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
 
         return datetime.datetime.fromtimestamp(timestamp)
 
     @pydantic.validate_arguments
-    async def edit(self, *,
+    async def edit(
+        self,
+        *,
         name: Optional[str] = None,
         type: Optional[Literal[0, 5]] = None,
         position: Optional[int] = None,
@@ -50,7 +54,6 @@ class GuildTextChannel(Channel):
         permission_overwrites: Optional[List[Any]] = None,
         category: Optional[int] = None,
         archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
-
         reason: Optional[str] = None,
     ) -> Optional[GuildTextChannel]:
         """
@@ -78,31 +81,41 @@ class GuildTextChannel(Channel):
             Change the default archive duration on a thread, use :class:`MISSING` or 0 for no timeout
         """
         payload = {
-            'name': (name or self.name),
-            'type': ((type if type is not None else None) or self.type),
-            'position': (position or self.position),
-            'topic': (topic or self.topic),
-            'nsfw': ((nsfw if nsfw is not None else None) or self.nsfw),
-            'rate_limit_per_user': ((ratelimit if ratelimit is not None else None) or self.rate_limit_per_user),
-            'permissions_overwrites': (permission_overwrites or self.permission_overwrites),
-            'parent_id': (getattr(category, 'id', category) or None),
-            'default_auto_archive_duration': ((archive_duration if archive_duration is not None else archive_duration) or self.default_auto_archive_duration),
+            "name": (name or self.name),
+            "type": ((type if type is not None else None) or self.type),
+            "position": (position or self.position),
+            "topic": (topic or self.topic),
+            "nsfw": ((nsfw if nsfw is not None else None) or self.nsfw),
+            "rate_limit_per_user": (
+                (ratelimit if ratelimit is not None else None)
+                or self.rate_limit_per_user
+            ),
+            "permissions_overwrites": (
+                permission_overwrites or self.permission_overwrites
+            ),
+            "parent_id": (getattr(category, "id", category) or None),
+            "default_auto_archive_duration": (
+                (archive_duration if archive_duration is not None else archive_duration)
+                or self.default_auto_archive_duration
+            ),
         }
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         if permission_overwrites:
             raise NotImplemented
-        
+
         # Rest should be standard python vars
 
         await self.conn.request(
-            Route('PATCH', path=f"/channels/{self.id}", bucket=bucket),
+            Route("PATCH", path=f"/channels/{self.id}", bucket=bucket),
             data=payload,
-            headers={'X-Audit-Log-Reason': reason}
+            headers={"X-Audit-Log-Reason": reason},
         )
 
     @pydantic.validate_arguments
-    async def fetch_messages(self, *,
+    async def fetch_messages(
+        self,
+        *,
         around: Optional[Union[Message, int]] = None,
         before: Optional[Union[Message, int]] = None,
         after: Optional[Union[Message, int]] = None,
