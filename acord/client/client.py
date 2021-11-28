@@ -188,13 +188,10 @@ class Client(object):
         acord.logger.info('Connected to websocket')
 
         try:
-            gateway.CURRENT_CONNECTIONS[get_event_loop()] = self.http
             self.loop.run_until_complete(handle_websocket(self, ws))
         except KeyboardInterrupt:
             # Kill connection
             self.loop.run_until_complete(self.http.disconnect())
-        finally:
-            gateway.CURRENT_CONNECTIONS.pop(get_event_loop(), None)
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """ Returns the message stored in the internal cache, may be outdated """
