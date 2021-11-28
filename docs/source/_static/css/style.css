@@ -35,7 +35,7 @@ Theme addition / customisation created by Seniatical.
     --pst-color-warning: 255, 193, 7;
     --pst-color-danger: 220, 53, 69;
     --pst-color-text-base: 174, 174, 174;
-  
+
     /* Headers and paragraphs */
     --pst-color-h1: var(--pst-color-primary);
     --pst-color-h2: var(--pst-color-primary);
@@ -71,6 +71,14 @@ Theme addition / customisation created by Seniatical.
     --pst-color-toc-link: 250, 250, 250;
     --pst-color-toc-link-hover: var(--pst-color-active-navigation);
     --pst-color-toc-link-active: var(--pst-color-active-navigation);
+
+    --attribute-table-title: var(--pst-color-primary);
+    --attribute-table-entry-border: #FFFFFF;
+    --attribute-table-entry-text: var(--pst-color-primary);
+    --attribute-table-entry-hover-border: var(--pst-color-navbar-link);
+    --attribute-table-entry-hover-background: var(--pst-color-navbar-link);
+    --attribute-table-entry-hover-text: var(--pst-color-navbar-link);
+    --attribute-table-badge: var(--pst-color-text-base);
 }
 
 
@@ -283,4 +291,68 @@ p.rubric {
 
 ul > li[class="py-attribute-table-entry"] {
     list-style: none;
+}
+
+.py-attribute-table {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    margin: 0 2em;
+    padding-top: 16px;
+}
+  
+.py-attribute-table-column {
+    flex: 1 1 auto;
+}
+  
+.py-attribute-table-column:not(:first-child) {
+    margin-top: 1em;
+}
+  
+.py-attribute-table-column > span {
+    font-weight: bold;
+    color: var(--attribute-table-title);
+}
+  
+main .py-attribute-table-column > ul {
+    list-style: none;
+    margin: 4px 0px;
+    padding-left: 0;
+    font-size: 0.95em;
+}
+  
+.py-attribute-table-entry {
+    margin: 0;
+    padding: 2px 0;
+    padding-left: 0.2em;
+    border-left: 2px solid var(--attribute-table-entry-border);
+    display: flex;
+    line-height: 1.2em;
+}
+  
+.py-attribute-table-entry > a {
+    padding-left: 0.5em;
+    color: var(--attribute-table-entry-text);
+    flex-grow: 1;
+}
+  
+.py-attribute-table-entry > a:hover {
+    color: var(--attribute-table-entry-hover-text);
+    text-decoration: none;
+}
+  
+.py-attribute-table-entry:hover {
+    background-color: var(--attribute-table-entry-hover-background);
+    border-left: 2px solid var(--attribute-table-entry-hover-border);
+    text-decoration: none;
+}
+  
+.py-attribute-table-badge {
+    flex-basis: 3em;
+    text-align: right;
+    font-size: 0.9em;
+    color: var(--attribute-table-badge);
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
