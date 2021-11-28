@@ -14,7 +14,7 @@ class Emoji(pydantic.BaseModel, Hashable):
     conn: Any  # Connection Object - for internal use
 
     id: int
-    # ID of Emoji
+    """ ID of Emoji """
 
     name: str
     """ Name of Emoji """
@@ -49,7 +49,8 @@ class Emoji(pydantic.BaseModel, Hashable):
     """ Whether the emoji has been deleted internally """
 
     # This has to be worked out manually
-    created_at: Optional[datetime.datetime]  # When the emoji was created
+    created_at: Optional[datetime.datetime]
+    """ When the emoji was created """
 
     @pydantic.validator("is_unicode")
     def _validate_unicode(cls, **kwargs) -> bool:
@@ -124,4 +125,4 @@ class Emoji(pydantic.BaseModel, Hashable):
         """
         Checks whether the client is able to use this emoji
         """
-        return self.conn.client.user in self.roles
+        return any(i for i in self.roles if i in self.conn.client.get_guild(self.guild_id).me.roles) and self.available
