@@ -5,10 +5,10 @@ import datetime
 
 from acord.bases import Hashable, File
 from acord.core.abc import Route
-from acord.models import User, Emoji, TextChannel, Snowflake
+from acord.models import User, Emoji, Snowflake
 from acord.errors import APIObjectDepreciated
 
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Union
 
 
 async def _clean_reaction(string):
@@ -26,96 +26,80 @@ async def _clean_reaction(string):
 
 
 class Message(pydantic.BaseModel, Hashable):
-<<<<<<< HEAD
-    conn: Any  # Connection Object - For internal use
-
-    activity: Any  # sent with Rich Presence-related chat embeds TODO: Message Activity
-    application: Any  # sent with Rich Presence-related chat embeds TODO: Application Object
-    attachments: List[File]  # List of file objects
-    author: User  # User object of who sent the message
-    channel_id: int  # id of the channel were the message was send
-    components: List[Any]  # List of buttons, selects etc..
-    content: str  # Message content
-=======
     conn: Any
     # Connection Object - For internal use
 
     activity: Any  
-    # sent with Rich Presence-related chat embeds TODO: Message Activity
+    """ sent with Rich Presence-related chat embeds """ # TODO: Message Activity
     application: Any  
-    # sent with Rich Presence-related chat embeds TODO: Application Object
+    """ sent with Rich Presence-related chat embeds """ # TODO: Application Object
     attachments: List[Any] 
-    # List of file objects TODO: Asset object
+    """ List of file objects """ # TODO: Asset object
     author: User  
-    # User object of who sent the message
+    """ User object of who sent the message """
     channel_id: int  
-    # id of the channel were the message was send
+    """ id of the channel were the message was send """
     components: List[Any]  
-    # List of buttons, selects etc..
+    """ List of all components in the message """
     content: str  
-    # Message content
->>>>>>> 0ce09084297ecbe924716dac6458244a6021b5ee
+    """ Message content """
+    
     edited_timestamp: Optional[
         Union[
             bool, datetime.datetime
         ]  # If not false contains timestamp of edited message
     ]
     embeds: List[Any]  
-    # List of embeds TODO: Embed object
+    """ List of embeds """ # TODO: Embed object
     flags: int  
-    # Message flags
+    """ Message flags """
     id: Snowflake  
-    # Message ID
+    """ Message ID """
     interaction: Optional[Any]  
-    # Message interactin TODO: Interaction object
+    """ Message Interaction """ # TODO: Interaction object
     guild_id: Optional[int]  
-    # Guild of were message was sent
+    """ Guild ID of were message was sent """
     member: Optional[Any]  
-    # Member object of who sent the message TODO: Member object
+    """ Member object of who sent the message """ # TODO: Member object
     mentions: List[Union[User, Any]]  
-    # List of mentioned users
+    """ List of mentioned users """
     mention_everyone: bool  
-    # Message mentioned @everyone
+    """ If message mentioned @everyone """
     mention_roles: List[Any]  
-    # Message mentioned any roles
+    """ If message mentioned any roles """
     mention_channels: Optional[
         List[Any]
-<<<<<<< HEAD
-    ]  # List of mentioned channels TODO: Channel Object
-    nonce: Optional[int]  # Message nonce: used for verifying if message was sent
-    pinned: bool  # Message pinned in channel or not
-    reactions: Optional[List[Any]] = list()  # List of reactions TODO: reaction object
-=======
     ]  
-    # List of mentioned channels TODO: Channel Object
+    """ List of mentioned channels """ # TODO: Channel Object
     nonce: Optional[int]  
-    # Message nonce: used for verifying if message was sent
+    """ Message nonce: used for verifying if message was sent """
     pinned: bool  
-    # Message pinned in channel or not
+    """ Message pinned in channel or not """
     reactions: Optional[List[Any]]  
-    # List of reactions TODO: reaction object
->>>>>>> 0ce09084297ecbe924716dac6458244a6021b5ee
+    """ List of reactions """ # TODO: reaction object
     referenced_message: Optional[
         Union[Message, Any]  
-        # Message replied to TODO: partial message
     ]
+    """ Replied message """ # TODO: partial message
     thread: Optional[Any]  
-    # Channel thread TODO: Channel Thread Object
+    """ Thread were message was sent """ # TODO: Channel Thread Object
     timestamp: datetime.datetime  
-    # Timestamp of when message was sent
+    """ Timestamp of when message was sent """
     tts: bool  
-    # Is a text to speech message
+    """ Is a text to speech message """
     type: int  
-    # Message type, e.g. DEFAULT, REPLY
+    """ Message type, e.g. DEFAULT, REPLY """
     sticker_items: Optional[List[Any]]  
-    # List of stickers TODO: Sticker object
+    """ List of stickers """ # TODO: Sticker object
     stickers: Optional[List[Any]]  
     # Depreciated raises error if provided
     webhook_id: Optional[int]  
-    # Webhook message ID
+    """ Webhook message ID """
 
     """ Extra's """
-    channel: Optional[TextChannel]
+    channel: Optional[Any]  # type: ignore
+    # Returns the :class:`TextChannel` object were the message was sent from.
+    # Not the actual object as cyclic imports are a pain
 
     class Config:
         arbitrary_types_allowed = True
@@ -266,3 +250,4 @@ class Message(pydantic.BaseModel, Hashable):
     async def reply(self, verify: Optional[bool] = True, **data) -> Message:
         """Shortcut for `Message.Channel.send(..., reference=self, verify=verify)`"""
         return await self.channel.send(reference=self, verify=verify, **data)
+
