@@ -1,4 +1,4 @@
-from typing import TypeVar, Union
+from typing import TypeVar
 
 Snowflake = TypeVar("Snowflake", bound=int)
 
@@ -6,8 +6,8 @@ Snowflake = TypeVar("Snowflake", bound=int)
 
 from .user import User
 from .emoji import Emoji
-from .channels import Channel, TextChannel
 
 from .message import Message
+from .channels import Channel, TextChannel
 
 Message.update_forward_refs()
