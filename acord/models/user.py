@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pydantic
 from acord.bases import Hashable
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 class User(pydantic.BaseModel, Hashable):
@@ -74,3 +74,7 @@ class User(pydantic.BaseModel, Hashable):
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
+
+    def mutual_guilds(self) -> List[Any]:
+        """ Return any guilds the user shares with the client """
+        return [i for i in self.conn.client.guilds if i.has_user(self)]
