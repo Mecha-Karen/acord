@@ -28,13 +28,17 @@ If you have any queries - `Click Here`_ to join our support server
 
 .. _Click Here: https://discord.gg/Q5mFhUM
 
-Dependencies
-============
-Acord relies on ``Pydantic`` and ``aiohttp``, without them the functionality of the module is non-existant.
-It is also recomended to install ``uvloop`` as it can speed up the program by a large margin.
+Features
+========
+
+* Modern pythonic API, ``async`` and ``await`` syntax
+* Easy to use and modify
+* Pydantic models and optional uv_loop installation
+* Ratelimit handling
+* Highly customisable
 
 Basic Example
--------------
+=============
 
 .. code-block:: py
 
@@ -50,6 +54,10 @@ Basic Example
             if message.content == "Hello":
                 return await message.channel.send(f"Hello {message.author}, I am {self.user}!")
 
+Dependencies
+============
+Acord relies on ``Pydantic`` and ``aiohttp``, without them the functionality of the module is non-existant.
+It is also recomended to install ``uvloop`` as it can speed up the program by a large margin.
 
 Contents
 ========
