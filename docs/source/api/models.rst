@@ -7,11 +7,33 @@
 
 .. currentmodule:: acord
 
+******
+Models
+******
+Our models use the ``Pydantic`` module for simple data parsing. 
+All methods from :class:`~pydantic.BaseModel` are inherited along with ours.
+These methods will not be shown in our docs, you can find them in ``Pydantic``'s documentation.
+
 User
 ~~~~
 
 .. attributetable:: User
 
 .. autoclass:: User
-    :members:
+   :members:
 
+Message
+~~~~~~~
+
+.. attributetable:: Message
+
+.. autoclass:: Message
+   :members:
+
+Emoji
+~~~~~
+
+.. attributetable:: Emoji
+
+.. autoclass:: Emoji
+   :members:

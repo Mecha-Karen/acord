@@ -6,6 +6,8 @@ Snowflake = TypeVar("Snowflake", bound=int)
 
 from .user import User
 from .emoji import Emoji
+from .channels import Channel, TextChannel
+
 from .message import Message
 
 Message.update_forward_refs()

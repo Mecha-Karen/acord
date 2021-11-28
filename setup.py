@@ -39,7 +39,8 @@ packages = [
     "acord.client",
     "acord.core",
     "acord.core.signals",
-    "acord.models"
+    "acord.models",
+    "acord.models.channels"
 ]
 
 setup(

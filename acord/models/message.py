@@ -5,7 +5,7 @@ import datetime
 
 from acord.bases import Hashable, File
 from acord.core.abc import Route
-from acord.models import User, Emoji, Snowflake
+from acord.models import User, Emoji, TextChannel, Snowflake
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Type, Union
@@ -30,7 +30,7 @@ class Message(pydantic.BaseModel, Hashable):
 
     activity: Any  # sent with Rich Presence-related chat embeds TODO: Message Activity
     application: Any  # sent with Rich Presence-related chat embeds TODO: Application Object
-    attachments: List[Any]  # List of file objects TODO: Asset object
+    attachments: List[File]  # List of file objects
     author: User  # User object of who sent the message
     channel_id: int  # id of the channel were the message was send
     components: List[Any]  # List of buttons, selects etc..
@@ -54,7 +54,7 @@ class Message(pydantic.BaseModel, Hashable):
     ]  # List of mentioned channels TODO: Channel Object
     nonce: Optional[int]  # Message nonce: used for verifying if message was sent
     pinned: bool  # Message pinned in channel or not
-    reactions: Optional[List[Any]]  # List of reactions TODO: reaction object
+    reactions: Optional[List[Any]] = list()  # List of reactions TODO: reaction object
     referenced_message: Optional[
         Union[Message, Any]  # Message replied to TODO: partial message
     ]
@@ -65,6 +65,9 @@ class Message(pydantic.BaseModel, Hashable):
     sticker_items: Optional[List[Any]]  # List of stickers TODO: Sticker object
     stickers: Optional[List[Any]]  # Depreciated raises error if provided
     webhook_id: Optional[int]  # Webhook message ID
+
+    """ Extra's """
+    channel: Optional[TextChannel]
 
     class Config:
         arbitrary_types_allowed = True
@@ -96,20 +99,30 @@ class Message(pydantic.BaseModel, Hashable):
 
         return User(**data)
 
+    @pydantic.validator("channel")
+    def _validate_channel(cls, _, **kwargs):
+        # meta: private
+        if _ is not None:
+            raise ValueError('Channel provided, when expected None')
+        conn = kwargs['values']['conn']
+        channel_id = kwargs['values']['channel_id']
+
+        return conn.client.get_channel(channel_id)
+
     def __init__(self, **data):
 
         super().__init__(**data)
 
     async def refetch(self) -> Optional[Message]:
         """Attempts to fetch the same message from the API again"""
-        data = await self.conn.request(
+        resp = await self.conn.request(
             Route(
                 "GET",
                 path=f"/channels/{self.channel_id}/messages/{self.id}",
                 bucket={"channel_id": self.channel_id, "guild_id": self.guild_id},
             )
         )
-        print(data)
+        return Message(conn=self.conn, **(await resp.json()))
 
     async def delete(self, *, reason: str = None) -> None:
         """
@@ -204,4 +217,4 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def reply(self, verify: Optional[bool] = True, **data) -> Message:
         """Shortcut for `Message.Channel.send(..., reference=self, verify=verify)`"""
-        return await (await self.channel).send(verify=verify, **data)
+        return await self.channel.send(reference=self, verify=verify, **data)

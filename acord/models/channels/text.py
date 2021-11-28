@@ -4,17 +4,17 @@ from typing import Any, List, Literal, Optional, Union
 import datetime
 
 import pydantic
-from pydantic import dataclasses
 
 from acord.bases.flags.channels import ChannelTypes
-from acord.models import Message
 from acord.core.abc import DISCORD_EPOCH, Route
+
+import acord
 
 from .__main__ import Channel
 
 
 # Standard text channel in a guild
-class GuildTextChannel(Channel):
+class TextChannel(Channel):
     guild_id: int  # ID of guild which it belongs to
     position: int  # Position of channel
     permission_overwrites: List[Any]  # Permissions of channel
@@ -55,7 +55,7 @@ class GuildTextChannel(Channel):
         category: Optional[int] = None,
         archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
         reason: Optional[str] = None,
-    ) -> Optional[GuildTextChannel]:
+    ) -> Optional["TextChannel"]:
         """
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
 
@@ -116,11 +116,11 @@ class GuildTextChannel(Channel):
     async def fetch_messages(
         self,
         *,
-        around: Optional[Union[Message, int]] = None,
-        before: Optional[Union[Message, int]] = None,
-        after: Optional[Union[Message, int]] = None,
+        around: Optional[Union["acord.Message", int]] = None,
+        before: Optional[Union["acord.Message", int]] = None,
+        after: Optional[Union["acord.Message", int]] = None,
         limit: Optional[int] = 50,
-    ) -> List[Message]:
+    ) -> List["acord.Message"]:
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         data = await self.conn.request(

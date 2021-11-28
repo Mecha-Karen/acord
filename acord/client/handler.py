@@ -63,6 +63,7 @@ async def handle_websocket(self, ws):
 
         if EVENT == "GUILD_CREATE":
             # TODO: guild object
+
             if DATA["id"] in UNAVAILABLE:
                 UNAVAILABLE.remove(DATA["id"])
                 self.dispatch("guild_recv", DATA)

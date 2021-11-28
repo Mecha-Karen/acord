@@ -10,22 +10,43 @@ from acord.models import User
 
 
 class Emoji(pydantic.BaseModel, Hashable):
+    """ Reprentation of a discord Emoji """
     conn: Any  # Connection Object - for internal use
 
-    id: int  # ID of emoji
-    name: str  # Name of emoji
-    roles: Optional[List[Any]]  # List of roles TODO: Role object
-    user: Optional[User]  # User who created the emoji
-    require_colons: Optional[bool]  # Whether this emoji must be wrapped in colons
-    managed: Optional[bool]  # Whether this emoji is managed
-    animated: Optional[bool]  # Emoji is animated or not
-    available: Optional[bool]  # Can be used or not - Lost due to server boosts
+    id: int
+    # ID of Emoji
 
-    """ Not provided by discord API """
+    name: str
+    """ Name of Emoji """
 
-    is_unicode: Optional[bool]  # Is the emoji unicode
-    guild_id: Optional[int]  # Guild were emoji belongs to
-    deleted: Optional[bool] = False  # Whether the emoji has been deleted internally
+    roles: Optional[List[Any]]  # TODO: Role object
+    """ List of roles """
+
+    user: Optional[User]
+    """ User who created the emoji """
+
+    require_colons: Optional[bool]
+    """ Whether this emoji must be wrapped in colons """
+
+    managed: Optional[bool]
+    """ Whether this emoji is managed """
+
+    animated: Optional[bool]
+    """ Emoji is animated or not """
+
+    available: Optional[bool]
+    """ Can be used or not - Lost due to server boosts """
+
+    # Below not provided by discord API
+
+    is_unicode: Optional[bool]
+    """ Is a unicode emoji """
+
+    guild_id: Optional[int]
+    """ Guild were emoji belongs to """
+
+    deleted: Optional[bool] = False
+    """ Whether the emoji has been deleted internally """
 
     # This has to be worked out manually
     created_at: Optional[datetime.datetime]  # When the emoji was created
@@ -57,6 +78,8 @@ class Emoji(pydantic.BaseModel, Hashable):
     async def delete(
         self, *, reason: Optional[str] = None, guild_id: Optional[int]
     ) -> None:
+        """
+        """
         if guild_id and guild_id != self.guild_id:
             raise ValueError(
                 f"Mismatching guild_id provided, expected {self.guild_id} got {guild_id}"
