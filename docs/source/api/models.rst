@@ -7,10 +7,6 @@
 
 .. currentmodule:: acord
 
-******
-Models
-******
-
 User
 ~~~~
 
