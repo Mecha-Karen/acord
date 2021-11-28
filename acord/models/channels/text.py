@@ -7,8 +7,7 @@ import pydantic
 
 from acord.bases.flags.channels import ChannelTypes
 from acord.core.abc import DISCORD_EPOCH, Route
-
-import acord
+from acord.models import Message
 
 from .__main__ import Channel
 
@@ -55,7 +54,7 @@ class TextChannel(Channel):
         category: Optional[int] = None,
         archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
         reason: Optional[str] = None,
-    ) -> Optional["TextChannel"]:
+    ):
         """
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
 
@@ -116,12 +115,19 @@ class TextChannel(Channel):
     async def fetch_messages(
         self,
         *,
-        around: Optional[Union["acord.Message", int]] = None,
-        before: Optional[Union["acord.Message", int]] = None,
-        after: Optional[Union["acord.Message", int]] = None,
+        around: Optional[Union[Message, int]] = None,
+        before: Optional[Union[Message, int]] = None,
+        after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
-    ) -> List["acord.Message"]:
+    ) -> List[Message]:
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        around = getattr(around, 'id', around)
+        before = getattr(before, 'id', before)
+        after = getattr(after, 'id', after)
+
+        if 0 < limit < 100:
+            raise ValueError('Messages to fetch must be an interger between 0 and 100')
 
         data = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket),
