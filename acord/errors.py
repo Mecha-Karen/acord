@@ -19,7 +19,13 @@ class APIObjectDepreciated(BaseResponseException):
 
 
 class Forbidden(BaseResponseException):
-    """Raised when request returns 403 indicating that you don't have sufficient permissions"""
+    """Raised when requested recourse returns 403,
+     indicating that you don't have sufficient permissions"""
+
+
+class NotFound(BaseResponseException):
+    """ Raised when requested recourse returns 404, 
+    indicating that you dont have sufficient permissions """
 
 
 class CannotOverideTokenWarning(Warning):
