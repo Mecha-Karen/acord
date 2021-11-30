@@ -37,3 +37,11 @@ Emoji
 
 .. autoclass:: Emoji
    :members:
+
+Guild
+~~~~~
+
+.. attributetable:: Guild
+
+.. autoclass:: Guild
+   :members:
