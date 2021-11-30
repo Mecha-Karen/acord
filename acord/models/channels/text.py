@@ -14,22 +14,33 @@ from .__main__ import Channel
 
 # Standard text channel in a guild
 class TextChannel(Channel):
-    guild_id: int  # ID of guild which it belongs to
-    position: int  # Position of channel
-    permission_overwrites: List[Any]  # Permissions of channel
-    name: str  # Name of channel
-    topic: Optional[str]  # Channel topic
-    nsfw: Optional[bool]  # Channel is marked as NSFW
-    last_message_id: Optional[int]  # Last message in channel, may or may not be valid
-    parent_id: Optional[int]  # Category to which the channel belongs to
-    last_pin_timestamp: Optional[int]  # Last pinned message in channel, may be None
-    permissions: Optional[str]  # String of user permissions
-    rate_limit_per_user: Optional[int]  # Channel ratelimit
-    default_auto_archive_duration: Optional[
-        int
-    ]  # Default time for threads to be archived
+    guild_id: int
+    """ ID of guild were text channel belongs """
+    position: int
+    """ Text channel position """
+    permission_overwrites: List[Any]
+    """ Channel Permissions """
+    name: str
+    """ Name of channel """ 
+    topic: Optional[str]
+    """ Channel topic """
+    nsfw: Optional[bool]
+    """ Whether channel is marked as NSFW """
+    last_message_id: Optional[int]
+    """ Last message in channel, may or may not be valid """
+    parent_id: Optional[int]
+    """ Category to which the channel belongs to """
+    last_pin_timestamp: Optional[datetime.datetime]
+    """ Last pinned message in channel, may be None """
+    permissions: Optional[str]
+    """ String of user permissions """
+    rate_limit_per_user: Optional[int]
+    """ Channel ratelimit """
+    default_auto_archive_duration: Optional[int]
+    """ Default time for threads to be archived """
 
     created_at: Optional[datetime.datetime]
+    """ When this channel was created """
 
     @pydantic.validator("created_at")
     def _validate_snowflake(cls, _, **kwargs) -> Optional[datetime.datetime]:
