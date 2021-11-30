@@ -14,7 +14,7 @@ from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
 
 from acord import Intents
 from acord.bases.mixins import _C, T
-from acord.models import Message, User
+from acord.models import Message, User, Channel, Guild
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -81,6 +81,7 @@ class Client(object):
         self.INTERNAL_STORAGE["messages"] = dict()
         self.INTERNAL_STORAGE["users"] = dict()
         self.INTERNAL_STORAGE["guilds"] = dict()
+        self.INTERNAL_STORAGE["channels"] = dict()
 
     def bindToken(self, token: str) -> None:
         self._lruPermanent = token
@@ -202,10 +203,15 @@ class Client(object):
         """Returns the user stored in the internal cache, may be outdated"""
         return self.INTERNAL_STORAGE.get("users", dict()).get(user_id)
 
-    def get_guild(self, guild_id: int) -> Optional[Any]:
+    def get_guild(self, guild_id: int) -> Optional[Guild]:
         """Returns the guild stored in the internal cache, may be outdated"""
         return self.INTENRAL_STORAGE.get("guilds", dict()).get(guild_id)
 
+    def get_channel(self, channel_id: int) -> Optional[Channel]:
+        """Returns the channel stored in the internal cache, may be outdated"""
+        return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
+
     async def gof_channel(self, guild_id: int, channel_id: int) -> Optional[Any]:
-        """Attempts to get a channel, if not found fetches and adds to cache. Raises :class:`NotFound` if cannot be fetched"""
+        """Attempts to get a channel, if not found fetches and adds to cache. 
+        Raises :class:`NotFound` if cannot be fetched"""
         raise NotImplemented
