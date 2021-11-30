@@ -27,9 +27,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ AFK timeout duration """
 
     application_command_count: Optional[int]
-    """ meta: private """
     application_command_counts: Optional[Dict[str, int]]
-    """ meta: private """
 
     application_id: Optional[Snowflake]
     """ application id of the guild creator if it is bot-created """
@@ -49,7 +47,7 @@ class Guild(pydantic.BaseModel, Hashable):
     discovery_splash: Optional[str]
 
     embedded_activities: List[Any]
-    """ meta: private """
+
     emojis: List[Emoji]
     """ List of emojis in guild """
     explicit_content_filter: int
@@ -63,12 +61,11 @@ class Guild(pydantic.BaseModel, Hashable):
     """ List of guild features """
 
     guild_hashes: Dict[Any, Any]
-    """ meta: private """
+
     guild_scheduled_events: List[Dict[str, Any]]
     """ List of scheduled guild events """      # TODO: events object
 
     hub_type: Optional[bool]
-    """ meta: private """
 
     joined_at: datetime.datetime
     """ When the user joined this guild """
@@ -77,7 +74,6 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Whether this guild is considered as large """
 
     lazy: Optional[bool]
-    """ meta: private """
 
     max_members: int
     """ Maximum amount of members allowed to join this guild """
