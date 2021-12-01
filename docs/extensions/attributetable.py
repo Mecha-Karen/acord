@@ -7,7 +7,6 @@ SOURCE: https://github.com/rapptz/discord.py/
 from collections import OrderedDict, namedtuple
 import importlib
 import inspect
-from logging import _STYLES
 import re
 
 # Sphinx imports
