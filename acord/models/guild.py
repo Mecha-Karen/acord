@@ -38,6 +38,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ All channels in the guild """
     default_message_notifications: Literal[0, 1]
     """ Default message notification
+
     * 0 - ALL_MESSAGES (members will receive notifications for all messages by default)
     * 1 - ONLY_MENTIONS (members will receive notifications only for messages that @mention them by default)
     """
@@ -52,6 +53,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ List of emojis in guild """
     explicit_content_filter: int
     """explicit content filter level
+
     * 0 - DISABLED (media content will not be scanned)
     * 1 - MEMBERS_WITHOUT_ROLE (media content sent by members without roles will be scanned)
     * 2 - ALL_MEMBERS (media content sent by all members will be scanned)
@@ -89,14 +91,16 @@ class Guild(pydantic.BaseModel, Hashable):
 
     mfa_level: int
     """required MFA level for the guild
-    0 - NONE (guild has no MFA/2FA requirement for moderation actions)
-    1 - ELEVATED (guild has a 2FA requirement for moderation actions)
+
+    * 0 - NONE (guild has no MFA/2FA requirement for moderation actions)
+    * 1 - ELEVATED (guild has a 2FA requirement for moderation actions)
     """
 
     nsfw: bool
     """ Whether the guild is marked as NSFW """
     nsfw_level: int
     """Guild NSFW level
+
     * DEFAULT - 0
     * EXPLICIT - 1
     * SAFE - 2
@@ -114,6 +118,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Number of guild boosts """
     premium_tier: int
     """ premium tier (Server Boost level)
+
     * NONE	 - 0	guild has not unlocked any Server Boost perks
     * TIER_1 - 1	guild has unlocked Server Boost level 1 perks
     * TIER_2 - 2	guild has unlocked Server Boost level 2 perks
@@ -151,6 +156,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     verification_level: int
     """ verification level required for the guild
+    
     * NONE	    - 0	(unrestricted)
     * LOW	    - 1	(must have verified email on account)
     * MEDIUM	- 2	(must be registered on Discord for longer than 5 minutes)
@@ -189,7 +195,7 @@ class Guild(pydantic.BaseModel, Hashable):
             else:
                 new_channels.append(channel)
 
-            cid = channel['id']
+            cid = int(channel['id'])
 
             conn.client.INTERNAL_STORAGE['channels'].update({cid: new_channels[-1]})
         

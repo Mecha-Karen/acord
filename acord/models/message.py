@@ -75,7 +75,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ Message nonce: used for verifying if message was sent """
     pinned: bool  
     """ Message pinned in channel or not """
-    reactions: Optional[List[Any]]  
+    reactions: Optional[List[Any]] = list()
     """ List of reactions """ # TODO: reaction object
     referenced_message: Optional[
         Union[Message, Any]  
@@ -106,7 +106,7 @@ class Message(pydantic.BaseModel, Hashable):
 
     @pydantic.validator("timestamp")
     def _timestamp_validator(cls, timestamp):
-        # meta: private
+        # :meta private:
         try:
             return datetime.datetime.fromisoformat(timestamp)
         except TypeError:
@@ -116,14 +116,14 @@ class Message(pydantic.BaseModel, Hashable):
 
     @pydantic.validator("stickers")
     def _stickers_depr_error(cls, _):
-        # meta: private
+        # :meta private:
         raise APIObjectDepreciated(
             '"stickers" attribute has been dropped, please use "sticker_items"'
         )
 
     @pydantic.validator("author")
     def _validate_author(cls, data: User, **kwargs):
-        # meta: private
+        # :meta private:
         data = data.dict()
         conn = kwargs["values"]["conn"]
 
@@ -133,13 +133,15 @@ class Message(pydantic.BaseModel, Hashable):
 
     @pydantic.validator("channel")
     def _validate_channel(cls, _, **kwargs):
-        # meta: private
+        # :meta private:
         if _ is not None:
             raise ValueError('Channel provided, when expected None')
         conn = kwargs['values']['conn']
         channel_id = kwargs['values']['channel_id']
 
-        return conn.client.get_channel(channel_id)
+        print(repr(channel_id))
+
+        return conn.client.get_channel(int(channel_id))
 
     def __init__(self, **data):
 
@@ -187,11 +189,10 @@ class Message(pydantic.BaseModel, Hashable):
         emoji: Union[:class:`str`, :class:`Emoji`]
             The emoji to add, if already on message does nothing
         """
-        # TODO: Reaction object
         emoji = await _clean_reaction(emoji)
 
-        if emoji in self.reactions:
-            return
+        # if self.has_reacted(self.conn.client):
+        #     return
 
         await self.conn.request(
             Route(

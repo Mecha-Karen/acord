@@ -217,13 +217,16 @@ class HTTPClient(object):
         headers["User-Agent"] = self.user_agent
 
         kwargs = dict()
-        kwargs["data"] = data
+        kwargs["json"] = data
         kwargs["headers"] = headers
 
+        print(route.method, str(url), kwargs)
         resp = await self._session.request(method=route.method, url=url, **kwargs)
 
-        if resp.status in [204]:
-            # Returned nothing - No need to decode anything
+        print(resp.status)
+        print(await resp.text())
+
+        if 200 <= resp.status < 300:
             return resp
 
         respData = await self.decodeResponse(resp)
@@ -245,8 +248,6 @@ class HTTPClient(object):
 
         if resp.status == 403:
             raise Forbidden(f"403: {respData}")
-
-        return resp
 
     @property
     def connected(self):

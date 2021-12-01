@@ -15,7 +15,7 @@ from .client import Client
 logger = logging.getLogger("ACord")
 __file__ = __import__("os").path.abspath(__file__)
 __doc__ = "An API wrapper for the discord API"
-__version__ = "0.0.1a"
+__version__ = "0.0.1a1"
 __author__ = "Mecha Karen"
 
 

@@ -12,6 +12,19 @@ from acord.models import Message
 from .__main__ import Channel
 
 
+class ChannelEditPayload(pydantic.BaseModel):
+    name: Optional[str] = None,
+    type: Optional[Literal[0, 5]] = None,
+    position: Optional[int] = None,
+    topic: Optional[str] = None,
+    nsfw: Optional[bool] = None,
+    ratelimit: Optional[int] = None,
+    permission_overwrites: Optional[List[Any]] = None,
+    category: Optional[int] = None,
+    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
+    reason: Optional[str] = None,
+
+
 # Standard text channel in a guild
 class TextChannel(Channel):
     guild_id: int
@@ -52,20 +65,7 @@ class TextChannel(Channel):
         return datetime.datetime.fromtimestamp(timestamp)
 
     @pydantic.validate_arguments
-    async def edit(
-        self,
-        *,
-        name: Optional[str] = None,
-        type: Optional[Literal[0, 5]] = None,
-        position: Optional[int] = None,
-        topic: Optional[str] = None,
-        nsfw: Optional[bool] = None,
-        ratelimit: Optional[int] = None,
-        permission_overwrites: Optional[List[Any]] = None,
-        category: Optional[int] = None,
-        archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
-        reason: Optional[str] = None,
-    ):
+    async def edit(self, **options) -> Optional[Channel]:
         """
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
 
@@ -87,32 +87,13 @@ class TextChannel(Channel):
             Currently not available
         category: Union[:class:`int`, CategoryChannel]
             Move the channel to a different category, use :class:`MISSING` for no category
-        archive_duration: :class:`int`
+        archive_duration: Literal[0, 60, 1440, 4230, 10080]
             Change the default archive duration on a thread, use :class:`MISSING` or 0 for no timeout
         """
-        payload = {
-            "name": (name or self.name),
-            "type": ((type if type is not None else None) or self.type),
-            "position": (position or self.position),
-            "topic": (topic or self.topic),
-            "nsfw": ((nsfw if nsfw is not None else None) or self.nsfw),
-            "rate_limit_per_user": (
-                (ratelimit if ratelimit is not None else None)
-                or self.rate_limit_per_user
-            ),
-            "permissions_overwrites": (
-                permission_overwrites or self.permission_overwrites
-            ),
-            "parent_id": (getattr(category, "id", category) or None),
-            "default_auto_archive_duration": (
-                (archive_duration if archive_duration is not None else archive_duration)
-                or self.default_auto_archive_duration
-            ),
-        }
+        payload = ChannelEditPayload(**options).json()
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
-        if permission_overwrites:
-            raise NotImplemented
+        reason = payload.pop("reason", None)
 
         # Rest should be standard python vars
 
@@ -137,12 +118,14 @@ class TextChannel(Channel):
         before = getattr(before, 'id', before)
         after = getattr(after, 'id', after)
 
-        if 0 < limit < 100:
+        if not 0 < limit < 100:
             raise ValueError('Messages to fetch must be an interger between 0 and 100')
 
-        data = await self.conn.request(
+        resp = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket),
             data={"around": around, "before": before, "after": after, "limit": limit},
         )
+
+        data = await resp.json()
 
         print(data)
