@@ -13,6 +13,8 @@ python:
         - requirements: dev-requirements.txt
         - method: pip
           path: .
+          extra_requirements:
+              - docs
 
 formats:
     - pdf
