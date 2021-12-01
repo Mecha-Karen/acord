@@ -10,7 +10,7 @@ python:
     install:
         - requirements: dev-requirements.txt
         - method: setuptools
-            path: package
+          path: package
 
 formats:
     - pdf
