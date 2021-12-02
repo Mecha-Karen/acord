@@ -220,7 +220,6 @@ class HTTPClient(object):
         kwargs["json"] = data
         kwargs["headers"] = headers
 
-        print(route.method, str(url), kwargs)
         resp = await self._session.request(method=route.method, url=url, **kwargs)
 
         if 200 <= resp.status < 300:
