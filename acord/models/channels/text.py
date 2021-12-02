@@ -13,16 +13,16 @@ from .__main__ import Channel
 
 
 class ChannelEditPayload(pydantic.BaseModel):
-    name: Optional[str] = None,
-    type: Optional[Literal[0, 5]] = None,
-    position: Optional[int] = None,
-    topic: Optional[str] = None,
-    nsfw: Optional[bool] = None,
-    ratelimit: Optional[int] = None,
-    permission_overwrites: Optional[List[Any]] = None,
-    category: Optional[int] = None,
-    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
-    reason: Optional[str] = None,
+    name: Optional[str] = None
+    type: Optional[Literal[0, 5]] = None
+    position: Optional[int] = None
+    topic: Optional[str] = None
+    nsfw: Optional[bool] = None
+    ratelimit: Optional[int] = None
+    permission_overwrites: Optional[List[Any]] = None
+    category: Optional[int] = None
+    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None
+    reason: Optional[str] = None
 
 
 # Standard text channel in a guild
