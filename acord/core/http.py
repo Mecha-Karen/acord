@@ -223,9 +223,6 @@ class HTTPClient(object):
         print(route.method, str(url), kwargs)
         resp = await self._session.request(method=route.method, url=url, **kwargs)
 
-        print(resp.status)
-        print(await resp.text())
-
         if 200 <= resp.status < 300:
             return resp
 
