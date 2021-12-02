@@ -212,6 +212,6 @@ class Client(object):
         return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
 
     async def gof_channel(self, guild_id: int, channel_id: int) -> Optional[Any]:
-        """Attempts to get a channel, if not found fetches and adds to cache. 
+        """Attempts to get a channel, if not found fetches and adds to cache.
         Raises :class:`NotFound` if cannot be fetched"""
         raise NotImplemented

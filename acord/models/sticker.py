@@ -5,13 +5,14 @@ from acord.bases import Hashable
 from acord.models import Snowflake, User
 from typing import Any, Optional
 
+
 class Sticker(pydantic.BaseModel, Hashable):
     conn: Any
 
     id: Snowflake
     # ID of the sticker
     pack_id: Optional[Snowflake]
-	# for standard stickers, id of the pack the sticker is from
+    # for standard stickers, id of the pack the sticker is from
     name: str
     # name of the sticker
     description: Optional[str]

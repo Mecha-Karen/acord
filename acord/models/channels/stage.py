@@ -4,6 +4,7 @@ import pydantic
 from acord.models import Snowflake
 from typing import Any, Literal
 
+
 class Stage(pydantic.BaseModel):
     conn: Any
 

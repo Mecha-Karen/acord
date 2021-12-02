@@ -11,8 +11,9 @@ from acord.models import Snowflake
 from acord.models import TextChannel
 from acord.models.emoji import Emoji
 
+
 class Guild(pydantic.BaseModel, Hashable):
-    conn: Any   # Connection object - For internal use
+    conn: Any  # Connection object - For internal use
 
     id: Snowflake
     """ Guild ID """
@@ -34,7 +35,7 @@ class Guild(pydantic.BaseModel, Hashable):
     banner: Optional[str]
     """ URL for the guild banner """
 
-    channels: List[Any]     # This gets sorted out with validators
+    channels: List[Any]  # This gets sorted out with validators
     """ All channels in the guild """
     default_message_notifications: Literal[0, 1]
     """ Default message notification
@@ -65,7 +66,7 @@ class Guild(pydantic.BaseModel, Hashable):
     guild_hashes: Dict[Any, Any]
 
     guild_scheduled_events: List[Dict[str, Any]]
-    """ List of scheduled guild events """      # TODO: events object
+    """ List of scheduled guild events """  # TODO: events object
 
     hub_type: Optional[bool]
 
@@ -87,7 +88,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Amount of members in this guild """
 
     members: List[Any]
-    """ List of all members in the guild """ # TODO: member object
+    """ List of all members in the guild """  # TODO: member object
 
     mfa_level: int
     """required MFA level for the guild
@@ -128,7 +129,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ presences of the members in the guild, will only include non-offline members if the size is greater than large threshold """
     public_updates_channel_id: Optional[Snowflake]
     """ the id of the channel where admins and moderators of Community guilds receive notices from Discord """
-    
+
     roles: List[Any]
     """ List of roles in the guild """
     rules_channel_id: Optional[Snowflake]
@@ -167,52 +168,56 @@ class Guild(pydantic.BaseModel, Hashable):
     voice_states: Optional[List[Any]] = list()
     """ array of partial voice state objects """
 
-    @pydantic.validator('icon')
+    @pydantic.validator("icon")
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:
             return None
 
-        id = kwargs['values']['id']
+        id = kwargs["values"]["id"]
         return f"https://cdn.discordapp.com/icons/{id}/{icon}.png"
 
-    @pydantic.validator('banner')
+    @pydantic.validator("banner")
     def _validate_guild_banner(cls, banner: str, **kwargs) -> Optional[str]:
         if not banner:
             return None
 
-        id = kwargs['values']['id']
+        id = kwargs["values"]["id"]
         return f"https://cdn.discordapp.com/banners/{id}/{banner}.png"
 
-    @pydantic.validator('channels')
-    def _validate_guild_channels(cls, channels: list, **kwargs) -> List[Union[TextChannel, Any]]:
+    @pydantic.validator("channels")
+    def _validate_guild_channels(
+        cls, channels: list, **kwargs
+    ) -> List[Union[TextChannel, Any]]:
         new_channels = list()
-        conn = kwargs['values']['conn']
-        id = kwargs['values']['id']
+        conn = kwargs["values"]["conn"]
+        id = kwargs["values"]["id"]
 
         for channel in channels:
-            if channel['type'] == ChannelTypes.GUILD_TEXT:
+            if channel["type"] == ChannelTypes.GUILD_TEXT:
                 new_channels.append(TextChannel(conn=conn, guild_id=id, **channel))
             else:
                 new_channels.append(channel)
 
-            cid = int(channel['id'])
+            cid = int(channel["id"])
 
-            conn.client.INTERNAL_STORAGE['channels'].update({cid: new_channels[-1]})
-        
+            conn.client.INTERNAL_STORAGE["channels"].update({cid: new_channels[-1]})
+
         return new_channels
 
-    @pydantic.validator('discovery_splash')
+    @pydantic.validator("discovery_splash")
     def _validate_guild_dsplash(cls, discovery_splash: str, **kwargs) -> Optional[str]:
         if not discovery_splash:
             return None
 
-        id = kwargs['values']['id']
-        return f"https://cdn.discordapp.com/discovery-splashes/{id}/{discovery_splash}.png"
+        id = kwargs["values"]["id"]
+        return (
+            f"https://cdn.discordapp.com/discovery-splashes/{id}/{discovery_splash}.png"
+        )
 
-    @pydantic.validator('splash')
+    @pydantic.validator("splash")
     def _validate_guild_spash(cls, splash: str, **kwargs) -> Optional[str]:
         if not splash:
             return None
-        
-        id = kwargs['values']['id']
-        return f'https://cdn.discordapp.com/splashes/{id}/{splash}.png'
+
+        id = kwargs["values"]["id"]
+        return f"https://cdn.discordapp.com/splashes/{id}/{splash}.png"

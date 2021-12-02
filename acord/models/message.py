@@ -29,71 +29,67 @@ class Message(pydantic.BaseModel, Hashable):
     conn: Any
     # Connection Object - For internal use
 
-    activity: Any  
-    """ sent with Rich Presence-related chat embeds """ # TODO: Message Activity
-    application: Any  
-    """ sent with Rich Presence-related chat embeds """ # TODO: Application Object
-    attachments: List[Any] 
-    """ List of file objects """ # TODO: Asset object
-    author: User  
+    activity: Any
+    """ sent with Rich Presence-related chat embeds """  # TODO: Message Activity
+    application: Any
+    """ sent with Rich Presence-related chat embeds """  # TODO: Application Object
+    attachments: List[Any]
+    """ List of file objects """  # TODO: Asset object
+    author: User
     """ User object of who sent the message """
-    channel_id: int  
+    channel_id: int
     """ id of the channel were the message was send """
-    components: List[Any]  
+    components: List[Any]
     """ List of all components in the message """
-    content: str  
+    content: str
     """ Message content """
-    
+
     edited_timestamp: Optional[
         Union[
             bool, datetime.datetime
         ]  # If not false contains timestamp of edited message
     ]
-    embeds: List[Any]  
-    """ List of embeds """ # TODO: Embed object
-    flags: int  
+    embeds: List[Any]
+    """ List of embeds """  # TODO: Embed object
+    flags: int
     """ Message flags """
-    id: Snowflake  
+    id: Snowflake
     """ Message ID """
-    interaction: Optional[Any]  
-    """ Message Interaction """ # TODO: Interaction object
-    guild_id: Optional[int]  
+    interaction: Optional[Any]
+    """ Message Interaction """  # TODO: Interaction object
+    guild_id: Optional[int]
     """ Guild ID of were message was sent """
-    member: Optional[Any]  
-    """ Member object of who sent the message """ # TODO: Member object
-    mentions: List[Union[User, Any]]  
+    member: Optional[Any]
+    """ Member object of who sent the message """  # TODO: Member object
+    mentions: List[Union[User, Any]]
     """ List of mentioned users """
-    mention_everyone: bool  
+    mention_everyone: bool
     """ If message mentioned @everyone """
-    mention_roles: List[Any]  
+    mention_roles: List[Any]
     """ If message mentioned any roles """
-    mention_channels: Optional[
-        List[Any]
-    ]  
-    """ List of mentioned channels """ # TODO: Channel Object
-    nonce: Optional[int]  
+    mention_channels: Optional[List[Any]]
+    """ List of mentioned channels """  # TODO: Channel Object
+    nonce: Optional[int]
     """ Message nonce: used for verifying if message was sent """
-    pinned: bool  
+    pinned: bool
     """ Message pinned in channel or not """
     reactions: Optional[List[Any]] = list()
-    """ List of reactions """ # TODO: reaction object
-    referenced_message: Optional[
-        Union[Message, Any]  
-    ]
-    """ Replied message """ # TODO: partial message
-    thread: Optional[Any]  
-    """ Thread were message was sent """ # TODO: Channel Thread Object
-    timestamp: datetime.datetime  
+    """ List of reactions """  # TODO: reaction object
+    referenced_message: Optional[Union[Message, Any]]
+    """ Replied message """  # TODO: partial message
+    thread: Optional[Any]
+    """ Thread were message was sent """  # TODO: Channel Thread Object
+    timestamp: datetime.datetime
     """ Timestamp of when message was sent """
-    tts: bool  
+    tts: bool
     """ Is a text to speech message """
-    type: int  
+    type: int
     """ Message type, e.g. DEFAULT, REPLY """
-    sticker_items: Optional[List[Any]]  
-    """ List of stickers """ # TODO: Sticker object
-    stickers: Optional[List[Any]]  
+    sticker_items: Optional[List[Any]]
+    """ List of stickers """  # TODO: Sticker object
+    stickers: Optional[List[Any]]
     # Depreciated raises error if provided
-    webhook_id: Optional[int]  
+    webhook_id: Optional[int]
     """ Webhook message ID """
 
     """ Extra's """
@@ -135,9 +131,9 @@ class Message(pydantic.BaseModel, Hashable):
     def _validate_channel(cls, _, **kwargs):
         # :meta private:
         if _ is not None:
-            raise ValueError('Channel provided, when expected None')
-        conn = kwargs['values']['conn']
-        channel_id = kwargs['values']['channel_id']
+            raise ValueError("Channel provided, when expected None")
+        conn = kwargs["values"]["conn"]
+        channel_id = kwargs["values"]["channel_id"]
 
         print(repr(channel_id))
 
@@ -251,4 +247,3 @@ class Message(pydantic.BaseModel, Hashable):
     async def reply(self, verify: Optional[bool] = True, **data) -> Message:
         """Shortcut for `Message.Channel.send(..., reference=self, verify=verify)`"""
         return await self.channel.send(reference=self, verify=verify, **data)
-

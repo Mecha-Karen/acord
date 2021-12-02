@@ -13,16 +13,16 @@ from .__main__ import Channel
 
 
 class ChannelEditPayload(pydantic.BaseModel):
-    name: Optional[str] = None,
-    type: Optional[Literal[0, 5]] = None,
-    position: Optional[int] = None,
-    topic: Optional[str] = None,
-    nsfw: Optional[bool] = None,
-    ratelimit: Optional[int] = None,
-    permission_overwrites: Optional[List[Any]] = None,
-    category: Optional[int] = None,
-    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None,
-    reason: Optional[str] = None,
+    name: Optional[str] = (None,)
+    type: Optional[Literal[0, 5]] = (None,)
+    position: Optional[int] = (None,)
+    topic: Optional[str] = (None,)
+    nsfw: Optional[bool] = (None,)
+    ratelimit: Optional[int] = (None,)
+    permission_overwrites: Optional[List[Any]] = (None,)
+    category: Optional[int] = (None,)
+    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = (None,)
+    reason: Optional[str] = (None,)
 
 
 # Standard text channel in a guild
@@ -34,7 +34,7 @@ class TextChannel(Channel):
     permission_overwrites: List[Any]
     """ Channel Permissions """
     name: str
-    """ Name of channel """ 
+    """ Name of channel """
     topic: Optional[str]
     """ Channel topic """
     nsfw: Optional[bool]
@@ -114,12 +114,12 @@ class TextChannel(Channel):
     ) -> List[Message]:
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
-        around = getattr(around, 'id', around)
-        before = getattr(before, 'id', before)
-        after = getattr(after, 'id', after)
+        around = getattr(around, "id", around)
+        before = getattr(before, "id", before)
+        after = getattr(after, "id", after)
 
         if not 0 < limit < 100:
-            raise ValueError('Messages to fetch must be an interger between 0 and 100')
+            raise ValueError("Messages to fetch must be an interger between 0 and 100")
 
         resp = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket),

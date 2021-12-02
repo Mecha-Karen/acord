@@ -73,12 +73,12 @@ async def handle_websocket(self, ws):
             self.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
 
         if EVENT == "GUILD_DELETE":
-            if DATA.get('unavailable', None) is not None:
+            if DATA.get("unavailable", None) is not None:
                 guild = Guild(conn=self.http, **DATA)
-                UNAVAILABLE.remove(DATA['id'])
+                UNAVAILABLE.remove(DATA["id"])
                 self.dispatch("guild_outage", guild)
 
                 self.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
             else:
-                guild = self.INTERNAL_STORAGE['guilds'].pop(DATA['id'])
+                guild = self.INTERNAL_STORAGE["guilds"].pop(DATA["id"])
                 self.dispatch("guild_remove", guild)
