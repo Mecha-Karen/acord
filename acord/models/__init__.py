@@ -8,8 +8,9 @@ from .user import User
 from .emoji import Emoji
 
 from .message import Message
-from .channels import Channel, TextChannel
+from .channels import Channel, TextChannel, Stage
 from .guild import Guild
 from .sticker import Sticker
+from .guild_template import GuildTemplate
 
 Message.update_forward_refs()
