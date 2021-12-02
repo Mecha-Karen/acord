@@ -112,20 +112,44 @@ class TextChannel(Channel):
         after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
     ) -> List[Message]:
+        """
+        Fetch messages directly from a channel
+
+        Parameters
+        ----------
+        around: Union[:class:`Message`, :class:`int`]
+            get messages around this message ID
+        before: Union[:class:`Message`, :class:`int`]
+            get messages before this message ID
+        after: Union[:class:`Message`, :class:`int`]
+            get messages after this message ID
+        limit: :class:`int`
+            max number of messages to return (1-100).
+
+            Defaults to **50**
+        """
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         around = getattr(around, 'id', around)
         before = getattr(before, 'id', before)
         after = getattr(after, 'id', after)
 
+        params = {"around": around, "before": before, "after": after, "limit": limit}
+
         if not 0 < limit < 100:
             raise ValueError('Messages to fetch must be an interger between 0 and 100')
 
         resp = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket),
-            data={"around": around, "before": before, "after": after, "limit": limit},
+            Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket, **params),
         )
 
         data = await resp.json()
 
-        print(data)
+        messages = list()
+
+        for message in data:
+            msg = Message(**message)
+            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
+            messages.append(msg)
+
+        return messages
