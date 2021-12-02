@@ -7,22 +7,32 @@ import pydantic
 
 from acord.bases.flags.channels import ChannelTypes
 from acord.core.abc import DISCORD_EPOCH, Route
-from acord.models import Message
+from acord.models import Message, Snowflake
 
 from .__main__ import Channel
 
 
 class ChannelEditPayload(pydantic.BaseModel):
-    name: Optional[str] = None
-    type: Optional[Literal[0, 5]] = None
-    position: Optional[int] = None
-    topic: Optional[str] = None
-    nsfw: Optional[bool] = None
-    ratelimit: Optional[int] = None
-    permission_overwrites: Optional[List[Any]] = None
-    category: Optional[int] = None
-    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = None
-    reason: Optional[str] = None
+    name: Optional[str]
+    type: Optional[Literal[0, 5]]
+    position: Optional[int]
+    topic: Optional[str]
+    nsfw: Optional[bool]
+    ratelimit: Optional[int]
+    permission_overwrites: Optional[List[Any]]
+    category: Optional[int]
+    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]]
+    reason: Optional[str]
+
+
+class MessageCreatePayload(pydantic.BaseModel):
+    content: Optional[str]
+
+    @pydantic.validator('content')
+    def _validate_content(cls, content: str) -> str:
+        if len(content) > 2000:
+            raise ValueError('Message content cannot be greater then 2000')
+        return content
 
 
 # Standard text channel in a guild
@@ -65,6 +75,30 @@ class TextChannel(Channel):
         return datetime.datetime.fromtimestamp(timestamp)
 
     @pydantic.validate_arguments
+    async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
+        """
+        Fetch a message directly from channel
+
+        Parameters
+        ----------
+        message_id: Union[:class:`Message`, :class:`Snowflake`]
+            The ID of the message to fetch
+        """
+        if isinstance(message_id, Message):
+            message_id = message_id.id
+
+        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        resp = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/messages/{message_id}", bucket=bucket)
+        )
+
+        message = Message(**(await resp.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{message.id}': message})
+
+        return message
+
+    @pydantic.validate_arguments
     async def edit(self, **options) -> Optional[Channel]:
         """
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
@@ -90,7 +124,7 @@ class TextChannel(Channel):
         archive_duration: Literal[0, 60, 1440, 4230, 10080]
             Change the default archive duration on a thread, use :class:`MISSING` or 0 for no timeout
         """
-        payload = ChannelEditPayload(**options).json()
+        payload = ChannelEditPayload(**options).dict()
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         reason = payload.pop("reason", None)
@@ -153,3 +187,22 @@ class TextChannel(Channel):
             messages.append(msg)
 
         return messages
+
+    @pydantic.validate_arguments
+    async def send(self, **data) -> Optional[Message]:
+        """
+        Create a message in the channel
+
+        Parameters
+        ----------
+        content: :class:`str`
+            Message content
+        """
+        payload = MessageCreatePayload(**data).dict()
+
+        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        r = await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
+            data=payload
+        )
