@@ -10,5 +10,6 @@ from .emoji import Emoji
 from .message import Message
 from .channels import Channel, TextChannel
 from .guild import Guild
+from .sticker import Sticker
 
 Message.update_forward_refs()
