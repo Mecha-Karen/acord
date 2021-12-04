@@ -1,7 +1,7 @@
 from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 
-from acord.bases import File
+from acord.bases import File, Embed
 from .models import Message, MessageReference, Snowflake
 
 
@@ -20,6 +20,7 @@ class ChannelEditPayload(pydantic.BaseModel):
 
 class MessageCreatePayload(pydantic.BaseModel):
     content: Optional[str]
+    embeds: Optional[Union[List[Embed], Embed]]
     files: Optional[Union[List[File], File]]
     message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
     tts: Optional[bool] = False
@@ -54,3 +55,9 @@ class MessageCreatePayload(pydantic.BaseModel):
         if isinstance(ref, dict):
             return MessageReference(**ref)
         return ref
+
+    @pydantic.validator('embeds')
+    def _validate_embeds(cls, embeds) -> list:
+        if isinstance(embeds, list):
+            return embeds
+        return [embeds]
