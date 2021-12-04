@@ -1,39 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, List, Optional, Union
 import datetime
-
 import pydantic
+from aiohttp import FormData
 
-from acord.bases.flags.channels import ChannelTypes
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
+from acord.payloads import ChannelEditPayload, MessageCreatePayload
 
 from .__main__ import Channel
-
-
-class ChannelEditPayload(pydantic.BaseModel):
-    name: Optional[str]
-    type: Optional[Literal[0, 5]]
-    position: Optional[int]
-    topic: Optional[str]
-    nsfw: Optional[bool]
-    ratelimit: Optional[int]
-    permission_overwrites: Optional[List[Any]]
-    category: Optional[int]
-    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]]
-    reason: Optional[str]
-
-
-class MessageCreatePayload(pydantic.BaseModel):
-    content: Optional[str]
-
-    @pydantic.validator('content')
-    def _validate_content(cls, content: str) -> str:
-        if len(content) > 2000:
-            raise ValueError('Message content cannot be greater then 2000')
-        return content
-
 
 # Standard text channel in a guild
 class TextChannel(Channel):
@@ -196,13 +172,44 @@ class TextChannel(Channel):
         Parameters
         ----------
         content: :class:`str`
-            Message content
+            Message content, must be below ``2000`` chars.
+        files: Union[List[:class:`File`], :class:`File`]
+            A file or a list of files to be sent. File must not be closed else an error is raised.
+        message_reference: Union[:class:`MessageReference`]
+            A message to reply to, client must be able to read messages in the channel.
         """
-        payload = MessageCreatePayload(**data).dict()
+        ob = MessageCreatePayload(**data)
 
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+        form_data = FormData()
+
+        if ob.files:
+            for index, file in enumerate(ob.files):
+
+                form_data.add_field(
+                    name=f'file{index}',
+                    value=file.fp,
+                    filename=file.filename,
+                    content_type="application/octet-stream"
+                )
+            
+        form_data.add_field(
+            name="payload_json",
+            value=ob.json(exclude={'files'}),
+            content_type="application/json"
+        )
+
+        if not any(
+            i for i in ob.dict() 
+            if i in ['content', 'files', 'embeds', 'sticker_ids']
+        ):
+            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
 
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
-            data=payload
+            data=form_data
         )
+
+        n_msg = Message(**(await r.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
+        return n_msg
