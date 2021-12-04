@@ -51,6 +51,18 @@ class TextChannel(Channel):
         return datetime.datetime.fromtimestamp(timestamp)
 
     @pydantic.validate_arguments
+    def get_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
+        """
+        Returns the message stored in the internal cache
+
+        Parameters
+        ----------
+        message_id: Union[:class:`Message`, :class:`Snowflake`]
+            ID of message to get
+        """
+        return self.conn.client.get_message(channel_id=self.id, message_id=message_id)
+
+    @pydantic.validate_arguments
     async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
         """
         Fetch a message directly from channel
@@ -58,7 +70,7 @@ class TextChannel(Channel):
         Parameters
         ----------
         message_id: Union[:class:`Message`, :class:`Snowflake`]
-            The ID of the message to fetch
+            ID of the message to fetch
         """
         if isinstance(message_id, Message):
             message_id = message_id.id
