@@ -20,24 +20,34 @@ class EmbedAuthor(pydantic.BaseModel):
 
 
 class EmbedField(pydantic.BaseModel):
-    ...
+    name: str
+    value: str
+    inline: Optional[bool] = True
 
 
 class EmbedImage(pydantic.BaseModel):
-    ...
-
+    url: pydantic.AnyHttpUrl
+    proxy_url: Optional[pydantic.AnyHttpUrl]
+    height: Optional[int]
+    width: Optional[int]
 
 class EmbedThumbnail(pydantic.BaseModel):
-    ...
+    url: pydantic.AnyHttpUrl
+    proxy_url: Optional[pydantic.AnyHttpUrl]
+    height: Optional[int]
+    width: Optional[int]
 
 
 class EmbedVideo(pydantic.BaseModel):
-    ...
+    url: Optional[str]
+    proxy_url: Optional[pydantic.AnyHttpUrl]
+    height: Optional[int]
+    width: Optional[int]
 
 
 class EmbedProvidor(pydantic.BaseModel):
-    ...
-
+    name: Optional[str]
+    url: Optional[pydantic.AnyHttpUrl]
 
 class Embed(pydantic.BaseModel):
     title: Optional[str]
@@ -64,7 +74,7 @@ class Embed(pydantic.BaseModel):
     """ Embed Providor """
     author: Optional[EmbedAuthor]
     """ Embed author """
-    fields: List[EmbedField]
+    fields: Optional[List[EmbedField]]
     """ Embed fields """
 
     @pydantic.validator('title')
@@ -81,7 +91,7 @@ class Embed(pydantic.BaseModel):
 
     def set_footer(self, **data) -> None:
         """
-        Set a footer on your embed
+        Add footer on embed
 
         Parameters
         ----------
@@ -94,3 +104,17 @@ class Embed(pydantic.BaseModel):
         """
         footer = EmbedFooter(**data)
         self.footer = footer
+
+    def set_author(self, **data) -> None:
+        """
+        Add author on embed
+
+        Parameters
+        ----------
+        name: :class:`str`
+        url: :class:`str`
+        icon_url: :class:`str`
+        proxy_icon_url: :class:`str`
+        """
+        author = EmbedAuthor(**data)
+        self.author = author
