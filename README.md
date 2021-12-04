@@ -58,7 +58,8 @@ class MyClient(Client):
 
     async def on_message(self, message: Message) -> None:
         if message.content == '.ping':
-            return message.reply("Pong!") 
+            channel = self.get_channel(message.channel_id)
+            return channel.send(content="Pong!", message_reference=message) 
 ```
 
 ## Links
