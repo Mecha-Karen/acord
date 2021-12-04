@@ -195,7 +195,7 @@ def get_class_results(lookup, modulename, name, fullname):
                 label = f'{name}.{attr}'
                 badge = AttrTableBadge('cls', 'cls')
                 badge['badge-type'] = _('classmethod')
-            elif inspect.isfunction(value):
+            elif inspect.isfunction(value) or doc.startswith('|func|'):
                 if doc.startswith(('A decorator', 'A shortcut decorator')):
                     # finicky but surprisingly consistent
                     badge = AttrTableBadge('@', '@')
