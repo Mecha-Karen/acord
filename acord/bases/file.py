@@ -5,7 +5,7 @@ import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: Union[Type[str], Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
+    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
     position: Optional[int] = 0
     filename: Optional[str]
     spoiler: Optional[bool] = False
@@ -19,6 +19,13 @@ class File(pydantic.BaseModel):
             kwargs["values"]["position"] = fp.tell()
 
         return fp
+
+    @pydantic.validator('filename')
+    def _validate_filename(cls, filename, **kwargs):
+        if not filename:
+            fp  = kwargs["values"]["fp"]
+            return fp.name or "unknown"
+        return filename
 
     @pydantic.validator("spoiler")
     def _validate_spoiler(cls, spoiler, **kwargs):
