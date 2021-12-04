@@ -177,6 +177,8 @@ class TextChannel(Channel):
             A file or a list of files to be sent. File must not be closed else an error is raised.
         message_reference: Union[:class:`MessageReference`]
             A message to reply to, client must be able to read messages in the channel.
+        tts: :class:`bool`
+            Whether this is a TTS message
         """
         ob = MessageCreatePayload(**data)
 

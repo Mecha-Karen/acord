@@ -29,6 +29,7 @@ class MessageCreatePayload(pydantic.BaseModel):
     content: Optional[str]
     files: Optional[Union[List[File], File]]
     message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
+    tts: Optional[bool] = False
 
     @pydantic.validator('content')
     def _validate_content(cls, content: str) -> str:
