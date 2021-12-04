@@ -24,6 +24,16 @@ intersphinx_mapping = {
   'py': ('https://docs.python.org/3', None),
 }
 
+rst_prolog = """
+.. |coro| replace:: This function is a |coroutine_link|_.
+.. |func| replace:: This is a |function_link|_.
+.. |maybecoro| replace:: This function *could be a* |coroutine_link|_.
+.. |coroutine_link| replace:: *coroutine*
+.. |function_link| replace:: *function*
+.. _coroutine_link: https://docs.python.org/3/library/asyncio-task.html#coroutine
+.. _function_link: https://docs.python.org/3/reference/compound_stmts.html#function
+"""
+
 templates_path = ['_templates']
 
 exclude_patterns = ['*.md', '*.template']
