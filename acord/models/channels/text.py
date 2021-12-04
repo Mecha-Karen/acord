@@ -52,8 +52,9 @@ class TextChannel(Channel):
 
     @pydantic.validate_arguments
     def get_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
-        """
-        Returns the message stored in the internal cache
+        """|func|
+
+        Returns the message stored in the internal cache, may be outdated
 
         Parameters
         ----------
@@ -64,7 +65,8 @@ class TextChannel(Channel):
 
     @pydantic.validate_arguments
     async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
-        """
+        """|coro|
+
         Fetch a message directly from channel
 
         Parameters
@@ -86,9 +88,9 @@ class TextChannel(Channel):
 
         return message
 
-    @pydantic.validate_arguments
     async def edit(self, **options) -> Optional[Channel]:
-        """
+        """|coro|
+
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
 
         Parameters
@@ -134,7 +136,8 @@ class TextChannel(Channel):
         after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
     ) -> List[Message]:
-        """
+        """|coro|
+
         Fetch messages directly from a channel
 
         Parameters
@@ -176,10 +179,10 @@ class TextChannel(Channel):
 
         return messages
 
-    @pydantic.validate_arguments
     async def send(self, **data) -> Optional[Message]:
-        """
-        Create a message in the channel
+        """|coro|
+
+        Create a new message in the channel
 
         Parameters
         ----------
