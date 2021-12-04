@@ -2,14 +2,7 @@ from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 
 from acord.bases import File
-from acord.models import Message, Snowflake
-
-
-class MessageReference(pydantic.BaseModel):
-    message_id: Snowflake
-    channel_id: Optional[Snowflake]
-    guild_id: Optional[Snowflake]
-    fail_if_not_exists: Optional[bool] = True
+from .models import Message, MessageReference, Snowflake
 
 
 class ChannelEditPayload(pydantic.BaseModel):
