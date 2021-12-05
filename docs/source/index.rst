@@ -6,7 +6,7 @@
    :theme-color: #f54646
 
 *********************************
-Welcome to ACords's Documentation
+Welcome to Acords's Documentation
 *********************************
 
 .. raw:: html
@@ -21,8 +21,8 @@ Welcome to ACords's Documentation
         </a>    
     </div>
 
-Welcome to ACords's Documentation, the place to find all the information about the acord module. 
-An API wrapper for the discord API.
+Welcome to Acords's Documentation, the place to find all the information about the Acord module. 
+Acord is an efficient and reliable wrapper for the Discord API.
 
 If you have any queries - `Click Here`_ to join our support server
 
@@ -36,6 +36,7 @@ Features
 * Pydantic models and optional uv_loop installation
 * Ratelimit handling
 * Highly customisable
+* Fast and efficient
 
 Basic Example
 =============
@@ -56,12 +57,10 @@ Basic Example
 
 Dependencies
 ============
-Acord relies on ``Pydantic`` and ``aiohttp``, without them the functionality of the module is non-existant.
-It is also recomended to install ``uvloop`` as it can speed up the program by a large margin.
-
+Acord relies on ``Pydantic`` and ``aiohttp``, without them the module cannot function properly.
+We also recommend installing the ``uvloop`` module, as it can speed up Acord by a large margin, however, this is optional.
 Contents
 ========
-
 .. toctree::
 
     api/models.rst
