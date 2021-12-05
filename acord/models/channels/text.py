@@ -188,12 +188,14 @@ class TextChannel(Channel):
         ----------
         content: :class:`str`
             Message content, must be below ``2000`` chars.
-        files: Union[List[:class:`File`], :class:`File`]
+        files: *Union[List[:class:`File`], :class:`File`]*
             A file or a list of files to be sent. File must not be closed else an error is raised.
         message_reference: Union[:class:`MessageReference`]
             A message to reply to, client must be able to read messages in the channel.
         tts: :class:`bool`
             Whether this is a TTS message
+        embeds: *Union[List[:class:`Embed`], :class:`File`]*
+            An embed or a list of embeds to send
         """
         ob = MessageCreatePayload(**data)
 
