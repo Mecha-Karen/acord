@@ -89,6 +89,25 @@ class Embed(pydantic.BaseModel):
             raise ValueError('Description cannot be greater then 4096 characters')
         return desc
 
+    def characters(self) -> int:
+        """ Counts the total amount of characters in the embed """
+        count = 0
+
+        count += len((self.title or ""))
+        count += len((self.description or ""))
+        
+        footer_text = getattr(self.footer, 'text', "")
+        count += len(footer_text)
+
+        author_text = getattr(self.author, 'name', "")
+        count += len(author_text)
+
+        for field in self.fields:
+            count += len((field.name or ""))
+            count += len((field.value or ""))
+
+        return count
+
     def set_footer(self, **data) -> None:
         """
         Add footer on embed
@@ -98,7 +117,7 @@ class Embed(pydantic.BaseModel):
         text: :class:`str`
             Footer text
         icon_url: :class:`str`
-            Footer icon url
+            A url for the icon url
         proxy_icon_url: :class:`str`
             A proxied url of footer icon
         """
@@ -112,9 +131,68 @@ class Embed(pydantic.BaseModel):
         Parameters
         ----------
         name: :class:`str`
+            Author name
         url: :class:`str`
+            URL of author
         icon_url: :class:`str`
+            A url for the author icon
         proxy_icon_url: :class:`str`
+            A proxied url of author icon
         """
         author = EmbedAuthor(**data)
         self.author = author
+
+    def add_field(self, **data) -> None:
+        """
+        Add a new field to your embed
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of field
+        value: :class:`str`
+            Value of field
+        inline: :class:`bool`
+            Whether or not this field should be inline. Defaults to ``False``
+        """
+        field = EmbedField(**data)
+
+        fields = self.fields
+
+        if (len(fields) + 1) > 21:
+            raise ValueError('Embed cannot contain more then 21 fields')
+        
+        fields.append(field)
+        self.fields = field
+
+    def remove_field(self, index: int) -> Optional[EmbedField]:
+        """
+        Remove a field from the embed,
+        Returns field if found,
+        Else raises :class:`IndexError`.
+
+        Parameters
+        ----------
+        index: :class:`int`
+            Index of field to remove.
+        """
+        fields = self.fields
+
+        x = fields.pop(index)
+        self.fields = fields
+        return x
+
+    def insert_field(self, index, **data) -> None:
+        """
+        Insert a field at a certain index
+
+        Parameters
+        ----------
+        index: :class:`int`
+            Index to insert field at, e.g. ``0`` is the start
+        """
+        fields = self.fields
+        field = EmbedField(**data)
+
+        fields.insert(index, field)
+        self.fields = fields
