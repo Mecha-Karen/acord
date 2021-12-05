@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 import pydantic
 import datetime
 
-from acord.core.abc import Route, isInt, DISCORD_EPOCH
+from acord.core.abc import DISCORD_EPOCH
 from acord.bases import Hashable, ChannelTypes
 from acord.models import Snowflake
 
@@ -157,7 +157,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     verification_level: int
     """ verification level required for the guild
-    
+
     * NONE	    - 0	(unrestricted)
     * LOW	    - 1	(must have verified email on account)
     * MEDIUM	- 2	(must be registered on Discord for longer than 5 minutes)
@@ -168,7 +168,10 @@ class Guild(pydantic.BaseModel, Hashable):
     voice_states: Optional[List[Any]] = list()
     """ array of partial voice state objects """
 
-    @pydantic.validator("icon")
+    created_at: Optional[datetime.datetime]
+    """ when the guild was created """
+
+    @pydantic.validator('icon')
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:
             return None
@@ -218,6 +221,11 @@ class Guild(pydantic.BaseModel, Hashable):
     def _validate_guild_spash(cls, splash: str, **kwargs) -> Optional[str]:
         if not splash:
             return None
+        
+        id = kwargs['values']['id']
+        return f'https://cdn.discordapp.com/splashes/{id}/{splash}.png'
 
-        id = kwargs["values"]["id"]
-        return f"https://cdn.discordapp.com/splashes/{id}/{splash}.png"
+    @pydantic.validator('created_at')
+    def _validate_guild_created_at(cls, _, **kwargs) -> datetime.datetime:
+        timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
+        return datetime.datetime.fromtimestamp(timestamp)

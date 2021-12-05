@@ -2,6 +2,8 @@ from .flags.intents import Intents
 from .flags.user import UserFlags
 from .flags.channels import ChannelTypes, VoiceQuality
 
+from .embeds import (EmbedFooter, EmbedAuthor, EmbedField, EmbedImage, EmbedThumbnail,
+                    EmbedVideo, EmbedProvidor, Embed)
 from .file import File
 from .mixins import Hashable, _C, T, H
 

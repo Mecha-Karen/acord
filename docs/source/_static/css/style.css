@@ -242,8 +242,8 @@ i.fa-box {
 }
 
 /* Highlighting */
-span.highlighted {
-    background-color: rgba(214, 255, 101, 0.2);
+.highlighted, dt:target {
+    background-color: rgb(31, 40, 62) !important;
 }
 
 
@@ -356,3 +356,5 @@ main .py-attribute-table-column > ul {
     -webkit-user-select: none;
     user-select: none;
 }
+
+

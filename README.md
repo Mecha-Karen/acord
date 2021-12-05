@@ -46,7 +46,7 @@ pip3 install .
 
 ### Client
 ```py
-from acord import Client, Message
+from acord import Client, Message, Intents
 
 class MyClient(Client):
 
@@ -58,7 +58,12 @@ class MyClient(Client):
 
     async def on_message(self, message: Message) -> None:
         if message.content == '.ping':
-            return message.reply("Pong!") 
+            channel = self.get_channel(message.channel_id)
+            return await channel.send(content="Pong!", message_reference=message)
+
+client = MyClient(intents=Intents.ALL)
+
+client.run("token")
 ```
 
 ## Links

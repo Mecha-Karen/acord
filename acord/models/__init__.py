@@ -9,6 +9,8 @@ from .emoji import Emoji
 
 from .message import Message
 from .channels import Channel, TextChannel, Stage
+from .message import Message, MessageReference
+from .channels import Channel, TextChannel
 from .guild import Guild
 from .sticker import Sticker
 from .guild_template import GuildTemplate

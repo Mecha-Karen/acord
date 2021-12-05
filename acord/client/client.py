@@ -116,7 +116,7 @@ class Client(object):
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
 
         if func:
-            events.append({"func": func, "once": getattr(func, False)})
+            events.append({"func": func, "once": getattr(func, "once", False)})
 
         to_rmv: List[Dict] = list()
         for event in events:

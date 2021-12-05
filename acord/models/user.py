@@ -85,3 +85,6 @@ class User(pydantic.BaseModel, Hashable):
     def mutual_guilds(self) -> List[Any]:
         """Return any guilds the user shares with the client"""
         return [i for i in self.conn.client.guilds if i.has_user(self)]
+
+    def __str__(self) -> str:
+        return f'{self.username}#{self.discriminator}'

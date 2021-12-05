@@ -195,7 +195,7 @@ def get_class_results(lookup, modulename, name, fullname):
                 label = f'{name}.{attr}'
                 badge = AttrTableBadge('cls', 'cls')
                 badge['badge-type'] = _('classmethod')
-            elif inspect.isfunction(value):
+            elif inspect.isfunction(value) or doc.startswith('|func|'):
                 if doc.startswith(('A decorator', 'A shortcut decorator')):
                     # finicky but surprisingly consistent
                     badge = AttrTableBadge('@', '@')
@@ -227,6 +227,8 @@ def class_results_to_node(key, elements):
     return AttrTableColumn('', title, ul)
 
 def setup(app):
+    app.add_directive('attributetable', PyAttrTable)
+
     app.add_node(AttrTable, html=(visit_AttrTable_node, depart_AttrTable_node))
     app.add_node(AttrTableColumn, html=(visit_AttrTableColumn_node, depart_AttrTableColumn_node))
     app.add_node(AttrTableTitle, html=(visit_AttrTableTitle_node, depart_AttrTableTitle_node))
@@ -234,5 +236,3 @@ def setup(app):
     app.add_node(AttrTableItem, html=(visit_AttrTableItem_node, depart_AttrTableItem_node))
     app.add_node(AttrTablePlaceHolder)
     app.connect('doctree-resolved', process_AttrTable)
-    
-    app.add_directive('attributetable', PyAttrTable)

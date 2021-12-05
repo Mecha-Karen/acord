@@ -1,20 +1,18 @@
 version: 2
+formats: []
 
-# Build from the docs/ directory with Sphinx
+build:
+    image: latest
+
 sphinx:
     builder: html
     configuration: docs/source/conf.py
     fail_on_warning: false
 
-# Explicitly set the version of Python and its requirements
+
 python:
     version: 3.8
     install:
         - requirements: dev-requirements.txt
         - method: pip
           path: .
-          extra_requirements:
-              - docs
-
-formats:
-    - pdf

@@ -22,7 +22,8 @@ def buildURL(*paths, **parameters) -> Union[str, yarl.URL]:
     URI += "?"
 
     for key, value in parameters.items():
-        URI += f"{key}={value}&"
+        if value:
+            URI += f"{key}={value}&"
 
     return yarl.URL(URI)
 

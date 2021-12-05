@@ -1,29 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, List, Optional, Union
 import datetime
-
 import pydantic
+from aiohttp import FormData
 
-from acord.bases.flags.channels import ChannelTypes
 from acord.core.abc import DISCORD_EPOCH, Route
-from acord.models import Message
+from acord.models import Message, Snowflake
+from acord.payloads import ChannelEditPayload, MessageCreatePayload
 
 from .__main__ import Channel
-
-
-class ChannelEditPayload(pydantic.BaseModel):
-    name: Optional[str] = (None,)
-    type: Optional[Literal[0, 5]] = (None,)
-    position: Optional[int] = (None,)
-    topic: Optional[str] = (None,)
-    nsfw: Optional[bool] = (None,)
-    ratelimit: Optional[int] = (None,)
-    permission_overwrites: Optional[List[Any]] = (None,)
-    category: Optional[int] = (None,)
-    archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]] = (None,)
-    reason: Optional[str] = (None,)
-
 
 # Standard text channel in a guild
 class TextChannel(Channel):
@@ -65,8 +51,46 @@ class TextChannel(Channel):
         return datetime.datetime.fromtimestamp(timestamp)
 
     @pydantic.validate_arguments
-    async def edit(self, **options) -> Optional[Channel]:
+    def get_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
+        """|func|
+
+        Returns the message stored in the internal cache, may be outdated
+
+        Parameters
+        ----------
+        message_id: Union[:class:`Message`, :class:`Snowflake`]
+            ID of message to get
         """
+        return self.conn.client.get_message(channel_id=self.id, message_id=message_id)
+
+    @pydantic.validate_arguments
+    async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
+        """|coro|
+
+        Fetch a message directly from channel
+
+        Parameters
+        ----------
+        message_id: Union[:class:`Message`, :class:`Snowflake`]
+            ID of the message to fetch
+        """
+        if isinstance(message_id, Message):
+            message_id = message_id.id
+
+        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        resp = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/messages/{message_id}", bucket=bucket)
+        )
+
+        message = Message(**(await resp.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{message.id}': message})
+
+        return message
+
+    async def edit(self, **options) -> Optional[Channel]:
+        """|coro|
+
         Modifies a guild channel, fires a ``channel_update`` event if channel is updated.
 
         Parameters
@@ -90,7 +114,7 @@ class TextChannel(Channel):
         archive_duration: Literal[0, 60, 1440, 4230, 10080]
             Change the default archive duration on a thread, use :class:`MISSING` or 0 for no timeout
         """
-        payload = ChannelEditPayload(**options).json()
+        payload = ChannelEditPayload(**options).dict()
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         reason = payload.pop("reason", None)
@@ -112,20 +136,105 @@ class TextChannel(Channel):
         after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
     ) -> List[Message]:
+        """|coro|
+
+        Fetch messages directly from a channel
+
+        Parameters
+        ----------
+        around: Union[:class:`Message`, :class:`int`]
+            get messages around this message ID
+        before: Union[:class:`Message`, :class:`int`]
+            get messages before this message ID
+        after: Union[:class:`Message`, :class:`int`]
+            get messages after this message ID
+        limit: :class:`int`
+            max number of messages to return (1-100).
+
+            Defaults to **50**
+        """
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         around = getattr(around, "id", around)
         before = getattr(before, "id", before)
         after = getattr(after, "id", after)
 
+        params = {"around": around, "before": before, "after": after, "limit": limit}
+
         if not 0 < limit < 100:
             raise ValueError("Messages to fetch must be an interger between 0 and 100")
 
         resp = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket),
-            data={"around": around, "before": before, "after": after, "limit": limit},
+            Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket, **params),
         )
 
         data = await resp.json()
 
-        print(data)
+        messages = list()
+
+        for message in data:
+            msg = Message(**message)
+            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
+            messages.append(msg)
+
+        return messages
+
+    async def send(self, **data) -> Optional[Message]:
+        """|coro|
+
+        Create a new message in the channel
+
+        Parameters
+        ----------
+        content: :class:`str`
+            Message content, must be below ``2000`` chars.
+        files: *Union[List[:class:`File`], :class:`File`]*
+            A file or a list of files to be sent. File must not be closed else an error is raised.
+        message_reference: Union[:class:`MessageReference`]
+            A message to reply to, client must be able to read messages in the channel.
+        tts: :class:`bool`
+            Whether this is a TTS message
+        embeds: *Union[List[:class:`Embed`], :class:`File`]*
+            An embed or a list of embeds to send
+        """
+        ob = MessageCreatePayload(**data)
+
+        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+        form_data = FormData()
+
+        if ob.files:
+            for index, file in enumerate(ob.files):
+
+                form_data.add_field(
+                    name=f'file{index}',
+                    value=file.fp,
+                    filename=file.filename,
+                    content_type="application/octet-stream"
+                )
+            
+        form_data.add_field(
+            name="payload_json",
+            value=ob.json(exclude={'files'}),
+            content_type="application/json"
+        )
+
+        if not any(
+            i for i in ob.dict() 
+            if i in ['content', 'files', 'embeds', 'sticker_ids']
+        ):
+            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
+
+        if any (
+            i for i in ob.embeds
+            if i.characters() > 6000
+        ):
+            raise ValueError('Embeds cannot contain more then 6000 characters')
+
+        r = await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
+            data=form_data
+        )
+
+        n_msg = Message(**(await r.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
+        return n_msg

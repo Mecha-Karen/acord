@@ -204,7 +204,8 @@ class HTTPClient(object):
         await self._session.close()
 
     async def request(
-        self, route: abc.Route, data: dict = None, headers: dict = dict()
+        self, route: abc.Route, data: dict = None, headers: dict = dict(),
+        **addtional_kwargs
     ) -> aiohttp.ClientResponse:
         trapped = self.trappedBuckets.get(route)
 
@@ -217,14 +218,12 @@ class HTTPClient(object):
         headers["User-Agent"] = self.user_agent
 
         kwargs = dict()
-        kwargs["json"] = data
+        kwargs["data"] = data
         kwargs["headers"] = headers
 
-        print(route.method, str(url), kwargs)
-        resp = await self._session.request(method=route.method, url=url, **kwargs)
+        kwargs.update(addtional_kwargs)
 
-        print(resp.status)
-        print(await resp.text())
+        resp = await self._session.request(method=route.method, url=url, **kwargs)
 
         if 200 <= resp.status < 300:
             return resp
@@ -248,6 +247,7 @@ class HTTPClient(object):
 
         if resp.status == 403:
             raise Forbidden(f"403: {respData}")
+
 
     @property
     def connected(self):

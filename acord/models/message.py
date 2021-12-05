@@ -3,7 +3,7 @@ from __future__ import annotations
 import pydantic
 import datetime
 
-from acord.bases import Hashable, File
+from acord.bases import Hashable
 from acord.core.abc import Route
 from acord.models import User, Emoji, Snowflake
 from acord.errors import APIObjectDepreciated
@@ -23,6 +23,13 @@ async def _clean_reaction(string):
         raise ValueError("Unknown emoji")
 
     return string
+
+
+class MessageReference(pydantic.BaseModel):
+    message_id: Snowflake
+    channel_id: Optional[Snowflake]
+    guild_id: Optional[Snowflake]
+    fail_if_not_exists: Optional[bool] = True
 
 
 class Message(pydantic.BaseModel, Hashable):
@@ -80,6 +87,14 @@ class Message(pydantic.BaseModel, Hashable):
     thread: Optional[Any]
     """ Thread were message was sent """  # TODO: Channel Thread Object
     timestamp: datetime.datetime
+    """ List of reactions """ # TODO: reaction object
+    referenced_message: Optional[
+        Union[Message, MessageReference]  
+    ]
+    """ Replied message """
+    thread: Optional[Any]  
+    """ Thread were message was sent """ # TODO: Channel Thread Object
+    timestamp: datetime.datetime  
     """ Timestamp of when message was sent """
     tts: bool
     """ Is a text to speech message """
