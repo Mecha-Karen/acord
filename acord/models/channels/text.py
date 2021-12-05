@@ -224,6 +224,12 @@ class TextChannel(Channel):
         ):
             raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
 
+        if any (
+            i for i in ob.embeds
+            if i.characters() > 6000
+        ):
+            raise ValueError('Embeds cannot contain more then 6000 characters')
+
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
             data=form_data
