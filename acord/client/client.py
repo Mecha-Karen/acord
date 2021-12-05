@@ -114,9 +114,12 @@ class Client(object):
 
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
+        to_rmv: List[Dict] = list()
 
         if func:
-            events.append({"func": func, "once": getattr(func, "once", False)})
+            self.loop.create_task(
+                func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+            )
 
         to_rmv: List[Dict] = list()
         for event in events:
