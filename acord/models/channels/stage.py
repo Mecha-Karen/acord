@@ -1,15 +1,14 @@
 from __future__ import annotations
 import pydantic
 
+from .__main__ import Channel
+
 from acord.models import Snowflake
+from acord.bases import Hashable
 from typing import Any, Literal
 
 
-class Stage(pydantic.BaseModel):
-    conn: Any
-
-    id: Snowflake
-    # The id of this Stage instance
+class Stage(Channel, Hashable):
     guild_id: Snowflake
     # The guild id of the associated Stage channel
     channel_id: Snowflake
