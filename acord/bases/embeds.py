@@ -106,7 +106,7 @@ class Embed(pydantic.BaseModel):
         author_text = getattr(self.author, 'name', "")
         count += len(author_text)
 
-        for field in self.fields:
+        for field in (self.fields or list()):
             count += len((field.name or ""))
             count += len((field.value or ""))
 
