@@ -89,6 +89,10 @@ class Embed(pydantic.BaseModel):
             raise ValueError('Description cannot be greater then 4096 characters')
         return desc
 
+    @pydantic.validator('color')
+    def _validate_colour(cls, desc):
+        return desc.as_hex()
+
     def characters(self) -> int:
         """ Counts the total amount of characters in the embed """
         count = 0
