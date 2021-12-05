@@ -61,18 +61,21 @@ class EmbedProvidor(pydantic.BaseModel):
     url: Optional[pydantic.AnyHttpUrl]
 
 class Embed(pydantic.BaseModel):
+    """ An object representing a discord embed """
+
     title: Optional[str]
-    """ Embed title """
+    """ Embed title, must be under 256 chars if provided """
     type: Optional[Literal["rich", "image", "video", "gifv", "article", "link"]] = "rich"
     """ Embed type, defaults to rich """
     description: Optional[str]
-    """ Embed description """
+    """ Embed description, must be under 4096 chars if provided """
     url: Optional[pydantic.AnyHttpUrl]
     """ Embed title hyperlink """
     timestamp: Optional[datetime.datetime]
     """ Embed timestamp """
     color: Optional[Color]
-    """ Embed colour """
+    """Embed colour,
+    can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_"""
     footer: Optional[EmbedFooter]
     """ Embed footer """
     image: Optional[EmbedImage]
