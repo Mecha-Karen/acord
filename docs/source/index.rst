@@ -59,8 +59,10 @@ Dependencies
 ============
 Acord relies on ``Pydantic`` and ``aiohttp``, without them the module cannot function properly.
 We also recommend installing the ``uvloop`` module, as it can speed up Acord by a large margin, however, this is optional.
+
 Contents
 ========
 .. toctree::
 
     api/models.rst
+    api/bases.rst
