@@ -10,7 +10,8 @@ from acord.models import User
 
 
 class Emoji(pydantic.BaseModel, Hashable):
-    """ Reprentation of a discord Emoji """
+    """Reprentation of a discord Emoji"""
+
     conn: Any  # Connection Object - for internal use
 
     id: int
@@ -79,8 +80,7 @@ class Emoji(pydantic.BaseModel, Hashable):
     async def delete(
         self, *, reason: Optional[str] = None, guild_id: Optional[int]
     ) -> None:
-        """
-        """
+        """ """
         if guild_id and guild_id != self.guild_id:
             raise ValueError(
                 f"Mismatching guild_id provided, expected {self.guild_id} got {guild_id}"
@@ -125,4 +125,11 @@ class Emoji(pydantic.BaseModel, Hashable):
         """
         Checks whether the client is able to use this emoji
         """
-        return any(i for i in self.roles if i in self.conn.client.get_guild(self.guild_id).me.roles) and self.available
+        return (
+            any(
+                i
+                for i in self.roles
+                if i in self.conn.client.get_guild(self.guild_id).me.roles
+            )
+            and self.available
+        )

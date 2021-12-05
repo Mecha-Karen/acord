@@ -20,7 +20,7 @@ class TextChannel(Channel):
     permission_overwrites: List[Any]
     """ Channel Permissions """
     name: str
-    """ Name of channel """ 
+    """ Name of channel """
     topic: Optional[str]
     """ Channel topic """
     nsfw: Optional[bool]
@@ -155,14 +155,14 @@ class TextChannel(Channel):
         """
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
-        around = getattr(around, 'id', around)
-        before = getattr(before, 'id', before)
-        after = getattr(after, 'id', after)
+        around = getattr(around, "id", around)
+        before = getattr(before, "id", before)
+        after = getattr(after, "id", after)
 
         params = {"around": around, "before": before, "after": after, "limit": limit}
 
         if not 0 < limit < 100:
-            raise ValueError('Messages to fetch must be an interger between 0 and 100')
+            raise ValueError("Messages to fetch must be an interger between 0 and 100")
 
         resp = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket, **params),
