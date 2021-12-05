@@ -4,7 +4,18 @@ from typing import Any, List, Literal, Optional
 import pydantic
 from pydantic.color import Color
 import datetime
+import json
 
+
+def _rgb_to_hex(rgb) -> int:
+    string = ""
+    for i in rgb:
+        val = hex(i)[2:]
+        if len(val) == 1:
+            string += '0' + val
+        else:
+            string += val
+    return string
 
 class EmbedFooter(pydantic.BaseModel):
     text: str
@@ -88,10 +99,6 @@ class Embed(pydantic.BaseModel):
         if len(desc) > 4096:
             raise ValueError('Description cannot be greater then 4096 characters')
         return desc
-
-    @pydantic.validator('color')
-    def _validate_colour(cls, desc):
-        return desc.as_hex()
 
     def characters(self) -> int:
         """ Counts the total amount of characters in the embed """
@@ -200,3 +207,14 @@ class Embed(pydantic.BaseModel):
 
         fields.insert(index, field)
         self.fields = fields
+
+    def dict(self, *args, **kwargs) -> dict:
+        # :meta private:
+        # Override pydantic to return `Color` as a hex int
+        data = super(Embed, self).dict(*args, **kwargs)
+
+        if self.color:
+            color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
+            data['color'] = color
+
+        return data
