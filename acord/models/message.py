@@ -3,7 +3,7 @@ from __future__ import annotations
 import pydantic
 import datetime
 
-from acord.bases import Hashable
+from acord.bases import Hashable, Embed
 from acord.core.abc import Route
 from acord.models import User, Emoji, Snowflake
 from acord.errors import APIObjectDepreciated
@@ -56,8 +56,8 @@ class Message(pydantic.BaseModel, Hashable):
             bool, datetime.datetime
         ]  # If not false contains timestamp of edited message
     ]
-    embeds: List[Any]
-    """ List of embeds """  # TODO: Embed object
+    embeds: List[Embed]
+    """ List of embeds """
     flags: int
     """ Message flags """
     id: Snowflake
@@ -107,11 +107,6 @@ class Message(pydantic.BaseModel, Hashable):
     webhook_id: Optional[int]
     """ Webhook message ID """
 
-    """ Extra's """
-    channel: Optional[Any]  # type: ignore
-    # Returns the :class:`TextChannel` object were the message was sent from.
-    # Not the actual object as cyclic imports are a pain
-
     class Config:
         arbitrary_types_allowed = True
 
@@ -141,18 +136,6 @@ class Message(pydantic.BaseModel, Hashable):
         data["conn"] = conn
 
         return User(**data)
-
-    @pydantic.validator("channel")
-    def _validate_channel(cls, _, **kwargs):
-        # :meta private:
-        if _ is not None:
-            raise ValueError("Channel provided, when expected None")
-        conn = kwargs["values"]["conn"]
-        channel_id = kwargs["values"]["channel_id"]
-
-        print(repr(channel_id))
-
-        return conn.client.get_channel(int(channel_id))
 
     def __init__(self, **data):
 
@@ -259,6 +242,11 @@ class Message(pydantic.BaseModel, Hashable):
             ),
         )
 
-    async def reply(self, verify: Optional[bool] = True, **data) -> Message:
-        """Shortcut for `Message.Channel.send(..., reference=self, verify=verify)`"""
-        return await self.channel.send(reference=self, verify=verify, **data)
+    async def reply(self, **data) -> Message:
+        """Shortcut for `Message.Channel.send(..., reference=self)`"""
+        channel = self.conn.client.get_channel(self.channel_id)
+        data.update(message_reference=self)     # If provided gets overwritten
+
+        if not channel:
+            raise ValueError('Target channel no longer exists')
+        return await channel.send(**data)
