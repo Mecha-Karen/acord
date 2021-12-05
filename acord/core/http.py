@@ -17,11 +17,13 @@ import aiohttp
 import acord
 import sys
 
-from acord.errors import Forbidden, GatewayConnectionRefused, HTTPException
+from acord.errors import BadRequest, DiscordError, Forbidden, GatewayConnectionRefused, HTTPException, NotFound
 from . import abc
 from .heartbeat import KeepAlive
 from .decoders import *
 from .signals import gateway
+
+from aiohttp import FormData
 
 
 class HTTPClient(object):
@@ -207,10 +209,6 @@ class HTTPClient(object):
         self, route: abc.Route, data: dict = None, headers: dict = dict(),
         **addtional_kwargs
     ) -> aiohttp.ClientResponse:
-        trapped = self.trappedBuckets.get(route)
-
-        if trapped:
-            await asyncio.sleep(trapped)
 
         url = route.url
 
@@ -230,6 +228,9 @@ class HTTPClient(object):
 
         respData = await self.decodeResponse(resp)
 
+        if 500 <= resp.status < 600:
+            raise DiscordError(str(respData))
+
         if resp.status == 429:
             retryAfter = respData["retry_after"]
             if respData["global"]:
@@ -239,15 +240,24 @@ class HTTPClient(object):
                     self._lock.release()
 
             else:
-                self.trappedBuckets.update({route.bucket: retryAfter})
                 await asyncio.sleep(retryAfter)
-                self.trappedBuckets.pop(route.bucket)
 
-            return await self.request(route, data, headers)
+            try:
+                return await self.request(route, data, headers, **addtional_kwargs)
+            except RuntimeError:
+                # Form Data has been processed already
+                n_data = FormData()
+                n_data._fields = data._fields
+
+                return await self.request(route, n_data, headers, **addtional_kwargs)
+
 
         if resp.status == 403:
-            raise Forbidden(f"403: {respData}")
-
+            raise Forbidden(str(respData))
+        if resp.status == 404:
+            raise NotFound(str(respData))
+        
+        raise BadRequest(str(respData))
 
     @property
     def connected(self):
