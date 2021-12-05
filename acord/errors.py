@@ -18,9 +18,18 @@ class APIObjectDepreciated(BaseResponseException):
     """Raised when a certain item in the api has been depreciated"""
 
 
+class BadRequest(BaseResponseException):
+    """Raised when requested recourse return 400,
+    This is only raised for unhandled errors"""
+
 class Forbidden(BaseResponseException):
     """Raised when requested recourse returns 403,
     indicating that you don't have sufficient permissions"""
+
+
+class DiscordError(BaseResponseException):
+    """Raised when requested recourse returns 500,
+    Indicating an error has occured on discords side"""
 
 
 class NotFound(BaseResponseException):
