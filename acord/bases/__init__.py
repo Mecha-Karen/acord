@@ -6,6 +6,7 @@ from .embeds import (EmbedFooter, EmbedAuthor, EmbedField, EmbedImage, EmbedThum
                     EmbedVideo, EmbedProvidor, Embed)
 from .file import File
 from .mixins import Hashable, _C, T, H
+from .mentions import AllowedMentions
 
 
 class MISSING(object):
