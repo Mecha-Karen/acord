@@ -82,7 +82,21 @@ class Embed(pydantic.BaseModel):
     """ Embed timestamp """
     color: Optional[EmbedColor]
     """Embed colour,
-    can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_"""
+    can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_
+
+    .. rubric:: Allowed Forms
+
+    .. code-block:: py
+
+        Embed(color="hsl(260, 50%, 20%)")
+        Embed(color="rgb(10, 10, 10)")
+        Embed(color="rgba(10, 10, 10, 0.1)")
+        Embed(color="#LongHex")
+        Embed(color="#ShortHex")
+        Embed(color="Hex or ShortHex")
+        Embed(color=Hex)
+        Embed(color="blue")
+    """
     footer: Optional[EmbedFooter]
     """ Embed footer """
     image: Optional[EmbedImage]
