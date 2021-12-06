@@ -1,20 +1,19 @@
 # A simple base client for handling responses from discord
 import asyncio
-from asyncio.events import AbstractEventLoop, get_event_loop
 import warnings
 import acord
 import sys
 import traceback
+from acord.core.abc import Route
 
 from acord.core.http import HTTPClient
-from acord.core.signals import gateway
 from acord.errors import *
 
 from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
 
 from acord import Intents
 from acord.bases.mixins import _C, T
-from acord.models import Message, User, Channel, Guild
+from acord.models import Message, User, Channel, Guild, TextChannel
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -196,6 +195,8 @@ class Client(object):
             # Kill connection
             self.loop.run_until_complete(self.http.disconnect())
 
+    # Fetch from cache:
+
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
         return self.INTERNAL_STORAGE.get("messages", dict()).get(
@@ -214,7 +215,33 @@ class Client(object):
         """Returns the channel stored in the internal cache, may be outdated"""
         return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
 
-    async def gof_channel(self, guild_id: int, channel_id: int) -> Optional[Any]:
+    # Fetch from API:
+
+    async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
+        """Fetches a channel from API and caches it"""
+        resp = await self.http.request(
+            Route("GET", path=f"/channels/{channel_id}")
+        )
+        channnel = await TextChannel(conn=self.http, **(await resp.json()))
+        self.INTERNAL_STORAGE['channels'].update({channel_id: channnel})
+        return channnel
+
+    async def fetch_message(self, channel_id: int, message_id: int) -> Optional[Message]:
+        """Fetches a message from API and caches it"""
+        resp = await self.http.request(
+            Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
+        )
+        message = await Message(conn=self.http, **(await resp.json()))
+        self.INTERNAL_STORAGE['messages'].update({f'{channel_id}:{message_id}': message})
+        return message
+
+    # Get from cache or Fetch from API:
+
+    async def gof_channel(self, channel_id: int) -> Optional[Any]:
         """Attempts to get a channel, if not found fetches and adds to cache.
         Raises :class:`NotFound` if cannot be fetched"""
-        raise NotImplemented
+        channel = self.get_channel(channel_id)
+
+        if channel is None:
+            return self.fetch_channel(channel_id)
+        return channel
