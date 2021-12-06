@@ -143,14 +143,7 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def refetch(self) -> Optional[Message]:
         """Attempts to fetch the same message from the API again"""
-        resp = await self.conn.request(
-            Route(
-                "GET",
-                path=f"/channels/{self.channel_id}/messages/{self.id}",
-                bucket={"channel_id": self.channel_id, "guild_id": self.guild_id},
-            )
-        )
-        return Message(conn=self.conn, **(await resp.json()))
+        return await self.conn.client.fetch_message(self.channel_id, self.id)
 
     async def delete(self, *, reason: str = None) -> None:
         """
