@@ -4,7 +4,6 @@ from typing import Any, List, Literal, Optional
 import pydantic
 from pydantic.color import Color
 import datetime
-import json
 
 
 def _rgb_to_hex(rgb) -> int:
@@ -16,6 +15,14 @@ def _rgb_to_hex(rgb) -> int:
         else:
             string += val
     return string
+
+class EmbedColor(Color):
+    def __init__(self, color) -> None:
+        if isinstance(color, int):
+            # Converts int into a 6 char hex code
+            color = f'#{color:0>6X}'
+        
+        super().__init__(color)
 
 class EmbedFooter(pydantic.BaseModel):
     text: str
@@ -73,7 +80,7 @@ class Embed(pydantic.BaseModel):
     """ Embed title hyperlink """
     timestamp: Optional[datetime.datetime]
     """ Embed timestamp """
-    color: Optional[Color]
+    color: Optional[EmbedColor]
     """Embed colour,
     can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_"""
     footer: Optional[EmbedFooter]
@@ -213,7 +220,7 @@ class Embed(pydantic.BaseModel):
 
     def dict(self, *args, **kwargs) -> dict:
         # :meta private:
-        # Override pydantic to return `Color` as a hex int
+        # Override pydantic to return `Color` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
 
         if self.color:
