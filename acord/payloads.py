@@ -1,7 +1,7 @@
 from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 
-from acord.bases import File, Embed
+from acord.bases import File, Embed, AllowedMentions
 from .models import Message, MessageReference, Snowflake
 
 
@@ -19,6 +19,7 @@ class ChannelEditPayload(pydantic.BaseModel):
 
 
 class MessageCreatePayload(pydantic.BaseModel):
+    allowed_mentions: Optional[AllowedMentions]
     content: Optional[str]
     embeds: Optional[Union[List[Embed], Embed]]
     files: Optional[Union[List[File], File]]
