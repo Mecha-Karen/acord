@@ -198,6 +198,8 @@ class TextChannel(Channel):
             An embed or a list of embeds to send
         """
         ob = MessageCreatePayload(**data)
+        if ob.allowed_mentions:
+            ob.allowed_mentions.run_auto(self)
 
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
         form_data = FormData()
