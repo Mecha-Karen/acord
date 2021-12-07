@@ -29,18 +29,36 @@ class Client(object):
         An existing loop to run the client off of
     token: :class:`str`
         Your API Token which can be generated at the developer portal
-    tokenType: typing.Union[BEARER, BOT]
-        The token type, which controls the payload data and restrictions.
+    intents: Union[:class:`Intents`, :class:`int`]
+        Intents to be passed through when connecting to gateway, defaults to ``0``
+    encoding: :class:`str`
+        Any of ``ETF`` and ``JSON`` are allowed to be chosen, controls data recieved by discord,
+        defaults to ``False``.
+    compress: :class:`bool`
+        Whether to read compressed stream when receiving requests, defaults to ``False``
 
-        .. warning::
-            If BEARER, do not use the `run` method. Your able to access data normally.
-    commandHandler: :class:`~typing.Callable`
-        An optional command handler, defaults to the built-in handler at :class:`~acord.DefaultCommandHandler`.
-
-        **Parameters passed though:**
-
-        * Message: :class:`~acord.Message`
-        * UpdatedCache: :class:`bool`
+    Attributes
+    ----------
+    loop: :class:`~asyncio.AbstractEventLoop`
+        Loop client uses
+    token: :class:`str`
+        Token set when initialising class
+    intents: Union[:class:`Intents`, :class:`int`]
+        Intents set when intialising class
+    encoding: :class:`str`
+        Encoding set when initialising class
+    compress: :class:`bool`
+        Whether to read compressed stream when receiving requests
+    session_id: :class:`str`
+        Session ID recieved when connecting to gateway
+    gateway_version: :class:`str`
+        Selected gateway version, available after connecting to gateway. 
+        In form ``v[0-9]``.
+    user: :class:`User`
+        Client user object
+    INTERNAL_STORAGE: :class:`dict`
+        Cache of gateway objects, recomended to fetch using built in methods, 
+        e.g. :meth:`Client.get_user`.
     """
 
     # SHOULD BE OVERWRITTEN
@@ -55,7 +73,6 @@ class Client(object):
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
-        commandHandler: Optional[_C] = None,
     ) -> None:
 
         self.loop = loop
@@ -64,7 +81,6 @@ class Client(object):
         self.intents = intents
 
         self._events = dict()
-        self.commandHandler = commandHandler
 
         # Gateway connection stuff
         self.encoding = encoding
@@ -83,9 +99,11 @@ class Client(object):
         self.INTERNAL_STORAGE["channels"] = dict()
 
     def bindToken(self, token: str) -> None:
+        """ Bind a token to the client, prevents new tokens from being set """
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False):
+        """ Register an event to be dispatched on call """
         def inner(func):
             data = {"func": func, "once": once}
 
@@ -101,12 +119,23 @@ class Client(object):
         return inner
 
     async def on_error(self, event_method):
+        """|coro|
+        Built in base error handler for events """
         acord.logger.error('Failed to run event "{}".'.format(event_method))
 
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
     def dispatch(self, event_name: str, *args, **kwargs) -> None:
+        """Dispatch a registered event
+
+        Parameters
+        ----------
+        event_name: :class:`str`
+            Name of event
+        *args, **kwargs
+            Additional args or kwargs to be passed through 
+        """
         if not event_name.startswith("on_"):
             func_name = "on_" + event_name
         acord.logger.info("Dispatching event: {}".format(event_name))
@@ -147,6 +176,16 @@ class Client(object):
         raise NotImplementedError()
 
     def run(self, token: str = None, *, reconnect: bool = True):
+        """Runs the client, loop blocking
+
+        Parameters
+        ----------
+        token: :class:`str`
+            Token to be passed through, if binded both ``Client.token`` and are overwritten.
+            Else, this token will be used to connect to gateway, if fails falls back onto ``Client.token``.
+        reconnect: :class:`bool`
+            Whether to reconnect it first connection fails, defaults to ``True``. 
+        """
         if (token or self.token) and getattr(self, "_lruPermanent", False):
             warnings.warn(
                 "Cannot use current token as another token was binded to the client",
@@ -217,23 +256,45 @@ class Client(object):
 
     # Fetch from API:
 
+    async def fetch_user(self, user_id: int) -> Optional[User]:
+        """Fetches user from API and caches it"""
+        resp = await self.http.request(
+            Route("GET", path=f"/users/{user_id}")
+        )
+        user = await User(conn=self.http, **(await resp.json()))
+        self.INTERNAL_STORAGE['users'].update({user.id: user})
+        return user
+
     async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
-        """Fetches a channel from API and caches it"""
+        """Fetches channel from API and caches it"""
         resp = await self.http.request(
             Route("GET", path=f"/channels/{channel_id}")
         )
-        channnel = await TextChannel(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE['channels'].update({channel_id: channnel})
-        return channnel
+        channel = await TextChannel(conn=self.http, **(await resp.json()))
+        self.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+        return channel
 
     async def fetch_message(self, channel_id: int, message_id: int) -> Optional[Message]:
-        """Fetches a message from API and caches it"""
+        """Fetches message from API and caches it"""
         resp = await self.http.request(
             Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
         )
         message = await Message(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE['messages'].update({f'{channel_id}:{message_id}': message})
         return message
+
+    async def fetch_guild(self, guild_id: int, *, with_counts: bool = False) -> Optional[Guild]:
+        """Fetches guild from API and caches it.
+
+        .. note::
+            If with_counts is set to ``True``, it will allow fields ``approximate_presence_count``,
+            ``approximate_member_count`` to be used.
+        """
+        resp = await self.http.request(
+            Route("GET", path=f"/guilds/{guild_id}", with_counts=bool(with_counts)),
+        )
+        guild = await Guild(conn=self.http, **(await resp.json()))
+        self.INTERNAL_STORAGE['guilds'].update({guild.id: guild})
 
     # Get from cache or Fetch from API:
 
