@@ -181,8 +181,9 @@ class Client(object):
         Parameters
         ----------
         token: :class:`str`
-            Token to be passed through, if binded both ``Client.token`` and are overwritten.
-            Else, this token will be used to connect to gateway, if fails falls back onto ``Client.token``.
+            Token to be passed through, if binded both :attr:`Client.token` and are overwritten.
+            Else, this token will be used to connect to gateway, 
+            if fails falls back onto :attr:`Client.token`.
         reconnect: :class:`bool`
             Whether to reconnect it first connection fails, defaults to ``True``. 
         """
