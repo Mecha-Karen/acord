@@ -64,5 +64,6 @@ Contents
 ========
 .. toctree::
 
+    api/client.rst
     api/models.rst
     api/bases.rst
