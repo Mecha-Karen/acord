@@ -15,15 +15,19 @@ class Intents(Flag):
         from acord import Intents
 
         myIntents = (
-            Intents.GUILDS          |
-            Intents.GUILD_MESSAGES  |
+            Intents.GUILDS
+            | Intents.GUILD_MESSAGES
+            | Intents.GUILD_PRESENCES
             ...
         )
 
     .. rubric:: Valid Attributes
+    Listed below are the allowed intent attrs and what events they allow to be used
 
     * NONE
+        - No intents
     * ALL
+        - Every intent allowed through the gateway
     * GUILDS
         - GUILD_CREATE
         - GUILD_UPDATE
