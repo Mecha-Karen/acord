@@ -13,18 +13,33 @@ Bases
 Bases are objects which represent different objects in the discord API.
 They minify the code written and can help improve readability in your code!
 
-File
-~~~~
-
-.. attributetable:: File
-
-.. autoclass:: File
-    :members:
-
 Embed
 ~~~~~
 
 .. attributetable:: Embed
 
 .. autoclass:: Embed
+    :members:
+
+Flags
+~~~~~
+
+Intents
+=======
+
+.. autoclass:: Intents
+    :members:
+
+Users
+=====
+
+.. autoclass:: UserFlags
+    :members:
+
+File
+~~~~
+
+.. attributetable:: File
+
+.. autoclass:: File
     :members:
