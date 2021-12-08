@@ -80,7 +80,9 @@ class Emoji(pydantic.BaseModel, Hashable):
     async def delete(
         self, *, reason: Optional[str] = None, guild_id: Optional[int]
     ) -> None:
-        """ """
+        """|coro|
+         
+        Deletes emoji """
         if guild_id and guild_id != self.guild_id:
             raise ValueError(
                 f"Mismatching guild_id provided, expected {self.guild_id} got {guild_id}"
@@ -102,6 +104,19 @@ class Emoji(pydantic.BaseModel, Hashable):
         roles: Optional[List[Any]] = None,
         reason: Optional[str] = None,
     ) -> Emoji:
+        """|coro|
+        
+        Edits emoji
+
+        Parameters
+        ----------
+        name: :class:`str`
+            New name for emoji
+        roles: List[Any]
+            List of roles allowed to use emoji
+        reason: :class:`str`
+            Reason for editing emoji, shows in Audit Logs.
+        """
         if not (name or roles):
             raise ValueError("No parameters provided to edit")
         if all(i for i in roles if isInt(i)):
@@ -112,13 +127,13 @@ class Emoji(pydantic.BaseModel, Hashable):
         else:
             raise ValueError("Incorrect roles provided")
 
-        name = name or self.name
+        name = str(name or self.name)
         roles = roles or list(map(lambda role: role.id, self.roles))
 
         await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/emojis/{self.id}"),
             data={"name": name, "roles": roles},
-            headers={"X-Audit-Log-Reason": reason},
+            headers={"X-Audit-Log-Reason": str(reason)},
         )
 
     def is_useable(self):
