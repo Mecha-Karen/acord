@@ -78,7 +78,7 @@ guild: :class:`Guild`
 on_guild_outage
 ~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``GUILD_DELETE``.
-Indicating client is in a guild that is unavailable due to an outage.
+Indicating the client is in a guild that is unavailable due to an outage.
 
 Parameters
 ==========
