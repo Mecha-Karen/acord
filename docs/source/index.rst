@@ -55,6 +55,10 @@ Basic Example
             if message.content == "Hello":
                 return await message.channel.send(f"Hello {message.author}, I am {self.user}!")
 
+    if __name__ == "__main__":
+        client = MyClient()
+        client.run("Token")
+
 Dependencies
 ============
 Acord relies on ``Pydantic`` and ``aiohttp``, without them the module cannot function properly.
