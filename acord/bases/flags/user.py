@@ -8,15 +8,61 @@ class UserFlags(Flag):
 
     .. rubric:: Usage
 
-    .. codeblock:: py
+    Checking for single flags
+
+    .. code-block:: py
 
         from acord import UserFlags
-        someFlag = User.flag
 
-        isStaff = someFlag & UserFlags.STAFF == UserFlags.STAFF
+        isStaff = User.flags & UserFlags.STAFF == UserFlags.STAFF
+
+    However, when checking for multiple flags, you need to use the ``|`` for all flags you want
+
+    .. code-block:: py
+
+        from acord import UserFlags
+        flags = (
+            UserFlags.STAFF
+            | UserFlags.PARTNER
+        )
+
+        hasFlags = User.flags & flags == flags
+
+    Attributes
+    ----------
+    NONE
+        Value of 0, or **NO** flags
+    STAFF
+        discord staff flag
+    PARTNER
+        discord partner flag
+    HYPESQUAD
+        hypesquad events coordinator flag
+    HYPESQUAD_BRAVERY
+        hypesquad house bravery flag
+    HYPESQUAD_BRILLIANCE
+        hypesquad house brilliance flag
+    HYPESQUAD_BALANCE
+        hypesquad house bravery flag
+    BUG_HUNTER_LEVEL_1
+        bug hunter level 1 flag
+    BUG_HINTER_LEVEL_2
+        bug hunter level 2 flag
+    PREMIUM_EARLY_SUPPORTER
+        early Nitro Supporter
+    TEAM_PSEUDO_USER
+        user is a :class:`Team`
+    VERIFIED_BOT
+        verified bot flag
+    VERIFIED_DEVELOPER
+        early verified bot developer flag
+    CERTIFIED_MODERATOR
+        discord certified moderator flag 
     """
 
     NONE = 0
+    BOT_HTTP_INTERACTIONS = 1 << 19
+
     STAFF = 1 << 0
     PARTNER = 1 << 1
 
@@ -34,11 +80,3 @@ class UserFlags(Flag):
     VERIFIED_BOT = 1 << 15
     VERIFIED_DEVELOPER = 1 << 17
     CERTIFIED_MODERATOR = 1 << 18
-
-    @classmethod
-    def isStaff(cls, O: UserFlags) -> bool:
-        return O & cls.STAFF == cls.STAFF
-
-    @classmethod
-    def isPartner(cls, O: UserFlags) -> bool:
-        return O & cls.PARTNER == cls.PARTNER
