@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pydantic
-from acord.bases import Hashable
+from acord.bases import Hashable, UserFlags
 from typing import Any, List, Optional
 
 
@@ -62,9 +62,9 @@ class User(pydantic.BaseModel, Hashable):
     ]  # the user's banner color encoded as an integer representation of hexadecimal color code
     locale: Optional[str]  # the user's chosen language option
     verified: Optional[bool]  # whether the email on this account has been verified
-    flags: Optional[int]  # the flags on a user's account
+    flags: Optional[UserFlags]  # the flags on a user's account
     premium_type: Optional[int]  # the type of Nitro subscription on a user's account
-    public_flags: Optional[int]  # the public flags on a user's account
+    public_flags: Optional[UserFlags]  # the public flags on a user's account
     email: Optional[str]  # the user's email, can be None as bots cannot have an email
 
     @pydantic.validator("avatar")
