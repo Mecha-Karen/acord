@@ -7,6 +7,7 @@ Snowflake = TypeVar("Snowflake", bound=int)
 from .user import User
 from .emoji import Emoji
 from .sticker import Sticker
+from .roles import Role, RoleTags
 
 from .message import Message, MessageReference
 from .channels import Channel, TextChannel, Stage
