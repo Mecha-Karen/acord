@@ -10,7 +10,7 @@ from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
 from acord.payloads import ChannelEditPayload, MessageCreatePayload
 
-from .__main__ import Channel
+from .base import Channel
 
 # Standard text channel in a guild
 
