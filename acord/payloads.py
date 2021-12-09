@@ -21,8 +21,8 @@ class ChannelEditPayload(pydantic.BaseModel):
 class MessageCreatePayload(pydantic.BaseModel):
     allowed_mentions: Optional[AllowedMentions]
     content: Optional[str]
-    embeds: Optional[Union[List[Embed], Embed]]
-    files: Optional[Union[List[File], File]]
+    embeds: Optional[Union[List[Embed], Embed]] = list()
+    files: Optional[Union[List[File], File]] = list()
     message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
     tts: Optional[bool] = False
 
