@@ -16,7 +16,7 @@ def _rgb_to_hex(rgb) -> int:
             string += val
     return string
 
-class EmbedColor(Color):
+class Color(Color):
     def __init__(self, color) -> None:
         if isinstance(color, int):
             # Converts int into a 6 char hex code
@@ -80,7 +80,7 @@ class Embed(pydantic.BaseModel):
     """ Embed title hyperlink """
     timestamp: Optional[datetime.datetime]
     """ Embed timestamp """
-    color: Optional[EmbedColor]
+    color: Optional[Color]
     """Embed colour,
     can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_
 
