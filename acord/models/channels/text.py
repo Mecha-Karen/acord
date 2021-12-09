@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 import datetime
 import pydantic
+import warnings
 from aiohttp import FormData
 
 from acord.core.abc import DISCORD_EPOCH, Route
@@ -12,6 +13,12 @@ from acord.payloads import ChannelEditPayload, MessageCreatePayload
 from .__main__ import Channel
 
 # Standard text channel in a guild
+
+async def _pop_task(client, channel_id, *messages) -> None:
+    # Create task to pop all messages in bulk deletion
+    for message in messages:
+        client.INTERNAL_STORAGE['messages'].pop(f'{channel_id}:{message}', None)
+
 class TextChannel(Channel):
     guild_id: int
     """ ID of guild were text channel belongs """
@@ -116,6 +123,11 @@ class TextChannel(Channel):
         """
         payload = ChannelEditPayload(**options).dict()
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        keys = list(payload.keys())
+        for k in keys:
+            if k not in options:
+                payload.pop(k)
 
         reason = payload.pop("reason", None)
 
@@ -238,3 +250,39 @@ class TextChannel(Channel):
         n_msg = Message(**(await r.json()))
         self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
         return n_msg
+
+    @pydantic.validate_arguments
+    async def bulk_delete(self, *messages: Union[Message, Snowflake], reason: str = None) -> None:
+        """|coro|
+
+        Deletes messages in bulk, in channel.
+
+        .. warning::
+            When deleting in bulk, you need atleast 2 messages and less then 100.
+
+        Parameters
+        ----------
+        messages: Union[:class:`Message`, :class:`Snowflake`]
+            Messages to be deleted
+        reason: :class:`str`
+            Reason for deleting messages
+        """
+        headers = dict()
+        if reason:
+            headers.update({'X-Audit-Log-Reason': reason})
+
+        if 2 < len(messages) < 100:
+            raise ValueError('Messages to delete must be greater then 2 and less then 100')
+
+        ids = set(map(lambda x: getattr(x, 'id', x), messages))
+
+        await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/messages/bulk-delete"),
+            data={'messages': list(ids)},
+            headers=headers
+        )
+
+        self.conn.client.loop.create_task(
+            _pop_task(self.conn.client, self.id, *ids), 
+            name=f"acord: bulk delete: {len(ids)}"
+        )
