@@ -137,9 +137,8 @@ class Message(pydantic.BaseModel, Hashable):
 
         return User(**data)
 
-    def __init__(self, **data):
-
-        super().__init__(**data)
+    async def _get_bucket(self):
+        return dict(channel_id=self.channel_id, guild_id=self.guild_id)
 
     async def refetch(self) -> Optional[Message]:
         """|coro|
@@ -177,7 +176,8 @@ class Message(pydantic.BaseModel, Hashable):
                 "GET", 
                 path=f"/channels/{self.channel_id}/messages/{self.id}/reactions/{emoji}",
                 after=getattr(after, 'id', after),
-                limit=limit
+                limit=limit,
+                bucket=(await self._get_bucket())
             ))
         data = await res.json()
         users = list(map(lambda x: User(x), data))
@@ -202,10 +202,7 @@ class Message(pydantic.BaseModel, Hashable):
             headers={
                 "X-Audit-Log-Reason": reason,
             },
-            bucket={
-                "channel_id": self.channel_id,
-                "guild_id": self.guild_id,
-            },
+            bucket=(await self._get_bucket()),
         )
 
     async def pin(self, *, reason: str = "") -> None:
@@ -218,7 +215,7 @@ class Message(pydantic.BaseModel, Hashable):
             raise ValueError('This message has already been pinned')
             
         await self.conn.request(
-            Route("PUT", path=f"/channels/{channel.id}/pins/{self.id}"),
+            Route("PUT", path=f"/channels/{channel.id}/pins/{self.id}", bucket=(await self._get_bucket())),
             headers={'X-Audit-Log-Reason': str(reason)}
         )
         self.pinned = True
@@ -233,11 +230,14 @@ class Message(pydantic.BaseModel, Hashable):
             raise ValueError('This message has not been pinned')
 
         await self.conn.request(
-            Route("DELETE", path=f"/channels/{channel.id}/pins/{self.id}"),
+            Route(
+                "DELETE", 
+                path=f"/channels/{channel.id}/pins/{self.id}", 
+                bucket=(await self._get_bucket())
+            ),
             headers={'X-Audit-Log-Reason': str(reason)}
         )
         self.pinned = False
-
 
     async def add_reaction(self, emoji: Union[str, Emoji]) -> None:
         """
