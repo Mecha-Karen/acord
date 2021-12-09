@@ -6,7 +6,7 @@ import datetime
 
 from acord.core.abc import Route, isInt, DISCORD_EPOCH
 from acord.bases import Hashable
-from acord.models import User
+from acord.models import User, Role
 
 
 class Emoji(pydantic.BaseModel, Hashable):
@@ -20,7 +20,7 @@ class Emoji(pydantic.BaseModel, Hashable):
     name: str
     """ Name of Emoji """
 
-    roles: Optional[List[Any]]  # TODO: Role object
+    roles: Optional[List[Role]]  # TODO: Role object
     """ List of roles """
 
     user: Optional[User]
@@ -101,7 +101,7 @@ class Emoji(pydantic.BaseModel, Hashable):
         self,
         *,
         name: Optional[str] = None,
-        roles: Optional[List[Any]] = None,
+        roles: Optional[List[Role]] = None,
         reason: Optional[str] = None,
     ) -> Emoji:
         """|coro|
@@ -117,13 +117,15 @@ class Emoji(pydantic.BaseModel, Hashable):
         reason: :class:`str`
             Reason for editing emoji, shows in Audit Logs.
         """
+        if reason:
+            reason = str(reason)
+
         if not (name or roles):
             raise ValueError("No parameters provided to edit")
         if all(i for i in roles if isInt(i)):
             roles = roles
-        # TODO: role object
-        # elif all(i for i in roles if isinstance(i, Role)):
-        #     roles = list(map(lambda role: role.id, roles))
+        elif all(i for i in roles if isinstance(i, Role)):
+            roles = list(map(lambda role: role.id, roles))
         else:
             raise ValueError("Incorrect roles provided")
 
@@ -133,7 +135,7 @@ class Emoji(pydantic.BaseModel, Hashable):
         await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/emojis/{self.id}"),
             data={"name": name, "roles": roles},
-            headers={"X-Audit-Log-Reason": str(reason)},
+            headers={"X-Audit-Log-Reason": reason},
         )
 
     def is_useable(self):
