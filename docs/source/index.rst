@@ -43,21 +43,22 @@ Basic Example
 
 .. code-block:: py
 
-    from acord import Client, Message
-    
+    from acord import Client, Message, Intents
+
     class MyClient(Client):
         def __init__(self, *args, **kwargs) -> None:
             super().__init__(*args, **kwargs)
-        
+
         async def on_message(self, message: Message) -> None:
             """ My on_message event handler! """
 
-            if message.content == "Hello":
-                return await message.channel.send(f"Hello {message.author}, I am {self.user}!")
+            if message.content.lower() == ".ping":
+                return await message.channel.send(content="Pong!")
 
     if __name__ == "__main__":
-        client = MyClient()
-        client.run("Token")
+        client = MyClient(intents=Intents.ALL)
+
+        client.run("Bot Token")
 
 Dependencies
 ============

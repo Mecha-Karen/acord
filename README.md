@@ -49,21 +49,19 @@ pip3 install .
 from acord import Client, Message, Intents
 
 class MyClient(Client):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def on_ready(self) -> None:
-        print(f"{self.user} is online!")
-
     async def on_message(self, message: Message) -> None:
-        if message.content == '.ping':
-            channel = self.get_channel(message.channel_id)
-            return await channel.send(content="Pong!", message_reference=message)
+        """ My on_message event handler! """
 
-client = MyClient(intents=Intents.ALL)
+        if message.content.lower() == ".ping":
+            return await message.channel.send(content="Pong!")
 
-client.run("token")
+if __name__ == "__main__":
+    client = MyClient(intents=Intents.ALL)
+
+    client.run("Bot Token")
 ```
 
 ## Links
