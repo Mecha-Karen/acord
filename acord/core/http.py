@@ -209,6 +209,10 @@ class HTTPClient(object):
         self, route: abc.Route, data: dict = None, headers: dict = dict(),
         **addtional_kwargs
     ) -> aiohttp.ClientResponse:
+        trapped = self.trappedBuckets.get(route.bucket)
+        if trapped:
+            await asyncio.sleep(trapped)
+            self.trappedBuckets.pop(route.bucket, None)
 
         url = route.url
 
@@ -240,7 +244,9 @@ class HTTPClient(object):
                     self._lock.release()
 
             else:
+                self.trappedBuckets.update({route.bucket: retryAfter})
                 await asyncio.sleep(retryAfter)
+                self.trappedBuckets.pop(route.bucket, None)
 
             try:
                 return await self.request(route, data, headers, **addtional_kwargs)
