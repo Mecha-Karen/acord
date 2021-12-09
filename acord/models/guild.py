@@ -19,7 +19,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Guild ID """
     name: str
     """ Name of guild """
-    icon: str
+    icon: Optional[str]
     """ Guild icon """
 
     afk_channel_id: Optional[Snowflake]
