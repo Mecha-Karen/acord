@@ -236,8 +236,8 @@ class TextChannel(Channel):
         ):
             raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
 
-        if any (
-            i for i in ob.embeds
+        if any(
+            i for i in (ob.embeds or list())
             if i.characters() > 6000
         ):
             raise ValueError('Embeds cannot contain more then 6000 characters')
