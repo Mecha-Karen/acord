@@ -68,6 +68,7 @@ We also recommend installing the ``uvloop`` module, as it can speed up Acord by 
 Contents
 ========
 .. toctree::
+    :titlesonly:
 
     events.rst
     api/client.rst
