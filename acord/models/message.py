@@ -5,7 +5,7 @@ import datetime
 
 from acord.bases import Hashable, Embed
 from acord.core.abc import Route
-from acord.models import User, Emoji, Snowflake
+from acord.models import User, Emoji, Sticker, Snowflake
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Union
@@ -82,7 +82,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ Message pinned in channel or not """
     reactions: Optional[List[Any]] = list()
     """ List of reactions """  # TODO: reaction object
-    referenced_message: Optional[Union[Message, Any]]
+    referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """  # TODO: partial message
     thread: Optional[Any]
     """ Thread were message was sent """  # TODO: Channel Thread Object
@@ -100,8 +100,8 @@ class Message(pydantic.BaseModel, Hashable):
     """ Is a text to speech message """
     type: int
     """ Message type, e.g. DEFAULT, REPLY """
-    sticker_items: Optional[List[Any]]
-    """ List of stickers """  # TODO: Sticker object
+    sticker_items: Optional[List[Sticker]]
+    """ List of stickers """
     stickers: Optional[List[Any]]
     # Depreciated raises error if provided
     webhook_id: Optional[int]
@@ -142,8 +142,50 @@ class Message(pydantic.BaseModel, Hashable):
         super().__init__(**data)
 
     async def refetch(self) -> Optional[Message]:
-        """Attempts to fetch the same message from the API again"""
+        """|coro|
+        
+        Attempts to fetch the same message from the API again"""
         return await self.conn.client.fetch_message(self.channel_id, self.id)
+
+    @pydantic.validate_arguments
+    async def get_reactions(self,
+        emoji: Union[str, Emoji],
+        *, 
+        update: bool = True,
+        after: Union[User, Snowflake],
+        limit: int = 25
+    ) -> List[User]:
+        """|coro|
+        
+        Fetches users from a reaction
+
+        Parameters
+        ----------
+        emoji: Union[:class:`str`, :class:`Emoji`]
+            Emoji to fetch reactions for
+        update: :class:`bool`
+            Whether to update message object, defaults to ``True``
+        after: Union[:class:`Snowflake`, :class:`User`]
+            Fetches users after this id
+        limit: :class:`int`
+            Amount of users to fetch,
+            any integer from 1 - 100
+        """
+        assert 1 <= limit <= 100, "Limit must be between 1 and 100"
+        res = await self.conn.request(
+            Route(
+                "GET", 
+                path=f"/channels/{self.channel_id}/messages/{self.id}/reactions/{emoji}",
+                after=getattr(after, 'id', after),
+                limit=limit
+            ))
+        data = await res.json()
+        users = list(map(lambda x: User(x), data))
+        
+        if update:
+            pass
+
+        return users
 
     async def delete(self, *, reason: str = None) -> None:
         """
@@ -165,6 +207,37 @@ class Message(pydantic.BaseModel, Hashable):
                 "guild_id": self.guild_id,
             },
         )
+
+    async def pin(self, *, reason: str = "") -> None:
+        """ Adds message to channel pins """
+        channel = self.conn.client.get_channel(self.channel_id)
+
+        if not channel:
+            raise ValueError('Target channel no longer exists')
+        if self.pinned:
+            raise ValueError('This message has already been pinned')
+            
+        await self.conn.request(
+            Route("PUT", path=f"/channels/{channel.id}/pins/{self.id}"),
+            headers={'X-Audit-Log-Reason': str(reason)}
+        )
+        self.pinned = True
+
+    async def unpin(self, *, reason: str = "") -> None:
+        """ Removes message from channel pins """
+        channel = self.conn.client.get_channel(self.channel_id)
+
+        if not channel:
+            raise ValueError('Target channel no longer exists')
+        if not self.pinned:
+            raise ValueError('This message has not been pinned')
+
+        await self.conn.request(
+            Route("DELETE", path=f"/channels/{channel.id}/pins/{self.id}"),
+            headers={'X-Audit-Log-Reason': str(reason)}
+        )
+        self.pinned = False
+
 
     async def add_reaction(self, emoji: Union[str, Emoji]) -> None:
         """
@@ -243,3 +316,17 @@ class Message(pydantic.BaseModel, Hashable):
         if not channel:
             raise ValueError('Target channel no longer exists')
         return await channel.send(**data)
+
+    async def crosspost(self) -> Message:
+        channel = self.conn.client.get_channel(self.channel_id)
+
+        if not channel:
+            raise ValueError('Target channel no longer exists')
+        resp = await self.conn.request(
+            Route("POST", path=f"/channels/{channel.id}/messages/{self.id}/crosspost")
+        )
+        message =  Message(**(await resp.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update(
+            {f'{message.channel_id}:{message.id}': message}
+        )
+        return message
