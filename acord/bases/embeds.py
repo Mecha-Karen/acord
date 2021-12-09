@@ -57,7 +57,7 @@ class EmbedThumbnail(pydantic.BaseModel):
 
 
 class EmbedVideo(pydantic.BaseModel):
-    url: Optional[str]
+    url: Optional[pydantic.AnyHttpUrl]
     proxy_url: Optional[pydantic.AnyHttpUrl]
     height: Optional[int]
     width: Optional[int]
