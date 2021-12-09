@@ -207,10 +207,8 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def pin(self, *, reason: str = "") -> None:
         """ Adds message to channel pins """
-        channel = self.conn.client.get_channel(self.channel_id)
+        channel = self.channel
 
-        if not channel:
-            raise ValueError('Target channel no longer exists')
         if self.pinned:
             raise ValueError('This message has already been pinned')
             
@@ -222,10 +220,8 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def unpin(self, *, reason: str = "") -> None:
         """ Removes message from channel pins """
-        channel = self.conn.client.get_channel(self.channel_id)
+        channel = self.channel
 
-        if not channel:
-            raise ValueError('Target channel no longer exists')
         if not self.pinned:
             raise ValueError('This message has not been pinned')
 
@@ -310,12 +306,9 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def reply(self, **data) -> Message:
         """Shortcut for `Message.Channel.send(..., reference=self)`"""
-        channel = self.conn.client.get_channel(self.channel_id)
         data.update(message_reference=self)     # If provided gets overwritten
 
-        if not channel:
-            raise ValueError('Target channel no longer exists')
-        return await channel.send(**data)
+        return await self.channel.send(**data)
 
     async def crosspost(self) -> Message:
         channel = self.conn.client.get_channel(self.channel_id)
@@ -330,3 +323,12 @@ class Message(pydantic.BaseModel, Hashable):
             {f'{message.channel_id}:{message.id}': message}
         )
         return message
+
+    @property
+    def channel(self):
+        """ Returns the channel message was sent in """
+        channel = self.conn.client.get_channel(self.channel_id)
+
+        if not channel:
+            raise ValueError('Target channel no longer exists')
+        return channel
