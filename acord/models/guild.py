@@ -8,8 +8,7 @@ from acord.core.abc import DISCORD_EPOCH
 from acord.bases import Hashable, ChannelTypes
 from acord.models import Snowflake
 
-from acord.models import TextChannel
-from acord.models.emoji import Emoji
+from acord.models import TextChannel, Emoji, Role
 
 
 class Guild(pydantic.BaseModel, Hashable):
@@ -130,7 +129,7 @@ class Guild(pydantic.BaseModel, Hashable):
     public_updates_channel_id: Optional[Snowflake]
     """ the id of the channel where admins and moderators of Community guilds receive notices from Discord """
 
-    roles: List[Any]
+    roles: List[Role]
     """ List of roles in the guild """
     rules_channel_id: Optional[Snowflake]
     """ the id of the channel where Community guilds can display rules and/or guidelines """
