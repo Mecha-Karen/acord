@@ -2,6 +2,7 @@ import pydata_sphinx_theme
 import datetime
 import os
 import sys
+from acord.bases import Hashable
 
 sys.path.append(os.path.abspath('../extensions'))
 
@@ -23,6 +24,9 @@ extensions = [
 intersphinx_mapping = {
   'py': ('https://docs.python.org/3', None),
 }
+
+autodoc_member_order = "groupwise"
+autodoc_typehints_description_target = "documented"
 
 rst_prolog = """
 .. |coro| replace:: This function is a |coroutine_link|_.
@@ -107,7 +111,7 @@ html_css_files = [
     'css/codeblocks.css'
 ]
 
-html_title = "Mecha Karen"
+html_title = "Acord"
 
 suppress_warnings = [
    "image.not_readable"
