@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pydantic
 
-from .__main__ import Channel
+from .base import Channel
 
 from acord.models import Snowflake
 from acord.bases import Hashable
