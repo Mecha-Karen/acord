@@ -6,7 +6,7 @@ from pydantic.color import Color
 import datetime
 
 
-def _rgb_to_hex(rgb) -> int:
+def _rgb_to_hex(rgb) -> str:
     string = ""
     for i in rgb:
         val = hex(i)[2:]
