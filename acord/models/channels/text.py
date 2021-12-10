@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any, Generator, List, Optional, Union
 import datetime
 import pydantic
 import warnings
@@ -147,7 +147,7 @@ class TextChannel(Channel):
         before: Optional[Union[Message, int]] = None,
         after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
-    ) -> List[Message]:
+    ) -> Generator[Message]:
         """|coro|
 
         Fetch messages directly from a channel
@@ -182,14 +182,10 @@ class TextChannel(Channel):
 
         data = await resp.json()
 
-        messages = list()
-
         for message in data:
             msg = Message(**message)
             self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
-            messages.append(msg)
-
-        return messages
+            yield msg
 
     async def send(self, **data) -> Optional[Message]:
         """|coro|
@@ -255,10 +251,14 @@ class TextChannel(Channel):
     async def bulk_delete(self, *messages: Union[Message, Snowflake], reason: str = None) -> None:
         """|coro|
 
-        Deletes messages in bulk, in channel.
+        Deletes messages in bulk, in a channel.
 
         .. warning::
             When deleting in bulk, you need atleast 2 messages and less then 100.
+            
+            You must also provide your own messages to delete, 
+            for a ``purge`` like method, 
+            use messages from :meth:`TextChannel.fetch_messages`.
 
         Parameters
         ----------
