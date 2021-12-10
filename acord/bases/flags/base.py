@@ -32,7 +32,7 @@ class BaseFlagMeta(EnumMeta):
             Name of flags you want to use,
             value must be set to ``True``!
         """
-        enum = super(cls.__class__, cls).__call__(value)
+        enum = super(cls.__class__, cls).__call__(int(value))
 
         for key, value in kwds.items():
             if value is True:
