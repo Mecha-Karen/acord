@@ -43,6 +43,16 @@ packages = [
     "acord.models.channels"
 ]
 
+extra_requires = {
+    "speedup": ['orjson>=3.5.4',
+                'aiodns>=1.1',
+                'brotli',
+                'cchardet']
+}
+
+if not sys.platform.startswith('win'):
+    extra_requires["speedup"].append("uvloop")
+
 setup(
     name="ACord",
     version=version,
@@ -61,4 +71,5 @@ setup(
     classifiers=classifiers,
     packages=packages,
     install_requires=["aiohttp", "pydantic"],
+    extra_requires=extra_requires
 )
