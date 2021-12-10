@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, List, Literal, Optional
 
 import pydantic
-from pydantic.color import Color
+from pydantic.color import Color as PydanticColor
 import datetime
 
 
@@ -16,7 +16,7 @@ def _rgb_to_hex(rgb) -> str:
             string += val
     return string
 
-class Color(Color):
+class Color(PydanticColor):
     def __init__(self, color) -> None:
         if isinstance(color, int):
             # Converts int into a 6 char hex code
