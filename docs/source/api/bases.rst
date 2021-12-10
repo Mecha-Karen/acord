@@ -24,6 +24,11 @@ Embed
 Flags
 ~~~~~
 
+BaseFlagMeta
+============
+.. autoclass:: BaseFlagMeta
+    :members: __call__
+
 Intents
 =======
 
@@ -34,6 +39,12 @@ Users
 =====
 
 .. autoclass:: UserFlags
+    :members:
+
+Permissions
+===========
+
+.. autoclass:: Permissions
     :members:
 
 File

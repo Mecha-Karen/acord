@@ -38,6 +38,34 @@ Features
 * Highly customisable
 * Fast and efficient
 
+Installation
+============
+Installing acord is as simple as ever!
+
+**Stable**
+
+.. code-block:: sh
+
+    # windows
+    pip install acord
+
+    # linux
+    pip3 install acord
+
+**Development**
+
+.. code-block:: sh
+
+    git clone https://github.com/Mecha-Karen/acord
+    cd acord
+
+    # windows
+    pip install .
+    
+    # linux
+    pip3 install .
+
+
 Basic Example
 =============
 

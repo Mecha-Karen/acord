@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 import pydantic
 
-from acord.bases import Hashable
+from acord.bases import Hashable, Permissions
 from acord.bases.embeds import Color
 
 from acord.models import Snowflake
@@ -31,13 +31,14 @@ class Role(pydantic.BaseModel, Hashable):
     """ Role unicode emoji """
     position: int
     """ Role position """
-    permissions: str
+    permissions: Permissions
     """ Role permissions """
     managed: bool
     """ Whether this role is managed by an integration """
     mentionable: bool
     """ Whether role can be mentioned """
     tags: Optional[RoleTags]
+    """ Role tags """
 
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, role_icon: str, **kwargs) -> Optional[str]:

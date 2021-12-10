@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generator, List, Optional, Union
+from typing import Any, Iterator, List, Optional, Union
 import datetime
 import pydantic
 import warnings
@@ -147,7 +147,7 @@ class TextChannel(Channel):
         before: Optional[Union[Message, int]] = None,
         after: Optional[Union[Message, int]] = None,
         limit: Optional[int] = 50,
-    ) -> Generator[Message]:
+    ) -> Iterator[Message]:
         """|coro|
 
         Fetch messages directly from a channel
