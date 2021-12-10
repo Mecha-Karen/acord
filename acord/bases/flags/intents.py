@@ -1,14 +1,16 @@
 from enum import Flag
+from .base import BaseFlagMeta
 
 
-class Intents(Flag):
+class Intents(Flag, metaclass=BaseFlagMeta):
     """
     Intents are used for accessing certain content through the gateway,
     without them many of the events wouldn't work as expected
 
     .. rubric:: Usage
 
-    All intents are assigned as a attribute, to combine intents, use the ``|`` operator, as shown below.
+    All intents are assigned as a attribute, 
+    to combine intents, use the ``|`` operator, as shown below.
 
     .. code-block:: py
 
@@ -20,6 +22,9 @@ class Intents(Flag):
             | Intents.GUILD_PRESENCES
             ...
         )
+
+    If bitwise operators are not to your taste, 
+    you can try using :meth:`BaseFlagMeta.__call__`.
 
     .. rubric:: Valid Attributes
     Listed below are the allowed intent attrs and what events they allow to be used

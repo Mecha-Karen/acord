@@ -1,8 +1,9 @@
 from __future__ import annotations
 from enum import Flag
+from .base import BaseFlagMeta
 
 
-class UserFlags(Flag):
+class UserFlags(Flag, metaclass=BaseFlagMeta):
     """
     User flags allow you to identify users based on there badges given by discord
 
@@ -27,6 +28,9 @@ class UserFlags(Flag):
         )
 
         hasFlags = User.flags & flags == flags
+
+    If bitwise operators are not to your taste, 
+    you can try using :meth:`BaseFlagMeta.__call__`.
 
     Attributes
     ----------
