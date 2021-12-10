@@ -70,17 +70,17 @@ class EmbedProvidor(pydantic.BaseModel):
 class Embed(pydantic.BaseModel):
     """ An object representing a discord embed """
 
-    title: Optional[str]
+    title: Optional[str] = None
     """ Embed title, must be under 256 chars if provided """
-    type: Optional[Literal["rich", "image", "video", "gifv", "article", "link"]] = "rich"
+    type: Literal["rich", "image", "video", "gifv", "article", "link"] = "rich"
     """ Embed type, defaults to rich """
-    description: Optional[str]
+    description: Optional[str] = None
     """ Embed description, must be under 4096 chars if provided """
-    url: Optional[pydantic.AnyHttpUrl]
+    url: Optional[pydantic.AnyHttpUrl] = None
     """ Embed title hyperlink """
-    timestamp: Optional[datetime.datetime]
+    timestamp: Optional[datetime.datetime] = None
     """ Embed timestamp """
-    color: Optional[Color]
+    color: Optional[Color] = None
     """Embed colour,
     can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_
 
@@ -97,19 +97,19 @@ class Embed(pydantic.BaseModel):
         Embed(color=Hex)
         Embed(color="blue")
     """
-    footer: Optional[EmbedFooter]
+    footer: Optional[EmbedFooter] = None
     """ Embed footer """
-    image: Optional[EmbedImage]
+    image: Optional[EmbedImage] = None
     """ Embed image """
-    thumbnail: Optional[EmbedThumbnail]
+    thumbnail: Optional[EmbedThumbnail] = None
     """ Embed thumbnail """
-    video: Optional[EmbedVideo]
+    video: Optional[EmbedVideo] = None
     """ Embed video """
-    providor: Optional[EmbedProvidor]
+    providor: Optional[EmbedProvidor] = None
     """ Embed Providor """
-    author: Optional[EmbedAuthor]
+    author: Optional[EmbedAuthor] = None
     """ Embed author """
-    fields: Optional[List[EmbedField]]
+    fields: List[EmbedField] = pydantic.Field(default_factory=list)
     """ Embed fields """
 
     @pydantic.validator('title')
@@ -128,18 +128,21 @@ class Embed(pydantic.BaseModel):
         """ Counts the total amount of characters in the embed """
         count = 0
 
-        count += len((self.title or ""))
-        count += len((self.description or ""))
+        if self.title is not None:
+            count += len(self.title)
+
+        if self.description is not None:
+            count += len(self.description)
         
-        footer_text = getattr(self.footer, 'text', "")
-        count += len(footer_text)
+        if self.footer is not None:
+            count += len(self.footer.text)
 
-        author_text = getattr(self.author, 'name', "")
-        count += len(author_text)
+        if self.author is not None:
+            count += len(self.author.name)
 
-        for field in (self.fields or list()):
-            count += len((field.name or ""))
-            count += len((field.value or ""))
+        for field in self.fields:
+            count += len(field.name)
+            count += len(field.value)
 
         return count
 
@@ -190,17 +193,15 @@ class Embed(pydantic.BaseModel):
         inline: :class:`bool`
             Whether or not this field should be inline. Defaults to ``False``
         """
+
+        if len(self.fields) + 1 > 21:
+            raise ValueError('Embed cannot contain more then 21 fields')
+
         field = EmbedField(**data)
 
-        fields = self.fields
+        self.fields.append(field)
 
-        if (len(fields) + 1) > 21:
-            raise ValueError('Embed cannot contain more then 21 fields')
-        
-        fields.append(field)
-        self.fields = field
-
-    def remove_field(self, index: int) -> Optional[EmbedField]:
+    def remove_field(self, index: int) -> EmbedField:
         """
         Remove a field from the embed,
         Returns field if found,
@@ -211,11 +212,9 @@ class Embed(pydantic.BaseModel):
         index: :class:`int`
             Index of field to remove.
         """
-        fields = self.fields
 
-        x = fields.pop(index)
-        self.fields = fields
-        return x
+        popped_field = self.fields.pop(index)
+        return popped_field
 
     def insert_field(self, index, **data) -> None:
         """
@@ -226,18 +225,16 @@ class Embed(pydantic.BaseModel):
         index: :class:`int`
             Index to insert field at, e.g. ``0`` is the start
         """
-        fields = self.fields
-        field = EmbedField(**data)
 
-        fields.insert(index, field)
-        self.fields = fields
+        field = EmbedField(**data)
+        self.fields.insert(index, field)
 
     def dict(self, *args, **kwargs) -> dict:
         # :meta private:
         # Override pydantic to return `Color` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
 
-        if self.color:
+        if self.color is not None:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data['color'] = color
 
