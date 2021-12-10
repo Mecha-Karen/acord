@@ -38,6 +38,7 @@ class Role(pydantic.BaseModel, Hashable):
     mentionable: bool
     """ Whether role can be mentioned """
     tags: Optional[RoleTags]
+    """ Role tags """
 
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, role_icon: str, **kwargs) -> Optional[str]:
