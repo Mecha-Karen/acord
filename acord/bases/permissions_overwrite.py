@@ -1,11 +1,10 @@
 import pydantic
-from acord.models import Snowflake
 from typing import Literal
 from .flags.permissions import Permissions
 
 
 class PermissionsOverwrite(pydantic.BaseModel):
-    id: Snowflake
+    id: int
     type: Literal[0, 1]
     allow: Permissions
     deny: Permissions
