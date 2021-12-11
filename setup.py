@@ -1,6 +1,7 @@
 from setuptools import setup
 import re
 import sys
+import os
 
 versionInfo = sys.version_info
 
@@ -50,7 +51,7 @@ extra_requires = {
                 'cchardet']
 }
 
-if not sys.platform.startswith('win'):
+if not os.name == "nt":
     extra_requires["speedup"].append("uvloop")
 
 setup(
