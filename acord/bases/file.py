@@ -1,11 +1,14 @@
 import os
 import io
-from typing import Optional, Union, Type
+from typing import TYPE_CHECKING, Optional, Union, Type
 import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
+    if TYPE_CHECKING:
+        fp: io.BufferedIOBase
+    else:
+        fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]
     """ A file object or the path to the file """
     position: Optional[int] = 0
     """ Position to were the file should be read from """
@@ -42,14 +45,14 @@ class File(pydantic.BaseModel):
 
         return spoiler
 
-    def reset(self, seek: Optional[bool] = False, position: Optional[int] = 0) -> None:
+    def reset(self, seek: bool = False, position: int = 0) -> None:
         """ Resets a files position
 
         Parameters
         ----------
-        seek: :class:`bool`
+        seek: optional :class:`bool` = `False`
             Whether to reset position
-        position: :class:`int`
+        position: optional :class:`int` = `0`
             Optional field to seek to a specific location in file
         """
         if not seek:
