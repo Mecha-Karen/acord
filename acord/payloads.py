@@ -1,7 +1,7 @@
 from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 
-from acord.bases import File, Embed, AllowedMentions
+from acord.bases import File, Embed, AllowedMentions, PermissionsOverwrite
 from .models import Message, MessageReference, Snowflake
 
 
@@ -12,7 +12,7 @@ class ChannelEditPayload(pydantic.BaseModel):
     topic: Optional[str]
     nsfw: Optional[bool]
     ratelimit: Optional[int]
-    permission_overwrites: Optional[List[Any]]
+    permission_overwrites: Optional[List[PermissionsOverwrite]]
     category: Optional[int]
     archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]]
     reason: Optional[str]
