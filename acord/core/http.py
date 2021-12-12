@@ -1,13 +1,18 @@
 """
 Main HTTP connection and websocket interaction between discord and your application
 """
+
 try:
     import uvloop
 
     uvloop.install()
 except ImportError:
-    __import__("warnings").warn(
-        "Failed to import UVLoop, it is recommended to install this library\npip install uvloop",
+    import warnings
+
+    warnings.warn(
+        "Failed to import UVLoop, it is recommended to install this library. \
+            If you are using windows simply ignore this warning.\
+            \npip install uvloop",
         ImportWarning,
     )
 
