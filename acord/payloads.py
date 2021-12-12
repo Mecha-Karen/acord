@@ -12,10 +12,16 @@ class ChannelEditPayload(pydantic.BaseModel):
     topic: Optional[str]
     nsfw: Optional[bool]
     ratelimit: Optional[int]
-    permission_overwrites: Optional[List[PermissionsOverwrite]]
+    permission_overwrites: Optional[Union[List[PermissionsOverwrite], PermissionsOverwrite]]
     category: Optional[int]
     archive_duration: Optional[Literal[0, 60, 1440, 4230, 10080]]
     reason: Optional[str]
+
+    @pydantic.validator('permission_overwrites')
+    def _validate_perms(cls, val) -> list:
+        if isinstance(val, list):
+            return val
+        return [val]
 
 
 class MessageCreatePayload(pydantic.BaseModel):
