@@ -1,7 +1,13 @@
 from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 
-from acord.bases import File, Embed, AllowedMentions, PermissionsOverwrite
+from acord.bases import (
+    File, 
+    Embed, 
+    AllowedMentions, 
+    PermissionsOverwrite, 
+    MessageFlags
+)
 from .models import Message, MessageReference, Snowflake
 
 
@@ -31,6 +37,8 @@ class MessageCreatePayload(pydantic.BaseModel):
     files: Optional[Union[List[File], File]] = list()
     message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
     tts: Optional[bool] = False
+    # Hold off for later releases
+    # components: List[Dict[str, Any]]
 
     @pydantic.validator('content')
     def _validate_content(cls, content: str) -> str:
@@ -41,12 +49,12 @@ class MessageCreatePayload(pydantic.BaseModel):
     @pydantic.validator('files')
     def _validate_file(cls, files) -> list:    
         if isinstance(files, File):
-            return [files]
+            files = [files]
         
         assert all(
             (isinstance(i, File) and getattr(i, 'is_closed', None) is False) 
             for i in files
-            ), "Invalid list of files passed through"
+            ), "Invalid list of files, make sure they are not closed and are file objects"
         
         return files
 
@@ -68,3 +76,31 @@ class MessageCreatePayload(pydantic.BaseModel):
         if isinstance(embeds, list):
             return embeds
         return [embeds]
+
+
+class MessageEditPayload(pydantic.BaseModel):
+    content: Optional[str]
+    embeds: Optional[str]
+    flags: Optional[MessageFlags]
+    allowed_mentions: Optional[AllowedMentions]
+    # Hold off for later releases
+    # components: List[Dict[str, Any]]
+    files: Optional[List[File]]
+
+    @pydantic.validator('content')
+    def _validate_content(cls, content: str) -> str:
+        if len(content) > 2000:
+            raise ValueError('Message content cannot be greater then 2000')
+        return content
+
+    @pydantic.validator('files')
+    def _validate_file(cls, files) -> list:    
+        if isinstance(files, File):
+            files = [files]
+        
+        assert all(
+            (isinstance(i, File) and getattr(i, 'is_closed', None) is False) 
+            for i in files
+            ), "Invalid list of files, make sure they are not closed and are file objects"
+        
+        return files
