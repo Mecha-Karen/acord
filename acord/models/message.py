@@ -1,4 +1,5 @@
 from __future__ import annotations
+from aiohttp.formdata import FormData
 
 import pydantic
 import datetime
@@ -311,10 +312,17 @@ class Message(pydantic.BaseModel, Hashable):
         return await self.channel.send(**data)
 
     async def crosspost(self) -> Message:
+        """Crossposts a message in a news channel"""
         channel = self.channel
 
         if not channel:
             raise ValueError('Target channel no longer exists')
+        if self.flags & MessageFlags.CROSSPOSTED == MessageFlags.CROSSPOSTED:
+            raise ValueError('This message has already been crossposted')
+        if not channel.type == 5:
+            # ChannelTypes.GUILD_NEWS
+            raise ValueError('Cannot crosspost message as channel is not a news channel')
+
         resp = await self.conn.request(
             Route("POST", path=f"/channels/{channel.id}/messages/{self.id}/crosspost")
         )
@@ -325,7 +333,73 @@ class Message(pydantic.BaseModel, Hashable):
         return message
 
     async def edit(self, **data) -> Message:
+        """|coro|
+
+        Modifies current message
+
+        Parameters
+        ----------
+        content: :class:`str`
+            new content for message
+        embeds: Union[List[:class:`Embed`], :class:`Embed`]
+            List of embeds to update message with.
+
+            .. warning::
+                Embeds are updated **EXACTLY** as they are provided.
+
+                So doing ``Message.edit(embeds=Embed)`` will remove previous embeds.
+                For extending embeds you can use something like:
+
+                .. code-block:: py
+
+                    from acord import Embed
+
+                    embeds = Message.embeds
+                    newEmbed = Embed(**kwargs)
+                    embeds.append(newEmbed)
+
+                    await Message.edit(embeds=embeds)
+        flags: :class:`MessageFlags`
+            edit message flags
+
+            .. warning::
+                only :attr:`MessageFlags.SUPPRESS_EMBEDS` can currently be set/unset
+        allowed_mentions: :class:`AllowedMentions`
+            edit allowed mentions for message
+        files: Union[List[:class:`File`], :class:`File`]
+            list of files to update message with,
+            works the same way as the embeds parameter
+        """
+        from acord.payloads import MessageEditPayload
+
         channel = self.channel
+        payload = MessageEditPayload(**data)
+        form_data = FormData()
+
+        if payload.files:
+            for index, file in enumerate(payload.files):
+
+                form_data.add_field(
+                    name=f'file{index}',
+                    value=file.fp,
+                    filename=file.filename,
+                    content_type="application/octet-stream"
+                )
+            
+        form_data.add_field(
+            name="payload_json",
+            value=payload.json(exclude={'files'}),
+            content_type="application/json"
+        )
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/channels/{channel.id}/messages/{self.id}"),
+            data=form_data,
+        )
+
+        n_msg = Message(conn=self.conn, **(await r.json()))
+        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
+        return n_msg
 
     @property
     def channel(self):
