@@ -115,7 +115,7 @@ class TextChannel(Channel):
         ratelimit: :class:`int`
             Change ratelimit value for channel
         permission_overwrite: List[:class:`PermissionsOverwrite`]
-            Currently not available
+            List of permissions to overwrite in the channel
         category: Union[:class:`int`, CategoryChannel]
             Move the channel to a different category, use :class:`MISSING` for no category
         archive_duration: Literal[0, 60, 1440, 4230, 10080]
