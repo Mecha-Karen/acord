@@ -247,7 +247,7 @@ class TextChannel(Channel):
             data=form_data
         )
 
-        n_msg = Message(**(await r.json()))
+        n_msg = Message(conn=self.conn, **(await r.json()))
         self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
         return n_msg
 
