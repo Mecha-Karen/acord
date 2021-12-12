@@ -1,6 +1,7 @@
 from setuptools import setup
 import re
 import sys
+import os
 
 versionInfo = sys.version_info
 
@@ -43,6 +44,16 @@ packages = [
     "acord.models.channels"
 ]
 
+extra_requires = {
+    "speedup": ['orjson>=3.5.4',
+                'aiodns>=1.1',
+                'brotli',
+                'cchardet']
+}
+
+if not os.name == "nt":
+    extra_requires["speedup"].append("uvloop")
+
 setup(
     name="ACord",
     version=version,
@@ -61,4 +72,5 @@ setup(
     classifiers=classifiers,
     packages=packages,
     install_requires=["aiohttp", "pydantic"],
+    extra_requires=extra_requires
 )

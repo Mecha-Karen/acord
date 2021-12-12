@@ -17,6 +17,7 @@ from .embeds import (
 from .file import File
 from .mixins import Hashable, _C, T, H
 from .mentions import AllowedMentions
+from .permissions_overwrite import PermissionsOverwrite
 
 
 class MISSING(object):

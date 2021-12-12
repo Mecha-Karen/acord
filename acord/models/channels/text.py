@@ -207,6 +207,18 @@ class TextChannel(Channel):
         """
         ob = MessageCreatePayload(**data)
 
+        if not any(
+            i for i in ob.dict() 
+            if i in ['content', 'files', 'embeds', 'sticker_ids']
+        ):
+            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
+
+        if any(
+            i for i in (ob.embeds or list())
+            if i.characters() > 6000
+        ):
+            raise ValueError('Embeds cannot contain more then 6000 characters')
+
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
         form_data = FormData()
 
@@ -225,18 +237,6 @@ class TextChannel(Channel):
             value=ob.json(exclude={'files'}),
             content_type="application/json"
         )
-
-        if not any(
-            i for i in ob.dict() 
-            if i in ['content', 'files', 'embeds', 'sticker_ids']
-        ):
-            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
-
-        if any(
-            i for i in (ob.embeds or list())
-            if i.characters() > 6000
-        ):
-            raise ValueError('Embeds cannot contain more then 6000 characters')
 
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
