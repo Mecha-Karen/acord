@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Any, Iterator, List, Optional, Union
 import datetime
 import pydantic
-import warnings
 from aiohttp import FormData
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
 from acord.payloads import ChannelEditPayload, MessageCreatePayload
+from acord.utils import _payload_dict_to_json
 
 from .base import Channel
 
@@ -114,7 +114,7 @@ class TextChannel(Channel):
             Whether to mark channel as NSFW
         ratelimit: :class:`int`
             Change ratelimit value for channel
-        permission_overwrite: List[Any]
+        permission_overwrite: List[:class:`PermissionsOverwrite`]
             Currently not available
         category: Union[:class:`int`, CategoryChannel]
             Move the channel to a different category, use :class:`MISSING` for no category
@@ -130,13 +130,17 @@ class TextChannel(Channel):
                 payload.pop(k)
 
         reason = payload.pop("reason", None)
+        headers = dict()
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+        headers.update({"Content-Type": "application/json"})
 
         # Rest should be standard python vars
 
         await self.conn.request(
             Route("PATCH", path=f"/channels/{self.id}", bucket=bucket),
-            data=payload,
-            headers={"X-Audit-Log-Reason": reason},
+            data=_payload_dict_to_json(ChannelEditPayload, **payload),
+            headers=headers,
         )
 
     @pydantic.validate_arguments
