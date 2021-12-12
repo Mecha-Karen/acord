@@ -3,7 +3,7 @@ from __future__ import annotations
 import pydantic
 import datetime
 
-from acord.bases import Hashable, Embed
+from acord.bases import Hashable, Embed, MessageFlags
 from acord.core.abc import Route
 from acord.models import User, Emoji, Sticker, Snowflake
 from acord.errors import APIObjectDepreciated
@@ -58,7 +58,7 @@ class Message(pydantic.BaseModel, Hashable):
     ]
     embeds: List[Embed]
     """ List of embeds """
-    flags: int
+    flags: MessageFlags
     """ Message flags """
     id: Snowflake
     """ Message ID """
@@ -311,7 +311,7 @@ class Message(pydantic.BaseModel, Hashable):
         return await self.channel.send(**data)
 
     async def crosspost(self) -> Message:
-        channel = self.conn.client.get_channel(self.channel_id)
+        channel = self.channel
 
         if not channel:
             raise ValueError('Target channel no longer exists')
@@ -323,6 +323,9 @@ class Message(pydantic.BaseModel, Hashable):
             {f'{message.channel_id}:{message.id}': message}
         )
         return message
+
+    async def edit(self, **data) -> Message:
+        channel = self.channel
 
     @property
     def channel(self):
