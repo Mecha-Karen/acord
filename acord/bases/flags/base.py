@@ -32,6 +32,8 @@ class BaseFlagMeta(EnumMeta):
             Name of flags you want to use,
             value must be set to ``True``!
         """
+        # get the value of an Enum
+        value = getattr(value, 'value', value)
 
         enum = super(cls.__class__, cls).__call__(int(value))
 
