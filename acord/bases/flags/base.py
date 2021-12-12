@@ -1,5 +1,5 @@
 from enum import EnumMeta
-from typing import Dict, overload
+from typing import Dict
 
 
 class BaseFlagMeta(EnumMeta):
