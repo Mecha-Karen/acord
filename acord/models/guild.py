@@ -8,8 +8,9 @@ from acord.core.abc import DISCORD_EPOCH
 from acord.bases import Hashable, ChannelTypes
 from acord.models import Snowflake
 
-from acord.models import TextChannel, Emoji, Role
-
+from .channels.text import TextChannel
+from .emoji import Emoji
+from .roles import Role
 
 class Guild(pydantic.BaseModel, Hashable):
     conn: Any  # Connection object - For internal use
