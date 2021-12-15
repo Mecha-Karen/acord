@@ -290,3 +290,18 @@ class TextChannel(Channel):
             _pop_task(self.conn.client, self.id, *ids), 
             name=f"acord: bulk delete: {len(ids)}"
         )
+
+    # Circular imports - Fix typehint when importing
+    async def fetch_invites(self) -> List[Any]:
+        """|coro|
+
+        Fetches all invites from channel
+        """
+        from acord.models import Invite
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/invites")
+        )
+        invites = await r.json()
+
+        return [Invite(**inv) for inv in invites]
