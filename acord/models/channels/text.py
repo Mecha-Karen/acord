@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 import datetime
 import pydantic
 from aiohttp import FormData
@@ -349,3 +349,52 @@ class TextChannel(Channel):
         )
 
         return Invite(**(await r.json()))
+
+    @pydantic.validate_arguments
+    async def follow(self, *, channel: Union[Channel, Snowflake]) -> Dict[str, Snowflake]:
+        """|coro|
+
+        Follows a guild news channel
+
+        Parameters
+        ----------
+        channel: Union[:class:`Channel`, :class:`Snowflake`]
+            Target channel, 
+            or channel to recieve messages from this channel.
+
+        Returns
+        -------
+        A dictionary with the keys:
+        
+        * channel_id: source channel id
+        * webhook_id: created target webhook id
+        """
+        if isinstance(channel, Channel):
+            channel = channel.id
+
+        r = await self.conn.request(
+            Route("POST", path=f'/channels/{self.id}/followers'),
+            data={'webhook_channel_id': channel},
+        )
+
+        return await r.json()
+
+    async def trigger_typing(self) -> None:
+        """|coro|
+
+        Creates a typing indicator in this channel
+        """
+        await self.conn.request(Route("POST", path=f'/channels/{self.id}/typing'))
+
+    async def pins(self) -> Iterator[Message]:
+        """|coro|
+
+        Fetches channel pins
+        """
+        r = await self.conn.request(Route("GET", path=f'/channels/{self.id}/pins'))
+        messages = await r.json()
+
+        for message in messages:
+            msg = Message(**message)
+            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
+            yield msg
