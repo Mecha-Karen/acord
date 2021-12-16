@@ -7,7 +7,7 @@ from aiohttp import FormData
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
-from acord.payloads import ChannelEditPayload, MessageCreatePayload
+from acord.payloads import ChannelEditPayload, InviteCreatePayload, MessageCreatePayload
 from acord.utils import _payload_dict_to_json
 
 from .base import Channel
@@ -305,3 +305,47 @@ class TextChannel(Channel):
         invites = await r.json()
 
         return [Invite(**inv) for inv in invites]
+
+    async def create_invite(self, *, reason: str = None, **data) -> Any:
+        """|coro|
+
+        Creates new invite in channel
+
+        max_age: :class:`int`
+            How long the invite can be used for,
+            must be greater or equal to 0
+            and less then 604800 (7 Days).
+
+            .. note::
+                0 is for never
+        max_uses: :class:`int`
+            How many times invite can be used,
+            before expiring.
+            Must be greater or equal to 0
+            and less then 100.
+
+            .. note::
+                0 is for infinite
+        temporary: :class:`bool`
+            Whether this invite only grants temporary membership
+        unique: :class:`bool`
+            If true,
+            don't try to reuse a similar invite
+            (useful for creating many unique one time use invites)
+        """
+        from acord.models import Invite
+
+        headers = dict()
+        if reason:
+            headers.update({'X-Audit-Reason': reason})
+        
+        if data:
+            data = InviteCreatePayload(**data)
+
+        r = await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/invites"),
+            data=data,
+            headers=headers
+        )
+
+        return Invite(**(await r.json()))
