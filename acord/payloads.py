@@ -104,3 +104,22 @@ class MessageEditPayload(pydantic.BaseModel):
             ), "Invalid list of files, make sure they are not closed and are file objects"
         
         return files
+
+
+class InviteCreatePayload(pydantic.BaseModel):
+    target_type: Optional[Literal[1, 2]]
+    target_user_id: Optional[int]
+    target_application_id: Optional[int]
+
+    max_age: int = 86400
+    max_uses: int = 0
+    temporary: bool = False
+    unique: bool = False
+
+    @pydantic.validator("max_age")
+    def _validate_max_age(cls, age) -> int:
+        assert 0 <= age <= 604800, "Max age of invite must be 0 - 604800"
+
+    @pydantic.validator("max_uses")
+    def _validate_max_uses(cls, uses) -> int:
+        assert 0 <= uses <= 100, "Max uses of invite must be 0 - 100"
