@@ -30,6 +30,22 @@ Guild
 .. autoclass:: Guild
    :members:
 
+Guild Template
+~~~~~~~~~~~~~~~
+
+.. attributetable:: GuildTemplate
+
+.. autoclass:: GuildTemplate
+   :members:
+
+Invite
+~~~~~~
+
+.. attributetable:: Invite
+
+.. autoclass:: Invite
+   :members:
+
 Message
 ~~~~~~~
 
@@ -38,12 +54,28 @@ Message
 .. autoclass:: Message
    :members:
 
-TextChannel
-~~~~~~~~~~~
+Sticker
+~~~~~~~
+
+.. attributetable:: Sticker
+
+.. autoclass:: Sticker
+   :members:
+
+Text Channel
+~~~~~~~~~~~~
 
 .. attributetable:: TextChannel
 
 .. autoclass:: TextChannel
+   :members:
+
+Role
+~~~~
+
+.. attributetable:: Role
+
+.. autoclass:: Role
    :members:
 
 User
