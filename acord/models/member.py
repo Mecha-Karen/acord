@@ -18,8 +18,8 @@ class Member(pydantic.BaseModel, Hashable):
     nick: :class:`str`
           Guild specific nickname of the member
     avatar: :class:`str`
-          Member\'s guild avatar hash
-    roles: :class:`List[acord.models.Snowflake]`
+          Member's guild avatar hash
+    roles: :class:`List[Snowflake]`
           List of role IDs of roles the user has
     joined_at: :class:`datetime.datetime`
           The time the user joined the guild
