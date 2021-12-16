@@ -30,7 +30,7 @@ class Member(pydantic.BaseModel, Hashable):
     mute: :class:`bool`
           Whether if the member is mutes in voice channels
     pending: :class:`bool`
-          Where if the member is pending verification. Not included (False) in non-GUILD_\* events
+          Whether if the member is pending verification. Not included (False) in non-GUILD_\* events
     permissions: :class:`str`
           Total permissions of the member in the channel. Including overwrites.
     """
