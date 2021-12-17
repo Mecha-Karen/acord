@@ -12,6 +12,7 @@ from .channels.text import TextChannel
 from .channels.thread import Thread
 from .emoji import Emoji
 from .roles import Role
+from .member import Member
 
 class Guild(pydantic.BaseModel, Hashable):
     conn: Any  # Connection object - For internal use
@@ -88,8 +89,8 @@ class Guild(pydantic.BaseModel, Hashable):
     member_count: int
     """ Amount of members in this guild """
 
-    members: List[Any]
-    """ List of all members in the guild """  # TODO: member object
+    members: Dict[Snowflake, Member]
+    """ Mapping of all members in guild """ 
 
     mfa_level: int
     """required MFA level for the guild
@@ -172,6 +173,12 @@ class Guild(pydantic.BaseModel, Hashable):
     created_at: Optional[datetime.datetime]
     """ when the guild was created """
 
+    @pydantic.validator("members", pre=True)
+    def _validate_members(cls, members, **kwargs) -> Dict[Snowflake, Member]:
+        conn = kwargs['values']['conn']
+
+        return {int(m['user']['id']): Member(conn=conn, **m) for m in members}
+
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:
@@ -230,3 +237,6 @@ class Guild(pydantic.BaseModel, Hashable):
     def _validate_guild_created_at(cls, _, **kwargs) -> datetime.datetime:
         timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
         return datetime.datetime.fromtimestamp(timestamp)
+
+    def get_member(self, member_id: Snowflake) -> Optional[Member]:
+        return self.members.get(member_id)
