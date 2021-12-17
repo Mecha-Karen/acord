@@ -7,6 +7,8 @@
 </div>
 <h4 align="center">A simple API wrapper for the discord API</h4>
 
+License: **GPL-3.0 License** (see the LICENSE file for details) covers all files in the **acord** repository unless stated otherwise.
+
 ## Features
 * Uses modern pythonic, ``await`` and ``async`` syntax
 * Flexible and customisable
