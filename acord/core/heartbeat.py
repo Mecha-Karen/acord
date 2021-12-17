@@ -1,9 +1,10 @@
 # Basic heartbeat controller
+from threading import Thread
 import asyncio
 from .signals import gateway  # type: ignore
 
 
-class KeepAlive(object):
+class KeepAlive(Thread):
     def __init__(self, identity, ws, helloPacket: dict):
         self._ws = ws
         self.packet = helloPacket
