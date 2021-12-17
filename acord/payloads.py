@@ -119,7 +119,27 @@ class InviteCreatePayload(pydantic.BaseModel):
     @pydantic.validator("max_age")
     def _validate_max_age(cls, age) -> int:
         assert 0 <= age <= 604800, "Max age of invite must be 0 - 604800"
+        return age
 
     @pydantic.validator("max_uses")
     def _validate_max_uses(cls, uses) -> int:
         assert 0 <= uses <= 100, "Max uses of invite must be 0 - 100"
+        return uses
+
+
+class ThreadCreatePayload(pydantic.BaseModel):
+    name: str
+    type: Literal[10, 11, 12] = 11
+    auto_archive_duration: Optional[Literal[0, 60, 1440, 4320, 10080]] = 60
+    invitable: Optional[bool] = False
+    rate_limit_per_user: Optional[int]
+
+    @pydantic.validator("name")
+    def _validate_name(cls, name) -> str:
+        assert 0 < len(name) <= 100, "Name of thread must be greater then 0 but less then 100"
+        return name
+
+    @pydantic.validator("rate_limit_per_user")
+    def _validate_slowmode(cls, sm) -> int:
+        assert 0 <= sm <= 21600, "Slowmode cannot be greater then 21600 and less then 0"
+        return sm
