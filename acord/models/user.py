@@ -45,27 +45,27 @@ class User(pydantic.BaseModel, Hashable):
 
     conn: Any  # Connection Object - For internal use
 
-    id: int  # TODO: Change this to ~acord.types.UserSnowflake~ later
-    username: str  # the user's username, not unique across the platform
-    discriminator: str  # the user's 4-digit discord-tag
-    avatar: Optional[str]  # the user's avatar hash
-    bot: Optional[bool]  # whether the user belongs to an OAuth2 application
+    id: int
+    username: str
+    discriminator: str
+    avatar: Optional[str]
+    bot: Optional[bool]
     system: Optional[
         bool
-    ]  # whether the user is an Official Discord System user (part of the urgent message system)
+    ]
     mfa_enabled: Optional[
         bool
-    ]  # whether the user has two factor enabled on their account
-    banner: Optional[str]  # the user's banner hash
+    ]
+    banner: Optional[str]
     accent_color: Optional[
         int
-    ]  # the user's banner color encoded as an integer representation of hexadecimal color code
-    locale: Optional[str]  # the user's chosen language option
-    verified: Optional[bool]  # whether the email on this account has been verified
-    flags: Optional[UserFlags]  # the flags on a user's account
-    premium_type: Optional[int]  # the type of Nitro subscription on a user's account
-    public_flags: Optional[UserFlags]  # the public flags on a user's account
-    email: Optional[str]  # the user's email, can be None as bots cannot have an email
+    ]
+    locale: Optional[str]
+    verified: Optional[bool]
+    flags: Optional[UserFlags]
+    premium_type: Optional[int]
+    public_flags: Optional[UserFlags] = 0
+    email: Optional[str]
 
     @pydantic.validator("avatar")
     def _validateEmail(cls, av: str, **kwargs) -> str:
