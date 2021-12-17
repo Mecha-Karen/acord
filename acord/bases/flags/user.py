@@ -81,6 +81,6 @@ class UserFlags(Flag, metaclass=BaseFlagMeta):
     PREMIUM_EARLY_SUPPORTER = 1 << 9
     TEAM_PSEUDO_USER = 1 << 10
 
-    VERIFIED_BOT = 1 << 15
+    VERIFIED_BOT = 1 << 16
     VERIFIED_DEVELOPER = 1 << 17
     CERTIFIED_MODERATOR = 1 << 18
