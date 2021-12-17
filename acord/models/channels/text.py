@@ -434,7 +434,7 @@ class TextChannel(Channel):
             data=data.json()
         )
         thread = Thread(conn=self.conn, **(await r.json()))
-        self.guild.threads.append(thread)
+        self.guild.threads.update({thread.id: thread})
 
         return thread
 
