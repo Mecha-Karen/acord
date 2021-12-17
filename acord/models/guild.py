@@ -9,6 +9,7 @@ from acord.bases import Hashable, ChannelTypes
 from acord.models import Snowflake
 
 from .channels.text import TextChannel
+from .channels.thread import Thread
 from .emoji import Emoji
 from .roles import Role
 
@@ -146,7 +147,7 @@ class Guild(pydantic.BaseModel, Hashable):
     system_channel_id: Optional[Snowflake]
     """ the id of the channel where guild notices such as welcome messages and boost events are posted """
 
-    threads: Optional[List[Any]] = list()
+    threads: Optional[List[Thread]] = list()
     """ List of threads in the guild """
 
     unavailable: Optional[bool]
