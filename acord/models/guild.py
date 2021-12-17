@@ -148,8 +148,8 @@ class Guild(pydantic.BaseModel, Hashable):
     system_channel_id: Optional[Snowflake]
     """ the id of the channel where guild notices such as welcome messages and boost events are posted """
 
-    threads: Optional[List[Thread]] = list()
-    """ List of threads in the guild """
+    threads: Optional[Dict[Snowflake, Thread]] = dict()
+    """ Mapping of threads in the guild """
 
     unavailable: Optional[bool]
     """ Whether guild is operational or lost due to outage """
@@ -178,6 +178,12 @@ class Guild(pydantic.BaseModel, Hashable):
         conn = kwargs['values']['conn']
 
         return {int(m['user']['id']): Member(conn=conn, **m) for m in members}
+
+    @pydantic.validator("threads", pre=True)
+    def _validate_threads(cls, threads, **kwargs) -> Dict[Snowflake, Thread]:
+        conn = kwargs['values']['conn']
+
+        return {int(t['id']): Thread(conn=conn, **t) for t in threads}
 
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
