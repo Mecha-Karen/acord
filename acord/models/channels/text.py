@@ -7,10 +7,11 @@ from aiohttp import FormData
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
-from acord.payloads import ChannelEditPayload, InviteCreatePayload, MessageCreatePayload
+from acord.payloads import ChannelEditPayload, InviteCreatePayload, MessageCreatePayload, ThreadCreatePayload
 from acord.utils import _payload_dict_to_json
 
 from .base import Channel
+from .thread import Thread
 
 # Standard text channel in a guild
 
@@ -382,7 +383,7 @@ class TextChannel(Channel):
     async def trigger_typing(self) -> None:
         """|coro|
 
-        Creates a typing indicator in this channel
+        Creates a typing indicator in this channel.
         """
         await self.conn.request(Route("POST", path=f'/channels/{self.id}/typing'))
 
@@ -398,3 +399,49 @@ class TextChannel(Channel):
             msg = Message(**message)
             self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
             yield msg
+
+    async def create_thread(
+        self, 
+        *, 
+        message: Union[Message, Snowflake] = None,
+        reason: str = None,
+        **options) -> Optional[Thread]:
+        """|coro|
+
+        Creates a thread in this channel
+
+        Parameters
+        ----------
+        message: Union[:class:`Message`, :class:`Snowflake`]
+            Message to start thread with
+        """
+        if message:
+            message_id = int(getattr(message, 'id', message))
+            path = f'/channels/{self.id}/messages/{message_id}/threads'
+        else:
+            path = f'/channels/{self.id}/threads'
+
+        data = ThreadCreatePayload(**options)
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': str(reason)})
+
+        r = await self.conn.request(
+            Route("POST", path=path),
+            headers=headers,
+            data=data.json()
+        )
+        thread = Thread(conn=self.conn, **(await r.json()))
+        self.guild.threads.append(thread)
+
+        return thread
+
+    @property
+    def guild(self):
+        """ Returns the guild were channel was created in """
+        guild = self.conn.client.get_guild(self.guild_id)
+        
+        if not guild:
+            raise ValueError('Target guild can no longer be found')
+        return guild
