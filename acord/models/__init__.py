@@ -12,7 +12,14 @@ from .member import Member
 
 from .message import Message, MessageReference
 from .invite import Invite
-from .channels import Channel, TextChannel, Stage
+from .channels import (
+    Channel, 
+    TextChannel, 
+    Stage, 
+    Thread, 
+    ThreadMeta, 
+    ThreadMember
+)
 from .guild import Guild
 from .guild_template import GuildTemplate
 
