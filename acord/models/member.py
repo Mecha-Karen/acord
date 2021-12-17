@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import pydantic
-from acord.bases import Hashable, UserFlags
 from typing import Any, List, Optional
+import pydantic
 import datetime
+from acord.bases import Hashable
+from acord.models import Snowflake
 
 from .user import User
 
@@ -33,14 +34,13 @@ class Member(pydantic.BaseModel, Hashable):
           Whether if the member is pending verification. Not included (False) in non-GUILD_\* events
     permissions: :class:`str`
           Total permissions of the member in the channel. Including overwrites.
+    guild_id: :class:`Snowflake`
+          ID of the guild member is in
     """
-    # Please check the doc strings before merging @Seniatical
-    # and tell me if i need to add anything else :)
 
     con: Any # connection object
 
     user: Optional[User] # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
-
     nick: Optional[str]
     avatar: Optional[str]
     roles: List[Snowflake]
