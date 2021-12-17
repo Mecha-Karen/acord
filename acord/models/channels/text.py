@@ -9,6 +9,7 @@ from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
 from acord.payloads import ChannelEditPayload, InviteCreatePayload, MessageCreatePayload, ThreadCreatePayload
 from acord.utils import _payload_dict_to_json
+from acord.errors import APIObjectDepreciated
 
 from .base import Channel
 from .thread import Thread
@@ -436,6 +437,114 @@ class TextChannel(Channel):
         self.guild.threads.append(thread)
 
         return thread
+
+    async def fetch_active_threads(self) -> Iterator[Thread]:
+        """|coro|
+
+        Fetches all active threads in channel
+
+        .. warning::
+
+            .. rubric:: Depreciated
+
+            This method will no longer work when using API Version >= 10,
+            instead implement :meth:`Guild.active_threads`
+        """
+        if int(self.conn.client.gateway_version[1]) >= 10:
+            raise APIObjectDepreciated("This method has been dropped,\
+                please use `Guild.active_threads`")
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/threads/active")
+        )
+        body = await r.json()
+
+        for thread in body['threads']:
+            tr = Thread(**thread)
+            self.guild.threads.update({tr.id: tr})
+            yield tr
+
+    async def fetch_public_archived_threads(
+        self,
+        *,
+        before: datetime.datetime = None,
+        limit: int = None
+        ) -> Iterator[Thread]:
+        """|coro|
+
+        Fetches all public archived thread in channel
+        """
+        body = dict()
+        if before:
+            body.update(before=before.isoformat())
+        if limit:
+            body.update(limit=int(limit))
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/threads/archived/public"),
+            data=body
+        )
+        data = await r.json()
+
+        for thread in data['threads']:
+            tr = Thread(**thread)
+            self.guild.threads.update({tr.id: tr})
+            yield tr
+
+    async def fetch_private_archived_threads(
+        self,
+        *,
+        before: datetime.datetime = None,
+        limit: int = None
+        ) -> Iterator[Thread]:
+        """|coro|
+
+        Fetches all private archived thread in channel
+        """
+        body = dict()
+        if before:
+            body.update(before=before.isoformat())
+        if limit:
+            body.update(limit=int(limit))
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/threads/archived/private"),
+            data=body
+        )
+        data = await r.json()
+
+        for thread in data['threads']:
+            tr = Thread(**thread)
+            self.guild.threads.update({tr.id: tr})
+            yield tr
+
+    async def fetch_joined_private_archived_threads(
+        self,
+        *,
+        before: datetime.datetime = None,
+        limit: int = None
+        ) -> Iterator[Thread]:
+        """|coro|
+
+        Fetches all private archived threads,
+        that the client has joined
+        """
+        body = dict()
+        if before:
+            body.update(before=before.isoformat())
+        if limit:
+            body.update(limit=int(limit))
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/users/@me/threads/archived/private"),
+            data=body
+        )
+        data = await r.json()
+
+        for thread in data['threads']:
+            tr = Thread(**thread)
+            self.guild.threads.update({tr.id: tr})
+            yield tr
 
     @property
     def guild(self):
