@@ -249,7 +249,7 @@ class Client(object):
 
     def get_guild(self, guild_id: int) -> Optional[Guild]:
         """Returns the guild stored in the internal cache, may be outdated"""
-        return self.INTENRAL_STORAGE.get("guilds", dict()).get(guild_id)
+        return self.INTERNAL_STORAGE.get("guilds", dict()).get(guild_id)
 
     def get_channel(self, channel_id: int) -> Optional[Channel]:
         """Returns the channel stored in the internal cache, may be outdated"""
