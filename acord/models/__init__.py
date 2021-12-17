@@ -8,6 +8,7 @@ from .user import User
 from .roles import Role, RoleTags
 from .emoji import Emoji
 from .sticker import Sticker
+from .member import Member
 
 from .message import Message, MessageReference
 from .invite import Invite
