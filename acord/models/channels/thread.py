@@ -6,6 +6,8 @@ import datetime
 
 from acord.core.abc import Route
 from acord.models import Snowflake, Member
+from acord.payloads import ThreadEditPayload
+from acord.utils import _payload_dict_to_json
 
 from .base import Channel
 from .textExt import ExtendedTextMethods
@@ -172,3 +174,40 @@ class Thread(Channel, ExtendedTextMethods):
                 yield guild.get_member(id)
             else:
                 yield nmember
+
+    async def edit(self, *, reason: str = None, **options) -> Optional[Thread]:
+        """|coro|
+
+        Edits the current thread
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            Reason for editing thread
+        name: :class:`str`
+            New name for thread
+        archived: :class:`bool`
+            Whether the thread should be archived or not
+        auto_archive_duration: :class:`int`
+            New auto archive duration, 
+            is set from parent channel OR during creation
+        rate_limit_per_user: :class:`int`
+            New slowmode for users in thread
+        """
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': str(reason)})
+
+        bucket = dict(guild_id=self.guild_id, channel_id=self.id)
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/channels/{self.id}", bucket=bucket),
+            data=_payload_dict_to_json(ThreadEditPayload, **options),
+            headers=headers
+        )
+
+        guild = self.conn.client.get_guild(self.guild_id)
+        tr = Thread(**(await r.json()))
+        guild.threads.update({tr.id: tr})
+        return tr
