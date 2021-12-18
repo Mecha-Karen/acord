@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional, Union
 import pydantic
 import datetime
 
-from acord.core.abc import DISCORD_EPOCH
+from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
-from acord.models import Snowflake
+from acord.models import (Channel,
+    TextChannel, Thread, Emoji, Role, Member, User,
+    Snowflake
+)
+from acord.models.channels.stage import Stage
 
-from .channels.text import TextChannel
-from .channels.thread import Thread
-from .emoji import Emoji
-from .roles import Role
-from .member import Member
+
+GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
+
 
 class Guild(pydantic.BaseModel, Hashable):
     conn: Any  # Connection object - For internal use
@@ -245,4 +247,212 @@ class Guild(pydantic.BaseModel, Hashable):
         return datetime.datetime.fromtimestamp(timestamp)
 
     def get_member(self, member_id: Snowflake) -> Optional[Member]:
+        """|func|
+
+        Gets a member from internal mapping
+
+        Parameters
+        ----------
+        member_id: :class:`Snowflake`
+            ID of member to get
+        """
         return self.members.get(member_id)
+
+    async def fetch_channels(self) -> Iterator[Channel]:
+        """|coro|
+
+        Fetches all channels in the guild,
+        doesn't include threads!
+        """
+        r = await self.conn.request(Route(
+            "GET", 
+            path=f"/guilds/{self.id}/channels", 
+            bucket=dict(guild_id=self.id)
+        ))
+        channels = await r.json()
+
+        for channel in channels:
+            if channel['type'] in GUILD_TEXT:
+                yield TextChannel(**channel)
+            if channel['type'] == ChannelTypes.GUILD_VOICE:
+                # TODO: Guild voice channel
+                yield channel
+            if channel['type'] == ChannelTypes.GUILD_STAGE_VOICE:
+                yield Stage(**channel)
+            if channel['type'] == ChannelTypes.GUILD_CATEGORY:
+                # TODO: Guild category
+                yield channel
+            
+            raise ValueError('Unknown channel type encountered, %s, %s' % (
+                channel['type'], hasattr(ChannelTypes, channel['type'])
+            ))
+
+    async def fetch_active_threads(self, *, include_private: bool = True) -> Iterator[Thread]:
+        """|coro|
+
+        Fetches all active threads in guild
+
+        Parameters
+        ----------
+        include_private: :class:`bool`
+            Whether to include private threads when yielding
+        """
+        r = await self.conn.request(Route(
+            "GET",
+            path=f"/guilds/{self.id}/threads/active",
+            bucket=dict(guild_id=self.id)
+        ))
+        body = await r.json()
+
+        for thread in body['threads']:
+            if thread['type'] == ChannelTypes.GUILD_PRIVATE_THREAD and not include_private:
+                continue
+            tr = Thread(**thread)
+
+            self.threads.update({tr.id: tr})
+            yield tr
+
+    async def fetch_member(self, *, member: Union[Member, Snowflake]) -> Optional[Member]:
+        """|coro|
+
+        Fetches a member from the guild
+
+        Parameters
+        ----------
+        member: Union[:class:`Member`, :class:`Snowflake`]
+            Member to fetch
+        """
+        r = await self.conn.request(Route(
+            "GET", 
+            path=f"/guilds/{self.id}/members/{member}", 
+            bucket=dict(guild_id=self.id)
+        ))
+        fetched_member = Member(**(await r.json()))
+        self.members.update({fetched_member.id: fetched_member})
+        return fetched_member
+
+    async def fetch_members(self, *, limit: int = 1, after: Snowflake = 0) -> Iterator[Member]:
+        """|coro|
+
+        Fetches guild members
+
+        Parameters
+        ----------
+        limit: :class:`int`
+            How many many members to fetch, 
+            must be less then 1000 and greater then 1.
+            Defaults to **1**!
+        after: :class:`Snowflake`
+            Fetches users after this user
+        """
+        assert 0 < limit <= 1000, "Limit must be less then 1000 and greater then 0"
+
+        route = Route(
+            "GET", 
+            path=f"/guilds/{self.id}/members",
+            limit=int(limit),
+            after=int(after)
+            )
+        r = await self.conn.request(route)
+        members = await r.json()
+
+        for member in members:
+            fmember = Member(**member)
+            self.members.update({fmember.id: fmember})
+            yield fmember
+
+    async def fetch_members_by_name(self, query: str, *, limit: int = 1) -> Iterator[Member]:
+        """|coro|
+
+        Fetches members by there username(s) or nickname(s)
+
+        Parameters
+        ----------
+        query: :class:`str`
+            Username/Nickame to use
+        limit: :class:`int`
+        """
+        assert 0 < limit <= 1000, "Limit must be less then 1000 and greater then 0"
+
+        route = Route(
+            "GET", 
+            path=f"/guilds/{self.id}/members/search",
+            query=str(query),
+            limit=int(limit)
+            )
+        r = await self.conn.request(route)
+        members = await r.json()
+
+        for member in members:
+            fmember = Member(**member)
+            self.members.update({fmember.id: fmember})
+            yield fmember
+
+    @pydantic.validate_arguments
+    async def add_member(
+        self,
+        user_id: Union[User, Snowflake],
+        access_token: str,
+        *,
+        nick: str = None,
+        roles: List[Union[Role, Snowflake]] = None,
+        mute: bool = None,
+        deaf: bool = None,
+        reason: str = None
+    ) -> Optional[Member]:
+        """|coro|
+
+        For bots with an ``access_token`` for a :class:`User`,
+        you may use this method for adding the user to this guild.
+
+        .. note::
+            Requires ``guilds.join`` scope inorder to add the user
+
+        Parameters
+        ----------
+        user_id: Union[:class:`User`, :class:`Snowflake`]
+            User to add to guild
+        access_token: :class:`str`
+            Access token to be used
+        nick: :class:`str`
+            Nickname for user
+        roles: List[Union[:class:`Role`, :class:`Snowflake`]]
+            List of roles to give user on join
+        mute: :class:`bool`
+            Whether the user is muted in voice channels
+        dead: :class:`bool`
+            Whether the user is deafened in voice channels
+        reason: :class:`str`
+            Reason for adding member to guild
+        """
+        roles = [getattr(i, 'id', i) for i in roles]
+        user_id = getattr(user_id, 'id', user_id)
+        data = dict(
+            access_token=access_token,
+            nick=nick,
+            roles=roles,
+            mute=mute,
+            deaf=deaf
+        )
+        data = {k: v for k, v in data.keys() if v is not None}
+        route = Route(
+            "PUT",
+            path=f"/guilds/{self.id}/members/{user_id}",
+            bucket=dict(guild_id=self.id)
+        )
+
+        headers = {"Content-Type": "application/json"}
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': reason})
+
+        r = await self.conn.request(
+            route, data=data, headers=headers
+        )
+
+        if r.status == 201:
+            member = Member(**(await r.json()))
+            self.members.update({member.id: member})
+        else:
+            member = self.members.get(user_id)
+        return member
