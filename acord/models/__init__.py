@@ -1,4 +1,4 @@
-from typing import List, TypeVar
+from typing import List, Optional, TypeVar
 
 Snowflake = TypeVar("Snowflake", bound=int)
 
@@ -27,3 +27,4 @@ Message.update_forward_refs()
 
 TextChannel.fetch_invites.__annotations__['return'] = List[Invite]
 TextChannel.create_invite.__annotations__['return'] = List[Invite]
+Invite.__annotations__['guild'] = Optional[Guild]
