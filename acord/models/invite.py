@@ -4,7 +4,6 @@ import pydantic
 import datetime
 
 from acord.bases import Hashable
-from .guild import Guild
 from .channels import Channel
 from .user import User
 
@@ -21,7 +20,7 @@ class Invite(pydantic.BaseModel, Hashable):
 
     code: str
     """the invite code (unique ID)"""
-    guild: Optional[Guild]
+    guild: Optional[Any]
     """the guild this invite is for"""
     channel: Channel
     """the channel this invite is for"""
@@ -46,7 +45,7 @@ class Invite(pydantic.BaseModel, Hashable):
 
 
     @pydantic.validator("guild", pre=True)
-    def _validate_guild(cls, partial_guild: dict, **kwargs) -> Optional[Guild]:
+    def _validate_guild(cls, partial_guild: dict, **kwargs):
         conn =  kwargs['values']['conn']
         guild_id = int(partial_guild['id'])
 
@@ -54,7 +53,7 @@ class Invite(pydantic.BaseModel, Hashable):
 
     
     @pydantic.validator("channel", pre=True)
-    def _validate_channel(cls, partial_channel: dict, **kwargs) -> Optional[Channel]:
+    def _validate_channel(cls, partial_channel: dict, **kwargs):
         conn =  kwargs['values']['conn']
         channel_id = int(partial_channel['id'])
         
