@@ -330,7 +330,7 @@ class TextChannel(Channel, ExtendedTextMethods):
             .. rubric:: Depreciated
 
             This method will no longer work when using API Version >= 10,
-            instead implement :meth:`Guild.active_threads`
+            instead implement :meth:`Guild.fetch_active_threads`
         """
         if int(self.conn.client.gateway_version[1]) >= 10:
             raise APIObjectDepreciated("This method has been dropped,\
