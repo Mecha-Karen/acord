@@ -59,44 +59,6 @@ class TextChannel(Channel, ExtendedTextMethods):
 
         return datetime.datetime.fromtimestamp(timestamp)
 
-    @pydantic.validate_arguments
-    def get_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
-        """|func|
-
-        Returns the message stored in the internal cache, may be outdated
-
-        Parameters
-        ----------
-        message_id: Union[:class:`Message`, :class:`Snowflake`]
-            ID of message to get
-        """
-        return self.conn.client.get_message(channel_id=self.id, message_id=message_id)
-
-    @pydantic.validate_arguments
-    async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
-        """|coro|
-
-        Fetch a message directly from channel
-
-        Parameters
-        ----------
-        message_id: Union[:class:`Message`, :class:`Snowflake`]
-            ID of the message to fetch
-        """
-        if isinstance(message_id, Message):
-            message_id = message_id.id
-
-        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
-
-        resp = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/messages/{message_id}", bucket=bucket)
-        )
-
-        message = Message(**(await resp.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{message.id}': message})
-
-        return message
-
     async def edit(self, **options) -> Optional[Channel]:
         """|coro|
 
@@ -320,26 +282,6 @@ class TextChannel(Channel, ExtendedTextMethods):
         )
 
         return await r.json()
-
-    async def trigger_typing(self) -> None:
-        """|coro|
-
-        Creates a typing indicator in this channel.
-        """
-        await self.conn.request(Route("POST", path=f'/channels/{self.id}/typing'))
-
-    async def pins(self) -> Iterator[Message]:
-        """|coro|
-
-        Fetches channel pins
-        """
-        r = await self.conn.request(Route("GET", path=f'/channels/{self.id}/pins'))
-        messages = await r.json()
-
-        for message in messages:
-            msg = Message(**message)
-            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
-            yield msg
 
     async def create_thread(
         self, 
