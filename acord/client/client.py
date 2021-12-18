@@ -305,5 +305,5 @@ class Client(object):
         channel = self.get_channel(channel_id)
 
         if channel is None:
-            return self.fetch_channel(channel_id)
+            return await self.fetch_channel(channel_id)
         return channel
