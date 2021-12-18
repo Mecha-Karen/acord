@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import Any, Dict, Iterator, List, Optional, Union
 import datetime
 import pydantic
-from aiohttp import FormData
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
-from acord.payloads import ChannelEditPayload, InviteCreatePayload, MessageCreatePayload, ThreadCreatePayload
+from acord.payloads import ChannelEditPayload, InviteCreatePayload, ThreadCreatePayload
 from acord.utils import _payload_dict_to_json
 from acord.errors import APIObjectDepreciated
 
+from .textExt import ExtendedTextMethods
 from .base import Channel
 from .thread import Thread
 
@@ -21,7 +21,7 @@ async def _pop_task(client, channel_id, *messages) -> None:
     for message in messages:
         client.INTERNAL_STORAGE['messages'].pop(f'{channel_id}:{message}', None)
 
-class TextChannel(Channel):
+class TextChannel(Channel, ExtendedTextMethods):
     guild_id: int
     """ ID of guild were text channel belongs """
     position: int
@@ -192,66 +192,6 @@ class TextChannel(Channel):
             msg = Message(**message)
             self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
             yield msg
-
-    async def send(self, **data) -> Optional[Message]:
-        """|coro|
-
-        Create a new message in the channel
-
-        Parameters
-        ----------
-        content: :class:`str`
-            Message content, must be below ``2000`` chars.
-        files: *Union[List[:class:`File`], :class:`File`]*
-            A file or a list of files to be sent. File must not be closed else an error is raised.
-        message_reference: Union[:class:`MessageReference`]
-            A message to reply to, client must be able to read messages in the channel.
-        tts: :class:`bool`
-            Whether this is a TTS message
-        embeds: *Union[List[:class:`Embed`], :class:`File`]*
-            An embed or a list of embeds to send
-        """
-        ob = MessageCreatePayload(**data)
-
-        if not any(
-            i for i in ob.dict() 
-            if i in ['content', 'files', 'embeds', 'sticker_ids']
-        ):
-            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
-
-        if any(
-            i for i in (ob.embeds or list())
-            if i.characters() > 6000
-        ):
-            raise ValueError('Embeds cannot contain more then 6000 characters')
-
-        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
-        form_data = FormData()
-
-        if ob.files:
-            for index, file in enumerate(ob.files):
-
-                form_data.add_field(
-                    name=f'file{index}',
-                    value=file.fp,
-                    filename=file.filename,
-                    content_type="application/octet-stream"
-                )
-            
-        form_data.add_field(
-            name="payload_json",
-            value=ob.json(exclude={'files'}),
-            content_type="application/json"
-        )
-
-        r = await self.conn.request(
-            Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
-            data=form_data
-        )
-
-        n_msg = Message(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
-        return n_msg
 
     @pydantic.validate_arguments
     async def bulk_delete(self, *messages: Union[Message, Snowflake], reason: str = None) -> None:
