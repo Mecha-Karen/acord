@@ -97,6 +97,34 @@ Text Channel
 
 .. autoclass:: TextChannel
    :members:
+   :inherited-members:
+   :exclude-members: json, dict, construct, update_forward_refs, copy
+
+Thread
+~~~~~~
+
+.. attributetable:: Thread
+
+.. autoclass:: Thread
+   :members:
+   :inherited-members:
+   :exclude-members: json, dict, construct, update_forward_refs, copy
+
+Thread Member
+~~~~~~~~~~~~~
+
+.. attributetable:: ThreadMember
+
+.. autoclass:: ThreadMember
+   :members:
+
+Thread Metadata
+~~~~~~~~~~~~~~~
+
+.. attributetable:: ThreadMeta
+
+.. autoclass:: ThreadMeta
+   :members:
 
 Role
 ~~~~
