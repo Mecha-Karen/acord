@@ -9,44 +9,44 @@ from acord.models import Snowflake
 from .user import User
 
 class Member(pydantic.BaseModel, Hashable):
-    """
-    Represents a guild member.
+      """
+      Represents a guild member.
 
-    Attributes
-    ----------
-    user: :class:`acord.models.User`
-          The User object of the member. Not included in MESSAGE_CREATE and MESSAGE_UPDATE events
-    nick: :class:`str`
-          Guild specific nickname of the member
-    avatar: :class:`str`
-          Member's guild avatar hash
-    roles: :class:`List[Snowflake]`
-          List of role IDs of roles the user has
-    joined_at: :class:`datetime.datetime`
-          The time the user joined the guild
-    premium_since: :class:`datetime.datetime`
-          When the user started boosting the guild
-    deaf: :class:`bool`
-          Whether if the member is deafened in voice channels
-    mute: :class:`bool`
-          Whether if the member is mutes in voice channels
-    pending: :class:`bool`
-          Whether if the member is pending verification. Not included (False) in non-GUILD_\* events
-    permissions: :class:`str`
-          Total permissions of the member in the channel. Including overwrites.
-    guild_id: :class:`Snowflake`
-          ID of the guild member is in
-    """
+      Attributes
+      ----------
+      user: :class:`User`
+            The User object of the member. Not included in MESSAGE_CREATE and MESSAGE_UPDATE events
+      nick: :class:`str`
+            Guild specific nickname of the member
+      avatar: :class:`str`
+            Member's guild avatar hash
+      roles: List[:class:`Snowflake`]
+            List of role IDs of roles the user has
+      joined_at: :class:`datetime.datetime`
+            The time the user joined the guild
+      premium_since: :class:`datetime.datetime`
+            When the user started boosting the guild
+      deaf: :class:`bool`
+            Whether if the member is deafened in voice channels
+      mute: :class:`bool`
+            Whether if the member is mutes in voice channels
+      pending: :class:`bool`
+            Whether if the member is pending verification. Not included in **NONE-GUILD-EVENTS** events
+      permissions: :class:`str`
+            Total permissions of the member in the channel. Including overwrites.
+      guild_id: :class:`Snowflake`
+            ID of the guild member is in
+      """
 
-    con: Any # connection object
+      conn: Any # connection object
 
-    user: Optional[User] # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
-    nick: Optional[str]
-    avatar: Optional[str]
-    roles: List[Snowflake]
-    joined_at: datetime.datetime
-    premium_since: Optional[datetime.datetime]
-    deaf: bool
-    mute: bool
-    pending: Optional[bool] # not included in non-GUILD_ events
-    permissions: Optional[str]
+      user: Optional[User] # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
+      nick: Optional[str]
+      avatar: Optional[str]
+      roles: List[Snowflake]
+      joined_at: datetime.datetime
+      premium_since: Optional[datetime.datetime]
+      deaf: bool
+      mute: bool
+      pending: Optional[bool] # not included in non-GUILD_ events
+      permissions: Optional[str]
