@@ -13,17 +13,26 @@ from .textExt import ExtendedTextMethods
 
 class ThreadMeta(pydantic.BaseModel):
     archived: bool
+    """Whether the thread has been archived"""
     archive_timestamp: datetime.datetime
+    """Time of when thread was archived"""
     auto_archive_duration: int
+    """Time for thread to be auto archived"""
     locked: bool
+    """Whether this thread has been locked"""
     invitable: Optional[bool]
+    """Whether this thread is invite only"""
 
 
 class ThreadMember(pydantic.BaseModel):
     id: Snowflake
+    """ID of thread"""
     user_id: Snowflake
+    """ID of user in thread"""
     join_timestamp: datetime.datetime
+    """When did this user join this thread"""
     flags: int
+    """Thread member flags"""
 
 
 class Thread(Channel, ExtendedTextMethods):
