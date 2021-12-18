@@ -8,6 +8,7 @@ from acord.core.abc import Route
 from acord.models import Snowflake, Member
 
 from .base import Channel
+from .textExt import ExtendedTextMethods
 
 
 class ThreadMeta(pydantic.BaseModel):
@@ -25,7 +26,7 @@ class ThreadMember(pydantic.BaseModel):
     flags: int
 
 
-class Thread(Channel):
+class Thread(Channel, ExtendedTextMethods):
     conn: Any
 
     id: Snowflake
