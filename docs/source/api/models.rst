@@ -12,7 +12,11 @@ Models
 ******
 Our models use the ``Pydantic`` module for simple data parsing. 
 All methods from :class:`~pydantic.BaseModel` are inherited along with ours.
-These methods will not be shown in our docs, you can find them in ``Pydantic``'s documentation.
+These methods will not be shown in our docs, you can find them in the ``Pydantic`` documentation.
+
+Snowflake
+~~~~~~~~~~
+A snowflake is a representation of a discord ID, which is a unique integer.
 
 Emoji
 ~~~~~
@@ -46,6 +50,14 @@ Invite
 .. autoclass:: Invite
    :members:
 
+Member
+~~~~~~
+
+.. attributetable:: Member
+
+.. autoclass:: Member
+   :members:
+
 Message
 ~~~~~~~
 
@@ -54,12 +66,28 @@ Message
 .. autoclass:: Message
    :members:
 
+Message Reference
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageReference
+
+.. autoclass:: MessageReference
+   :members:
+
 Sticker
 ~~~~~~~
 
 .. attributetable:: Sticker
 
 .. autoclass:: Sticker
+   :members:
+
+Stage Channel
+~~~~~~~~~~~~~
+
+.. attributetable:: Stage
+
+.. autoclass:: Stage
    :members:
 
 Text Channel
