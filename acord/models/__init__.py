@@ -18,7 +18,9 @@ from .channels import (
     Stage, 
     Thread, 
     ThreadMeta, 
-    ThreadMember
+    ThreadMember,
+    VoiceChannel,
+    CategoryChannel
 )
 from .guild import Guild, Ban
 from .guild_template import GuildTemplate
