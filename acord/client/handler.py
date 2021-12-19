@@ -100,10 +100,68 @@ async def handle_websocket(self, ws):
 
         if EVENT == "CHANNEL_UPDATE":
             channel, _ = _d_to_channel(DATA, self.http)
-            
+
             self.INTERNAL_STORAGE['channels'].update({channel.id: channel})
             self.dispatch('channel_update', channel)
 
         if EVENT == "CHANNEL_DELETE":
             channel = self.INTERNAL_STORAGE['channels'].pop(int(DATA['id']))
             self.dispatch('channel_delete', channel)
+
+        if EVENT == "THREAD_CREATE":
+            thread = Thread(conn=self.http, **DATA)
+
+            guild = self.get_guild(thread.guild_id)
+            guild.threads.update({thread.id: thread})
+
+            self.dispatch('thread_create', thread)
+
+        if EVENT == "THREAD_UPDATE":
+            thread = Thread(conn=self.http, **DATA)
+
+            guild = self.get_guild(thread.guild_id)
+            guild.threads.update({thread.id: thread})
+
+            self.dispatch('thread_update', thread)
+
+        if EVENT == "THREAD_DELETE":
+            guild = self.get_guild(int(DATA['guild_id']))
+            thread = guild.threads.pop(int(DATA['guild_id']))
+
+            self.dispatch('thread_delete')
+
+        if EVENT == "THREAD_SYNC_LIST":
+            guild = self.get_guild(int(DATA['guild_id']))
+            threads = list()
+
+            for thread in DATA['threads']:
+                tr = Thread(conn=self.http, **thread)
+                threads.append(tr)
+
+                guild.threads.update({tr.id: tr})
+
+            self.dispatch('thread_sync', threads)
+
+        if EVENT == "THREAD_MEMBER_UPDATE":
+            guild = self.get_guild(int(DATA.pop('guild_id')))
+            member = ThreadMember(**DATA)
+
+            guild.threads[member.id].members.update({member.user_id: member})
+
+            self.dispatch('thread_member_update', member)
+
+        if EVENT == "THREAD_MEMBERS_UPDATE":
+            guild = self.get_guild(int(DATA.pop('guild_id')))
+            thread = guild.threads[int(DATA.pop('id'))]
+
+            thread.member_count = DATA['member_count']
+
+            for member in DATA['added_members']:
+                trm = ThreadMember(**member)
+                thread.members.update({trm.id: trm})
+
+            for member in DATA['removed_member_ids']:
+                thread.members.pop(int(member), None)
+                # Not all members may be in the thread
+
+            self.dispatch('thread_members_update', thread)

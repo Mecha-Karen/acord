@@ -114,3 +114,61 @@ Parameters
 ==========
 channel: :class:`Channel`
     Channel that was just deleted
+
+on_thread_create
+~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_CREATE``.
+Indicating that a thread has been created.
+
+Parameters
+==========
+thread: :class:`Thread`
+    Thread thats just been created
+
+on_thread_update
+~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_UPDATE``.
+Indicating that a thread has been updated.
+
+Parameters
+==========
+thread: :class:`Thread`
+    Thread thats just been updated
+
+on_thread_delete
+~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_DELETE``.
+Indicating that a thread has been deleted.
+
+Parameters
+==========
+thread: :class:`Thread`
+    Thread thats just been deleted
+
+on_thread_sync
+~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_LIST_SYNC``.
+Indicating that the client has gotten access to new threads.
+
+Parameters
+==========
+threads: List[:class:`Thread`]
+    A list of threads that the client has gained access to.
+
+on_thread_member_update
+~~~~~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_MEMBER_UPDATE``.
+
+Parameters
+==========
+thread_member: :class:`ThreadMember`
+    Member that has been updated
+
+on_thread_members_update
+~~~~~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``THREAD_MEMBERS_UPDATE``.
+
+Parameters
+==========
+thread_member: :class:`Thread`
+    Updated thread, were :attr:`Thread.members` is updated
