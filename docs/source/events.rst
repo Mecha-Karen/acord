@@ -85,46 +85,6 @@ Parameters
 guild: :class:`Guild`
     Guild thats experiencing an outage, :attr:`Guild.unavailable` should be true.
 
-on_text_create
-~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_CREATE``.
-Only when type is a text channel
-
-Parameters
-==========
-channel: :class:`TextChannel`
-    Text channel that was just created
-
-on_voice_create
-~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_CREATE``.
-Only when type is a voice channel
-
-Parameters
-==========
-channel: :class:`VoiceChannel`
-    Voice channel that was just created
-
-on_category_create
-~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_CRATE``.
-Only when type is a category
-
-Parameters
-==========
-channel: :class:`CategoryChannel`
-    Category that was just created
-
-on_dm_create
-~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_CREATE``.
-Only when type is DM/DM Group channel.
-
-Parameters
-==========
-channel: Union[:class:`DMChannel`, :class:`GroupDMChannel`]
-    DM channel that was just created
-
 on_channel_create
 ~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``CHANNEL_CREATE``.
@@ -134,3 +94,23 @@ Parameters
 ==========
 channel: :class:`Channel`
     Channel just created
+
+on_channel_update
+~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``CHANNEL_UPDATE``.
+This is called when any channels are updated.
+
+Parameters
+==========
+channel: :class:`Channel`
+    Channel that was just updated
+
+on_channel_delete
+~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``CHANNEL_DELETE``.
+Indicating a channel has been deleted
+
+Parameters
+==========
+channel: :class:`Channel`
+    Channel that was just deleted
