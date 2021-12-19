@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional, Text, Union
 import pydantic
 import datetime
 
@@ -8,7 +8,7 @@ from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
     TextChannel, Thread, Emoji, Role, Member, User,
-    Snowflake
+    VoiceChannel, Snowflake
 )
 from acord.models.channels.stage import Stage
 
@@ -183,8 +183,9 @@ class Guild(pydantic.BaseModel, Hashable):
     @pydantic.validator("members", pre=True)
     def _validate_members(cls, members, **kwargs) -> Dict[Snowflake, Member]:
         conn = kwargs['values']['conn']
+        id = kwargs['values']['id']
 
-        return {int(m['user']['id']): Member(conn=conn, **m) for m in members}
+        return {int(m['user']['id']): Member(conn=conn, guild_id=id, **m) for m in members}
 
     @pydantic.validator("threads", pre=True)
     def _validate_threads(cls, threads, **kwargs) -> Dict[Snowflake, Thread]:
@@ -280,8 +281,7 @@ class Guild(pydantic.BaseModel, Hashable):
             if channel['type'] in GUILD_TEXT:
                 yield TextChannel(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_VOICE:
-                # TODO: Guild voice channel
-                yield channel
+                yield VoiceChannel(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_STAGE_VOICE:
                 yield Stage(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_CATEGORY:
