@@ -35,9 +35,9 @@ def _d_to_channel(DATA, conn):
     elif DATA['type'] == ChannelTypes.GUILD_CATEGORY:
         channel = CategoryChannel(conn=conn, **DATA), "category"
     elif DATA['type'] == ChannelTypes.GROUP_DM:
-        channel = GroupDMChannel(conn=conn, **DATA)
+        channel = GroupDMChannel(conn=conn, **DATA), "dm"
     elif DATA['type'] == ChannelTypes.DM:
-        channel = DMChannel(conn=conn, **DATA)
+        channel = DMChannel(conn=conn, **DATA), "dm"
     else:
         raise ValueError('Unknown channel type encountered, %s, %s' % (
             DATA['type'], hasattr(ChannelTypes, DATA['type'])
