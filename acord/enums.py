@@ -1,10 +1,10 @@
 from enum import IntEnum
 
-class MessageNotificationLevel(IntEnum):
+class GuildMessageNotification(IntEnum):
     ALL_MESSAGES = 0
     ONLY_MENTIONS = 1
 
-class ExplicitContentFilter(IntEnum):
+class ExplicitContentFilterLevel(IntEnum):
     DISABLED = 0
     MEMBERS_WITHOUT_ROLES = 1
     ALL_MEMBERS = 2
@@ -19,7 +19,7 @@ class NSFWLevel(IntEnum):
     SAFE = 2
     AGE_RESTRICTED = 3
 
-class PremiumTier(IntEnum):
+class PremiumTierLevel(IntEnum):
     NONE = 0
     TIER_1 = 1
     TIER_2 = 2
