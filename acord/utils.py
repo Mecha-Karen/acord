@@ -1,6 +1,7 @@
 # Some helper objects used in the lib
 
 from typing import Any
+from copy import deepcopy
 
 
 def _payload_dict_to_json(base, **keys) -> Any:
@@ -13,3 +14,7 @@ def _payload_dict_to_json(base, **keys) -> Any:
             to_exclude.append(key)
     
     return base.json(exclude=set(to_exclude))
+
+
+def copy(obj, **kwds) -> Any:
+    return deepcopy(obj, **kwds)

@@ -112,7 +112,10 @@ class Client(object):
             else:
                 self._events.update({name: [data]})
 
-            func.__event_name__ = name
+            try:
+                func.__event_name__ = name
+            except AttributeError:
+                func.__dict__.update(__event_name__=name)
 
             return func
 

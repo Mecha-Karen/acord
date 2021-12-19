@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional, Text, Union
 import pydantic
 import datetime
 
@@ -8,7 +8,7 @@ from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
     TextChannel, Thread, Emoji, Role, Member, User,
-    Snowflake
+    VoiceChannel, Snowflake
 )
 from acord.models.channels.stage import Stage
 from acord.enums import (
@@ -22,6 +22,11 @@ from acord.enums import (
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
+
+
+class Ban(pydantic.BaseModel):
+    reason: str
+    user: User
 
 
 class Guild(pydantic.BaseModel, Hashable):
@@ -172,8 +177,9 @@ class Guild(pydantic.BaseModel, Hashable):
     @pydantic.validator("members", pre=True)
     def _validate_members(cls, members, **kwargs) -> Dict[Snowflake, Member]:
         conn = kwargs['values']['conn']
+        id = kwargs['values']['id']
 
-        return {int(m['user']['id']): Member(conn=conn, **m) for m in members}
+        return {int(m['user']['id']): Member(conn=conn, guild_id=id, **m) for m in members}
 
     @pydantic.validator("threads", pre=True)
     def _validate_threads(cls, threads, **kwargs) -> Dict[Snowflake, Thread]:
@@ -267,12 +273,11 @@ class Guild(pydantic.BaseModel, Hashable):
 
         for channel in channels:
             if channel['type'] in GUILD_TEXT:
-                yield TextChannel(**channel)
+                yield TextChannel(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_VOICE:
-                # TODO: Guild voice channel
-                yield channel
+                yield VoiceChannel(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_STAGE_VOICE:
-                yield Stage(**channel)
+                yield Stage(conn=self.conn, **channel)
             if channel['type'] == ChannelTypes.GUILD_CATEGORY:
                 # TODO: Guild category
                 yield channel
@@ -301,7 +306,7 @@ class Guild(pydantic.BaseModel, Hashable):
         for thread in body['threads']:
             if thread['type'] == ChannelTypes.GUILD_PRIVATE_THREAD and not include_private:
                 continue
-            tr = Thread(**thread)
+            tr = Thread(conn=self.conn, **thread)
 
             self.threads.update({tr.id: tr})
             yield tr
@@ -321,7 +326,7 @@ class Guild(pydantic.BaseModel, Hashable):
             path=f"/guilds/{self.id}/members/{member}", 
             bucket=dict(guild_id=self.id)
         ))
-        fetched_member = Member(**(await r.json()))
+        fetched_member = Member(conn=self.conn, **(await r.json()))
         self.members.update({fetched_member.id: fetched_member})
         return fetched_member
 
@@ -351,7 +356,7 @@ class Guild(pydantic.BaseModel, Hashable):
         members = await r.json()
 
         for member in members:
-            fmember = Member(**member)
+            fmember = Member(conn=self.conn, **member)
             self.members.update({fmember.id: fmember})
             yield fmember
 
@@ -378,9 +383,63 @@ class Guild(pydantic.BaseModel, Hashable):
         members = await r.json()
 
         for member in members:
-            fmember = Member(**member)
+            fmember = Member(conn=self.conn, **member)
             self.members.update({fmember.id: fmember})
             yield fmember
+
+    async def fetch_bans(self) -> Iterator[Ban]:
+        """|coro|
+
+        Returns all the users banned in the guild
+        """
+        r = await self.conn.request(Route(
+            "GET", 
+            path=f"/guilds/{self.id}/bans", 
+            bucket=dict(guild_id=self.id)
+        ))
+        for ban in (await r.json()):
+            yield Ban(**ban)
+
+    async def fetch_ban(self, user_id: Union[User, Snowflake]) -> Optional[Ban]:
+        """|coro|
+
+        Fetches ban for this user,
+        if exists.
+
+        Parameters
+        ----------
+        user_id: Union[:class:`User`, :class:`Snowflake`]
+            ID of user who was banned
+        """
+        user_id = getattr(user_id, 'id', user_id)
+
+        r = await self.conn.request(Route(
+            "GET", 
+            path=f"/guilds/{self.id}/bans/{user_id}", 
+            bucket=dict(guild_id=self.id)
+        ))
+        return Ban(**(await r.json()))
+
+    async def unban(self, user_id: Union[User, Snowflake], *, reason: str = None) -> None:
+        """|coro|
+
+        Removes ban from user
+
+        Parameters
+        ----------
+        user_id: Union[:class:`User`, :class:`Snowflake`]
+            user ID to be unbanned
+        """
+        user_id = getattr(user_id, 'id', user_id)
+        headers = dict()
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        await self.conn.request(
+            Route("DELETE", path=f"/guilds/{self.id}/bans/{user_id}"),
+            headers=headers
+        )
 
     @pydantic.validate_arguments
     async def add_member(
@@ -445,7 +504,7 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         if r.status == 201:
-            member = Member(**(await r.json()))
+            member = Member(conn=self.conn, **(await r.json()))
             self.members.update({member.id: member})
         else:
             member = self.members.get(user_id)
