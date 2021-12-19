@@ -52,8 +52,7 @@ class Guild(pydantic.BaseModel, Hashable):
     default_message_notifications: GuildMessageNotification
     """ Default message notification
 
-    * 0 - ALL_MESSAGES (members will receive notifications for all messages by default)
-    * 1 - ONLY_MENTIONS (members will receive notifications only for messages that @mention them by default)
+    :class:`GuildMessageNotification`
     """
 
     description: Optional[str]
@@ -67,9 +66,7 @@ class Guild(pydantic.BaseModel, Hashable):
     explicit_content_filter: ExplicitContentFilterLevel
     """explicit content filter level
 
-    * 0 - DISABLED (media content will not be scanned)
-    * 1 - MEMBERS_WITHOUT_ROLE (media content sent by members without roles will be scanned)
-    * 2 - ALL_MEMBERS (media content sent by all members will be scanned)
+    :class:`ExplicitContentFilterLevel`
     """
 
     features: List[str]
@@ -105,8 +102,7 @@ class Guild(pydantic.BaseModel, Hashable):
     mfa_level: MFALevel
     """required MFA level for the guild
 
-    * 0 - NONE (guild has no MFA/2FA requirement for moderation actions)
-    * 1 - ELEVATED (guild has a 2FA requirement for moderation actions)
+    :class:`MFALevel`
     """
 
     nsfw: bool
@@ -114,10 +110,7 @@ class Guild(pydantic.BaseModel, Hashable):
     nsfw_level: NSFWLevel
     """Guild NSFW level
 
-    * DEFAULT - 0
-    * EXPLICIT - 1
-    * SAFE - 2
-    * AGE_RESTRICTED - 3
+    :class:`NSFWLevel`
     """
 
     owner_id: Snowflake
@@ -132,10 +125,7 @@ class Guild(pydantic.BaseModel, Hashable):
     premium_tier: PremiumTierLevel
     """ premium tier (Server Boost level)
 
-    * NONE	 - 0	guild has not unlocked any Server Boost perks
-    * TIER_1 - 1	guild has unlocked Server Boost level 1 perks
-    * TIER_2 - 2	guild has unlocked Server Boost level 2 perks
-    * TIER_3 - 3	guild has unlocked Server Boost level 3 perks
+    :class:`PremiumTierLevel`
     """
     presences: Optional[List[Dict[str, Any]]]
     """ presences of the members in the guild, will only include non-offline members if the size is greater than large threshold """
@@ -170,11 +160,7 @@ class Guild(pydantic.BaseModel, Hashable):
     verification_level: VerificationLevel
     """ verification level required for the guild
 
-    * NONE	    - 0	(unrestricted)
-    * LOW	    - 1	(must have verified email on account)
-    * MEDIUM	- 2	(must be registered on Discord for longer than 5 minutes)
-    * HIGH	    - 3	(must be a member of the server for longer than 10 minutes)
-    * VERY_HIGH	- 4	(must have a verified phone number )
+    :class:`VerificationLevel`
     """
 
     voice_states: Optional[List[Any]] = list()
