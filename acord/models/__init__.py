@@ -20,7 +20,7 @@ from .channels import (
     ThreadMeta, 
     ThreadMember
 )
-from .guild import Guild
+from .guild import Guild, Ban
 from .guild_template import GuildTemplate
 
 Message.update_forward_refs()
