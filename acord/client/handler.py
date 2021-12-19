@@ -2,8 +2,10 @@ from typing import Dict
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
 
+from acord.bases import ChannelTypes
+from acord.utils import _d_to_channel
 from acord.errors import *
-from ..models import User, Message, Guild
+from acord.models import *
 
 
 async def handle_websocket(self, ws):
@@ -82,3 +84,12 @@ async def handle_websocket(self, ws):
             else:
                 guild = self.INTERNAL_STORAGE["guilds"].pop(DATA["id"])
                 self.dispatch("guild_remove", guild)
+
+        if EVENT == "CHANNEL_CREATE":
+            channel, _exc = _d_to_channel(DATA, self.http)
+
+            # Simple fix for now, will be removed when all channel types are done
+            channel_id = getattr(channel, 'id', channel['id'])
+
+            self.INTERNAL_STORAGE['channels'].update({channel_id: channel})
+            self.dispatch(f"{_exc}_create", channel)

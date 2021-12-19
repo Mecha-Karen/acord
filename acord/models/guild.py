@@ -7,9 +7,9 @@ import datetime
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
-    TextChannel, Thread, Emoji, Role, Member, User,
-    VoiceChannel, Snowflake
+    TextChannel, Thread, Emoji, Role, Member, User, Snowflake
 )
+
 from acord.models.channels.stage import Stage
 from acord.enums import (
     GuildMessageNotification,
@@ -19,6 +19,7 @@ from acord.enums import (
     PremiumTierLevel,
     VerificationLevel
 )
+from acord.utils import _d_to_channel
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -272,19 +273,8 @@ class Guild(pydantic.BaseModel, Hashable):
         channels = await r.json()
 
         for channel in channels:
-            if channel['type'] in GUILD_TEXT:
-                yield TextChannel(conn=self.conn, **channel)
-            if channel['type'] == ChannelTypes.GUILD_VOICE:
-                yield VoiceChannel(conn=self.conn, **channel)
-            if channel['type'] == ChannelTypes.GUILD_STAGE_VOICE:
-                yield Stage(conn=self.conn, **channel)
-            if channel['type'] == ChannelTypes.GUILD_CATEGORY:
-                # TODO: Guild category
-                yield channel
-            
-            raise ValueError('Unknown channel type encountered, %s, %s' % (
-                channel['type'], hasattr(ChannelTypes, channel['type'])
-            ))
+            ch, _ = _d_to_channel(channel, self.conn)
+            yield ch
 
     async def fetch_active_threads(self, *, include_private: bool = True) -> Iterator[Thread]:
         """|coro|
