@@ -11,7 +11,7 @@ from acord.models import (Channel,
     Snowflake
 )
 from acord.models.channels.stage import Stage
-from acord.enums import (
+from acord.bases import (
     GuildMessageNotification,
     ExplicitContentFilterLevel,
     MFALevel,
