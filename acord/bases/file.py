@@ -1,19 +1,25 @@
 import os
 import io
-from typing import Optional, Union, Type
+from typing import TYPE_CHECKING, Optional, Union, Type
 import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
-    """ A file object or the path to the file """
-    position: Optional[int] = 0
+    if TYPE_CHECKING:
+        fp: io.BufferedIOBase
+        """ A file object or the path to the file """
+        filename: str
+        """ Name of file, if not given tries to read ``fp.name`` before returning ``unknown`` """
+    else:
+        fp: Union[str, Type[os.PathLike], io.BufferedIOBase]
+        """ A file object or the path to the file """
+        filename: Optional[str]
+        """ Name of file, if not given tries to read ``fp.name`` before returning ``unknown`` """
+    position: int = 0
     """ Position to were the file should be read from """
-    filename: Optional[str]
-    """ Name of file, if not given tries to read ``fp.name`` before returning ``unknown`` """
-    spoiler: Optional[bool] = False
+    spoiler: bool = False
     """ Whether the file should be marked as a spoiler """
-    is_closed: Optional[bool] = False
+    is_closed: bool = False
     """ Whether ``fp`` is open or closed """
 
     @pydantic.validator("fp")
@@ -26,10 +32,10 @@ class File(pydantic.BaseModel):
         return fp
 
     @pydantic.validator('filename')
-    def _validate_filename(cls, filename, **kwargs):
-        if not filename:
-            fp  = kwargs["values"]["fp"]
-            return fp.name or "unknown"
+    def _validate_filename(cls, filename: Optional[str], **kwargs):
+        if filename is None:
+            fp: Type[io.BufferedIOBase] = kwargs["values"]["fp"]
+            return getattr(fp, "name") or "unknown"
         return filename
 
     @pydantic.validator("spoiler")
@@ -42,14 +48,14 @@ class File(pydantic.BaseModel):
 
         return spoiler
 
-    def reset(self, seek: Optional[bool] = False, position: Optional[int] = 0) -> None:
+    def reset(self, seek: bool = False, position: int = 0) -> None:
         """ Resets a files position
 
         Parameters
         ----------
-        seek: :class:`bool`
+        seek: optional :class:`bool` = `False`
             Whether to reset position
-        position: :class:`int`
+        position: optional :class:`int` = `0`
             Optional field to seek to a specific location in file
         """
         if not seek:

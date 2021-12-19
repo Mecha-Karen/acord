@@ -6,7 +6,7 @@ class BaseFlagMeta(EnumMeta):
     # Override EnumMeta.__call__ to allow use of ``Flag(Some_Flag=True)``
     # Alternative for using bitwise operators
 
-    def __call__(cls, value: int = 0, **kwds: Dict[str, bool]):
+    def __call__(cls, value: int = 0, *args, **kwargs: Dict[str, bool]):
         """If you dont like using bitwise operators, 
         or would like a simple way of creating flags.
 
@@ -28,17 +28,17 @@ class BaseFlagMeta(EnumMeta):
         ----------
         value: :class:`int`
             Value of flag
-        **kwds: Dict[:class:`str`, :class:`bool`]
+        **kwargs: Dict[:class:`str`, :class:`bool`]
             Name of flags you want to use,
             value must be set to ``True``!
         """
-        value = getattr(value, 'value', value)
         # get the value of an Enum
+        value = getattr(value, 'value', value)
 
         enum = super(cls.__class__, cls).__call__(int(value))
 
-        for key, value in kwds.items():
-            if value is True:
-                enum |= getattr(cls, key)
+        for flag_name, flag_value in kwargs.items():
+            if flag_value is True:
+                enum |= getattr(cls, flag_name)
         
         return enum
