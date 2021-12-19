@@ -4,3 +4,4 @@ from .text import TextChannel
 from .thread import ThreadMember, ThreadMeta, Thread
 from .voice import VoiceChannel
 from .category import CategoryChannel
+from .dm import DMChannel, GroupDMChannel
