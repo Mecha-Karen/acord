@@ -57,6 +57,13 @@ async def handle_websocket(self, ws):
 
         if EVENT == "MESSAGE_CREATE":
             message = Message(conn=self.http, **DATA)
+
+            try:
+                if hasattr(message.channel, 'last_message_id'):
+                    message.channel.last_message_id = message.id
+            except ValueError:
+                pass
+
             self.INTERNAL_STORAGE["messages"].update(
                 {f"{message.channel_id}:{message.id}": message}
             )
@@ -86,10 +93,17 @@ async def handle_websocket(self, ws):
                 self.dispatch("guild_remove", guild)
 
         if EVENT == "CHANNEL_CREATE":
-            channel, _exc = _d_to_channel(DATA, self.http)
+            channel, _ = _d_to_channel(DATA, self.http)
 
-            # Simple fix for now, will be removed when all channel types are done
-            channel_id = getattr(channel, 'id', channel['id'])
+            self.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+            self.dispatch("channel_create", channel)
 
-            self.INTERNAL_STORAGE['channels'].update({channel_id: channel})
-            self.dispatch(f"{_exc}_create", channel)
+        if EVENT == "CHANNEL_UPDATE":
+            channel, _ = _d_to_channel(DATA, self.http)
+            
+            self.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+            self.dispatch('channel_update', channel)
+
+        if EVENT == "CHANNEL_DELETE":
+            channel = self.INTERNAL_STORAGE['channels'].pop(int(DATA['id']))
+            self.dispatch('channel_delete', channel)
