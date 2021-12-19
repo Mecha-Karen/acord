@@ -11,6 +11,14 @@ from acord.models import (Channel,
     Snowflake
 )
 from acord.models.channels.stage import Stage
+from acord.enums import (
+    GuildMessageNotification,
+    ExplicitContentFilterLevel,
+    MFALevel,
+    NSFWLevel,
+    PremiumTierLevel,
+    VerificationLevel
+)
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -41,7 +49,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     channels: List[Any]  # This gets sorted out with validators
     """ All channels in the guild """
-    default_message_notifications: Literal[0, 1]
+    default_message_notifications: GuildMessageNotification
     """ Default message notification
 
     * 0 - ALL_MESSAGES (members will receive notifications for all messages by default)
@@ -56,7 +64,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     emojis: List[Emoji]
     """ List of emojis in guild """
-    explicit_content_filter: int
+    explicit_content_filter: ExplicitContentFilterLevel
     """explicit content filter level
 
     * 0 - DISABLED (media content will not be scanned)
@@ -94,7 +102,7 @@ class Guild(pydantic.BaseModel, Hashable):
     members: Dict[Snowflake, Member]
     """ Mapping of all members in guild """ 
 
-    mfa_level: int
+    mfa_level: MFALevel
     """required MFA level for the guild
 
     * 0 - NONE (guild has no MFA/2FA requirement for moderation actions)
@@ -103,7 +111,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     nsfw: bool
     """ Whether the guild is marked as NSFW """
-    nsfw_level: int
+    nsfw_level: NSFWLevel
     """Guild NSFW level
 
     * DEFAULT - 0
@@ -121,7 +129,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Whether Boosts progress bar is enabled """
     premium_subscription_count: int
     """ Number of guild boosts """
-    premium_tier: int
+    premium_tier: PremiumTierLevel
     """ premium tier (Server Boost level)
 
     * NONE	 - 0	guild has not unlocked any Server Boost perks
@@ -159,7 +167,7 @@ class Guild(pydantic.BaseModel, Hashable):
     vanity_url_code: Optional[str]
     """ the vanity url code for the guild """
 
-    verification_level: int
+    verification_level: VerificationLevel
     """ verification level required for the guild
 
     * NONE	    - 0	(unrestricted)
