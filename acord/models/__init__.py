@@ -20,7 +20,9 @@ from .channels import (
     ThreadMeta, 
     ThreadMember,
     VoiceChannel,
-    CategoryChannel
+    CategoryChannel,
+    DMChannel,
+    GroupDMChannel,
 )
 from .guild import Guild, Ban
 from .guild_template import GuildTemplate
