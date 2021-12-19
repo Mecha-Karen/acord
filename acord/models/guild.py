@@ -9,6 +9,16 @@ from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
     TextChannel, Thread, Emoji, Role, Member, User, Snowflake
 )
+
+from acord.models.channels.stage import Stage
+from acord.bases import (
+    GuildMessageNotification,
+    ExplicitContentFilterLevel,
+    MFALevel,
+    NSFWLevel,
+    PremiumTierLevel,
+    VerificationLevel
+)
 from acord.utils import _d_to_channel
 
 
@@ -45,11 +55,10 @@ class Guild(pydantic.BaseModel, Hashable):
 
     channels: List[Any]  # This gets sorted out with validators
     """ All channels in the guild """
-    default_message_notifications: Literal[0, 1]
+    default_message_notifications: GuildMessageNotification
     """ Default message notification
 
-    * 0 - ALL_MESSAGES (members will receive notifications for all messages by default)
-    * 1 - ONLY_MENTIONS (members will receive notifications only for messages that @mention them by default)
+    :class:`GuildMessageNotification`
     """
 
     description: Optional[str]
@@ -60,12 +69,10 @@ class Guild(pydantic.BaseModel, Hashable):
 
     emojis: List[Emoji]
     """ List of emojis in guild """
-    explicit_content_filter: int
+    explicit_content_filter: ExplicitContentFilterLevel
     """explicit content filter level
 
-    * 0 - DISABLED (media content will not be scanned)
-    * 1 - MEMBERS_WITHOUT_ROLE (media content sent by members without roles will be scanned)
-    * 2 - ALL_MEMBERS (media content sent by all members will be scanned)
+    :class:`ExplicitContentFilterLevel`
     """
 
     features: List[str]
@@ -98,22 +105,18 @@ class Guild(pydantic.BaseModel, Hashable):
     members: Dict[Snowflake, Member]
     """ Mapping of all members in guild """ 
 
-    mfa_level: int
+    mfa_level: MFALevel
     """required MFA level for the guild
 
-    * 0 - NONE (guild has no MFA/2FA requirement for moderation actions)
-    * 1 - ELEVATED (guild has a 2FA requirement for moderation actions)
+    :class:`MFALevel`
     """
 
     nsfw: bool
     """ Whether the guild is marked as NSFW """
-    nsfw_level: int
+    nsfw_level: NSFWLevel
     """Guild NSFW level
 
-    * DEFAULT - 0
-    * EXPLICIT - 1
-    * SAFE - 2
-    * AGE_RESTRICTED - 3
+    :class:`NSFWLevel`
     """
 
     owner_id: Snowflake
@@ -125,13 +128,10 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Whether Boosts progress bar is enabled """
     premium_subscription_count: int
     """ Number of guild boosts """
-    premium_tier: int
+    premium_tier: PremiumTierLevel
     """ premium tier (Server Boost level)
 
-    * NONE	 - 0	guild has not unlocked any Server Boost perks
-    * TIER_1 - 1	guild has unlocked Server Boost level 1 perks
-    * TIER_2 - 2	guild has unlocked Server Boost level 2 perks
-    * TIER_3 - 3	guild has unlocked Server Boost level 3 perks
+    :class:`PremiumTierLevel`
     """
     presences: Optional[List[Dict[str, Any]]]
     """ presences of the members in the guild, will only include non-offline members if the size is greater than large threshold """
@@ -163,14 +163,10 @@ class Guild(pydantic.BaseModel, Hashable):
     vanity_url_code: Optional[str]
     """ the vanity url code for the guild """
 
-    verification_level: int
+    verification_level: VerificationLevel
     """ verification level required for the guild
 
-    * NONE	    - 0	(unrestricted)
-    * LOW	    - 1	(must have verified email on account)
-    * MEDIUM	- 2	(must be registered on Discord for longer than 5 minutes)
-    * HIGH	    - 3	(must be a member of the server for longer than 10 minutes)
-    * VERY_HIGH	- 4	(must have a verified phone number )
+    :class:`VerificationLevel`
     """
 
     voice_states: Optional[List[Any]] = list()
