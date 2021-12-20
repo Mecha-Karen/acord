@@ -105,14 +105,14 @@ async def handle_websocket(self, ws):
                 self.dispatch("guild_remove", guild)
 
         if EVENT == "GUILD_UPDATE":
-            guild = Guild(**DATA)
+            guild = Guild(conn=self.http, **DATA)
 
             self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
             self.dispatch("guild_update", guild)
 
         if EVENT == "GUILD_BAN_ADD":
             guild = self.get_guild(int(DATA['guild_id']))
-            user = User(**DATA['user'])
+            user = User(conn=self.http, **DATA['user'])
 
             guild.members.pop(user.id)
             self.INTERNAL_STORAGE['users'].update({user.id: user})
@@ -120,10 +120,24 @@ async def handle_websocket(self, ws):
 
         if EVENT == "GUILD_BAN_REMOVE":
             guild = self.get_guild(int(DATA['guild_id']))
-            user = User(**DATA['user'])
+            user = User(conn=self.http, **DATA['user'])
 
             self.INTERNAL_STORAGE['users'].update({user.id: user})
             self.dispatch('guild_ban_remove', guild, user)
+
+        if EVENT == "GUILD_EMOJIS_UPDATE":
+            guild = self.get_guild(int(DATA['guild_id']))
+            emojis = DATA['emoji']
+            bulk = list()
+
+            for emoji in emojis:
+                e = Emoji(conn=self.http, guild_id=guild.id, **emoji)
+                guild.emojis.update({e.id: e})
+                bulk.append(e)
+                
+                self.dispatch('emoji_update', e)
+
+            self.dispatch('emojis_update', bulk)
 
         """ CHANNELS """
 
