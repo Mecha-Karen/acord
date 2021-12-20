@@ -7,7 +7,7 @@ import datetime
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
-    TextChannel, Thread, Emoji, Role, Member, User, Snowflake
+    TextChannel, Thread, Emoji, Role, Member, User, Snowflake, emoji
 )
 
 from acord.models.channels.stage import Stage
@@ -53,7 +53,7 @@ class Guild(pydantic.BaseModel, Hashable):
     banner: Optional[str]
     """ URL for the guild banner """
 
-    channels: List[Any]  # This gets sorted out with validators
+    channels: Dict[Snowflake, Channel]
     """ All channels in the guild """
     default_message_notifications: GuildMessageNotification
     """ Default message notification
@@ -67,7 +67,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
     embedded_activities: List[Any]
 
-    emojis: List[Emoji]
+    emojis: Dict[Snowflake, Emoji]
     """ List of emojis in guild """
     explicit_content_filter: ExplicitContentFilterLevel
     """explicit content filter level
@@ -188,6 +188,13 @@ class Guild(pydantic.BaseModel, Hashable):
 
         return {int(t['id']): Thread(conn=conn, **t) for t in threads}
 
+    @pydantic.validator("emojis", pre=True)
+    def _validate_threads(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
+        conn = kwargs['values']['conn']
+        id = kwargs['values']['id']
+
+        return {int(e['id']): Emoji(conn=conn, guild_id=id, **e) for e in emojis}
+
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:
@@ -204,25 +211,20 @@ class Guild(pydantic.BaseModel, Hashable):
         id = kwargs["values"]["id"]
         return f"https://cdn.discordapp.com/banners/{id}/{banner}.png"
 
-    @pydantic.validator("channels")
+    @pydantic.validator("channels", pre=True)
     def _validate_guild_channels(
         cls, channels: list, **kwargs
     ) -> List[Union[TextChannel, Any]]:
-        new_channels = list()
+        mapping = dict()
         conn = kwargs["values"]["conn"]
-        id = kwargs["values"]["id"]
 
         for channel in channels:
-            if channel["type"] == ChannelTypes.GUILD_TEXT:
-                new_channels.append(TextChannel(conn=conn, guild_id=id, **channel))
-            else:
-                new_channels.append(channel)
+            ch = _d_to_channel(channel, conn)
 
-            cid = int(channel["id"])
+            conn.client.INTERNAL_STORAGE["channels"].update({ch.id: ch})
+            mapping.update({ch.id: ch})
 
-            conn.client.INTERNAL_STORAGE["channels"].update({cid: new_channels[-1]})
-
-        return new_channels
+        return mapping
 
     @pydantic.validator("discovery_splash")
     def _validate_guild_dsplash(cls, discovery_splash: str, **kwargs) -> Optional[str]:
