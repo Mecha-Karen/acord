@@ -189,7 +189,7 @@ class Guild(pydantic.BaseModel, Hashable):
         return {int(t['id']): Thread(conn=conn, **t) for t in threads}
 
     @pydantic.validator("emojis", pre=True)
-    def _validate_threads(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
+    def _validate_emojis(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
         conn = kwargs['values']['conn']
         id = kwargs['values']['id']
 
