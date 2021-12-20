@@ -118,6 +118,13 @@ async def handle_websocket(self, ws):
             self.INTERNAL_STORAGE['users'].update({user.id: user})
             self.dispatch('guild_ban', guild, user)
 
+        if EVENT == "GUILD_BAN_REMOVE":
+            guild = self.get_guild(int(DATA['guild_id']))
+            user = User(**DATA['user'])
+
+            self.INTERNAL_STORAGE['users'].update({user.id: user})
+            self.dispatch('guild_ban_remove', guild, user)
+
         """ CHANNELS """
 
         if EVENT == "CHANNEL_CREATE":
