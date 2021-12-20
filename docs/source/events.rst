@@ -65,7 +65,7 @@ Parameters
 channel: :class:`Channel`
     Channel were message was pinned/unpinned in
 
-timestamp: :py:`datetime.datetime`
+timestamp: :obj:`py:datetime.datetime`
     The timestamp of when message was pinned/unpinned
 
 on_guild_create
@@ -248,7 +248,7 @@ thread_member: :class:`ThreadMember`
     Member that has been updated
 
 on_thread_members_update
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``THREAD_MEMBERS_UPDATE``.
 
 Parameters
