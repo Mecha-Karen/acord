@@ -110,6 +110,64 @@ Parameters
 guild: :class:`Guild`
     Guild thats experiencing an outage, :attr:`Guild.unavailable` should be true.
 
+on_guild_update
+~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_UPDATE``.
+Indicating that a guild has been modifed.
+
+Parameters
+==========
+guild: :class:`Guild`
+    Guild that has been updated
+
+on_guild_ban
+~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_BAN_ADD``.
+Indicating a user has been banned
+
+Parameters
+==========
+guild: :class:`Guild`
+    Guild were user was banned from
+user: :class:`User`
+    User who was banned
+
+on_guild_ban_remove
+~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_BAN_REMOVE``.
+Indicating a user has been unbanned
+
+Parameters
+==========
+guild: :class:`Guild`
+    Guild were user was unbanned from
+user: :class:`User`
+    User who was unbanned
+
+on_emoji_update
+~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_EMOJIS_UPDATE``.
+Indicating an emoji has been updated.
+This is different to ``on_emojis_update``,
+as this is a singular emoji not all of them.
+
+Parameters
+==========
+emoji: :class:`Emoji`
+    Emoji just updated
+
+on_emojis_update
+~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_EMOJIS_UPDATE``.
+Indicating many emojis have been updated.
+this is different to ``on_emoji_update``,
+as this contains all updated emojis instead of 1.
+
+Parameters
+==========
+emojis: List[:class:`Emoji`]
+    List of updated emojis
+
 on_channel_create
 ~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``CHANNEL_CREATE``.
