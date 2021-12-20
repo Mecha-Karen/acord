@@ -1,8 +1,7 @@
-from typing import Dict
+import datetime
+
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
-
-from acord.bases import ChannelTypes
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
@@ -40,6 +39,9 @@ async def handle_websocket(self, ws):
                 "\n* Invalid intents"
             )
 
+        if OPERATION == gateway.RESUME:
+            self.dispatch('resume')
+
         if OPERATION == gateway.HEARTBEATACK:
             self.dispatch("heartbeat")
 
@@ -55,6 +57,8 @@ async def handle_websocket(self, ws):
 
             continue
 
+        """ MESSAGES """
+
         if EVENT == "MESSAGE_CREATE":
             message = Message(conn=self.http, **DATA)
 
@@ -69,6 +73,14 @@ async def handle_websocket(self, ws):
             )
 
             self.dispatch("message", message)
+
+        if EVENT == "CHANNEL_PINS_UPDATE":
+            channel = self.get_channel(int(DATA['channel_id']))
+            ts = datetime.datetime.fromisoformat(DATA['last_pin_timestamp'])
+
+            self.dispatch('message_pin', channel, ts)
+
+        """ GUILDS """
 
         if EVENT == "GUILD_CREATE":
             guild = Guild(conn=self.http, **DATA)
@@ -92,6 +104,8 @@ async def handle_websocket(self, ws):
                 guild = self.INTERNAL_STORAGE["guilds"].pop(DATA["id"])
                 self.dispatch("guild_remove", guild)
 
+        """ CHANNELS """
+
         if EVENT == "CHANNEL_CREATE":
             channel, _ = _d_to_channel(DATA, self.http)
 
@@ -107,6 +121,8 @@ async def handle_websocket(self, ws):
         if EVENT == "CHANNEL_DELETE":
             channel = self.INTERNAL_STORAGE['channels'].pop(int(DATA['id']))
             self.dispatch('channel_delete', channel)
+
+        """ THREADS """
 
         if EVENT == "THREAD_CREATE":
             thread = Thread(conn=self.http, **DATA)

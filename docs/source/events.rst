@@ -32,6 +32,14 @@ on_heartbeat
 ~~~~~~~~~~~~
 Called when the client has sent a heartbeat and has recieved a successful response.
 
+on_resume
+~~~~~~~~~
+Called when client connection resumed,
+meaning that the connection was reset by peer and needed to be reconnected.
+
+.. warning::
+    You may notice changes in certain objects so track user made caches.
+
 on_message
 ~~~~~~~~~~
 Called when gateway dispatches ``MESSAGE_CREATE``.
@@ -42,6 +50,23 @@ Parameters
 
 message: :class:`Message`
     Message that was just created
+
+on_message_pin
+~~~~~~~~~~~~~~
+Called when gateway dispatches ``CHANNEL_PINS_UPDATE``.
+Indicating a message has been pinned/unpinned.
+
+.. note::
+    This event is not called when pinned message is deleted
+
+Parameters
+==========
+
+channel: :class:`Channel`
+    Channel were message was pinned/unpinned in
+
+timestamp: :py:`datetime.datetime`
+    The timestamp of when message was pinned/unpinned
 
 on_guild_create
 ~~~~~~~~~~~~~~~
