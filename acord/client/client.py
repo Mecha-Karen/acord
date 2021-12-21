@@ -4,8 +4,9 @@ import warnings
 import acord
 import sys
 import traceback
-from acord.core.abc import Route
 
+from acord.core.abc import Route
+from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
 
@@ -174,11 +175,29 @@ class Client(object):
             if event_name in self._events:
                 self._events.pop(event_name)
 
-    def resume(self):
-        """Resumes a closed gateway connection"""
-        raise NotImplementedError()
+    async def resume(self) -> None:
+        """|coro|
+        
+        Resumes a closed gateway connection, 
+        should only be called internally.
+        """
+        payload = dict(
+            op=6,
+            d=dict(
+                token=self.http.token,
+                session_id=self.session_id,
+                seq=gateway.sequence
+            )
+        )
 
-    def run(self, token: str = None, *, reconnect: bool = True):
+        await self.http.ws.send_json(payload)
+
+    def run(self, 
+            token: str = None, 
+            *, 
+            reconnect: bool = True,
+            resumed: bool = False
+        ):
         """Runs the client, loop blocking
 
         Parameters
@@ -232,11 +251,23 @@ class Client(object):
         self.dispatch("connect")
         acord.logger.info("Connected to websocket")
 
+        if resumed:
+            self.loop.run_until_complete(self.resume())
+
         try:
             self.loop.run_until_complete(handle_websocket(self, ws))
         except KeyboardInterrupt:
             # Kill connection
             self.loop.run_until_complete(self.http.disconnect())
+        except OSError as e:
+            if e.args[0] == 104:
+                # kill connection and re-run
+                self.loop.run_until_complete(self.http.disconnect())
+
+                return self.run(token=token, reconnect=reconnect, resumed=True)
+            
+            raise
+
 
     # Fetch from cache:
 

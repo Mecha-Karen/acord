@@ -3,6 +3,7 @@
 from typing import Any
 from copy import deepcopy
 from acord.bases import ChannelTypes
+from acord.models.channels.dm import DMChannel, GroupDMChannel
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -33,9 +34,10 @@ def _d_to_channel(DATA, conn):
         channel = Stage(conn=conn, **DATA)
     elif DATA['type'] == ChannelTypes.GUILD_CATEGORY:
         channel = CategoryChannel(conn=conn, **DATA), "category"
-    elif DATA['type'] in DM_CHANNELS:
-        # TODO: GROUP DM AND DM CHANNELS
-        channel = DATA, "dm"
+    elif DATA['type'] == ChannelTypes.GROUP_DM:
+        channel = GroupDMChannel(conn=conn, **DATA), "dm"
+    elif DATA['type'] == ChannelTypes.DM:
+        channel = DMChannel(conn=conn, **DATA), "dm"
     else:
         raise ValueError('Unknown channel type encountered, %s, %s' % (
             DATA['type'], hasattr(ChannelTypes, DATA['type'])

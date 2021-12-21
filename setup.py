@@ -37,6 +37,7 @@ packages = [
     "acord",
     "acord.bases",
     "acord.bases.flags",
+    "acord.bases.enums",
     "acord.client",
     "acord.core",
     "acord.core.signals",
