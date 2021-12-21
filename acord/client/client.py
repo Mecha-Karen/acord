@@ -104,7 +104,27 @@ class Client(object):
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False):
-        """ Register an event to be dispatched on call """
+        """ Register an event to be dispatched on call.
+
+        This is a decorator,
+        if you do not want to use the decorator consider trying:
+
+        .. code-block:: py
+
+            from acord import Client
+            from xyz import some_event_handler
+
+            client = Client(...)
+            client.on("message")(some_event_handler)
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of event,
+            consider checking out all `events <../events.html>`_
+        once: :class:`bool`
+            Whether the event should be ran once before being removed.
+        """
         def inner(func):
             data = {"func": func, "once": once}
 
