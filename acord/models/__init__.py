@@ -8,10 +8,9 @@ from .user import User
 from .roles import Role, RoleTags
 from .emoji import Emoji
 from .sticker import Sticker
-from .member import Member
 from .attachment import Attachment
-
 from .message import Message, MessageReference
+from .member import Member
 from .invite import Invite
 from .channels import (
     Channel, 

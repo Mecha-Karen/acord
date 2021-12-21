@@ -3,7 +3,6 @@
 from typing import Any
 from copy import deepcopy
 from acord.bases import ChannelTypes
-from acord.models.channels.dm import DMChannel, GroupDMChannel
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -23,7 +22,7 @@ def _payload_dict_to_json(base, **keys) -> Any:
 
 
 def _d_to_channel(DATA, conn):
-    from acord.models import TextChannel, CategoryChannel, VoiceChannel, Stage
+    from acord.models import TextChannel, CategoryChannel, VoiceChannel, Stage, DMChannel, GroupDMChannel
 
     if DATA['type'] in GUILD_TEXT:
         channel = TextChannel(conn=conn, **DATA), "text"
