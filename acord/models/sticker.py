@@ -19,11 +19,11 @@ class Sticker(pydantic.BaseModel, Hashable):
     """ description of the sticker """
     tags: str
     """ autocomplete/suggestion tags for the sticker (max 200 characters) """
-    asset: str
+    asset: Optional[str]
     """ **DEPRECATED** previously the sticker asset hash, now an empty string """
     type: int
     """ type of sticker """
-    formate_type: int
+    format_type: int
     """ type of sticker format """
     available: Optional[bool]
     """ whether this guild sticker can be used, may be false due to loss of Server Boosts """
