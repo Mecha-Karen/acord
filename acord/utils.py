@@ -28,7 +28,6 @@ def _d_to_channel(DATA, conn):
     if DATA['type'] in GUILD_TEXT:
         channel = TextChannel(conn=conn, **DATA), "text"
     elif DATA['type'] == ChannelTypes.GUILD_VOICE:
-        print(DATA)
         channel = VoiceChannel(conn=conn, **DATA), "voice"
     elif DATA['type'] == ChannelTypes.GUILD_STAGE_VOICE:
         channel = Stage(conn=conn, **DATA)
