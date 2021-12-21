@@ -15,7 +15,7 @@ from .client import Client
 logger = logging.getLogger("ACord")
 __file__ = __import__("os").path.abspath(__file__)
 __doc__ = "An API wrapper for the discord API"
-__version__ = "0.0.1a1"
+__version__ = "0.0.1a2"
 __author__ = "Mecha Karen"
 
 
@@ -26,4 +26,4 @@ class VersionInfo(NamedTuple):
     level: Literal["Pre-Alpha", "Alpha", "Beta", "Stable", "Final"]
 
 
-version_info: VersionInfo = VersionInfo(major=0, minor=0, micro=1, level="Pre-Alpha")
+version_info: VersionInfo = VersionInfo(major=0, minor=0, micro=2, level="Pre-Alpha")

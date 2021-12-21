@@ -127,7 +127,7 @@ async def handle_websocket(self, ws):
 
         if EVENT == "GUILD_EMOJIS_UPDATE":
             guild = self.get_guild(int(DATA['guild_id']))
-            emojis = DATA['emoji']
+            emojis = DATA['emojis']
             bulk = list()
 
             for emoji in emojis:
@@ -138,6 +138,20 @@ async def handle_websocket(self, ws):
                 self.dispatch('emoji_update', e)
 
             self.dispatch('emojis_update', bulk)
+
+        if EVENT == "GUILD_STICKERS_UPDATE":
+            guild = self.get_guild(int(DATA['guild_id']))
+            stickers = DATA['stickers']
+            bulk = list()
+
+            for sticker in stickers:
+                s = Sticker(conn=self.http, guild_id=guild.id, **sticker)
+                guild.stickers.update({s.id: s})
+                bulk.append(s)
+                
+                self.dispatch('sticker_update', s)
+
+            self.dispatch('stickers_update', bulk)
 
         """ CHANNELS """
 

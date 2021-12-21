@@ -168,6 +168,30 @@ Parameters
 emojis: List[:class:`Emoji`]
     List of updated emojis
 
+on_sticker_update
+~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
+Indicating an sticker has been updated.
+This is different to ``on_stickers_update``,
+as this is a singular sticker not all of them.
+
+Parameters
+==========
+sticker: :class:`Sticker`
+    Sticker just updated
+
+on_stickers_update
+~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
+Indicating many sticker have been updated.
+this is different to ``on_stickers_update``,
+as this contains all updated stickers instead of 1.
+
+Parameters
+==========
+sticker: List[:class:`Sticker`]
+    List of updated stickers
+
 on_channel_create
 ~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``CHANNEL_CREATE``.

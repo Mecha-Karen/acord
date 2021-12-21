@@ -7,10 +7,11 @@ import datetime
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
 from acord.models import (Channel,
-    TextChannel, Thread, Emoji, Role, Member, User, Snowflake, emoji
+    TextChannel, Thread, Emoji, Role, Member, 
+    User, Sticker,
+    Snowflake
 )
 
-from acord.models.channels.stage import Stage
 from acord.bases import (
     GuildMessageNotification,
     ExplicitContentFilterLevel,
@@ -147,7 +148,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ URL of the guild splash """
     stage_instances: Optional[List[Any]] = list()
     """ Stage instances in the guild """
-    stickers: Optional[List[Any]] = list()
+    stickers: Optional[Dict[Snowflake, Sticker]] = dict()
     """ List of guild stickers """
     system_channel_flags: Optional[int]
     """ system channel flags """
@@ -194,6 +195,15 @@ class Guild(pydantic.BaseModel, Hashable):
         id = kwargs['values']['id']
 
         return {int(e['id']): Emoji(conn=conn, guild_id=id, **e) for e in emojis}
+
+    @pydantic.validator("stickers", pre=True)
+    def _validate_stickers(cls, stickers, **kwargs) -> Dict[Snowflake, Sticker]:
+        conn = kwargs['values']['conn']
+        id = kwargs['values']['id']
+
+        return {int(s['id']): Sticker(conn=conn, guild_id=id, **s) for s in stickers}
+
+    """ End of list -> mapping """ 
 
     @pydantic.validator('icon')
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
