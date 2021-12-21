@@ -144,6 +144,7 @@ class Client(object):
 
     async def on_error(self, event_method):
         """|coro|
+        
         Built in base error handler for events """
         acord.logger.error('Failed to run event "{}".'.format(event_method))
 
