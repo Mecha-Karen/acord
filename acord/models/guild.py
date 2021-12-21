@@ -146,7 +146,7 @@ class Guild(pydantic.BaseModel, Hashable):
     public_updates_channel_id: Optional[Snowflake]
     """ the id of the channel where admins and moderators of Community guilds receive notices from Discord """
 
-    roles: List[Role]
+    roles: Dict[Snowflake, Role]
     """ List of roles in the guild """
     rules_channel_id: Optional[Snowflake]
     """ the id of the channel where Community guilds can display rules and/or guidelines """
@@ -197,6 +197,12 @@ class Guild(pydantic.BaseModel, Hashable):
         conn = kwargs["values"]["conn"]
 
         return {int(t["id"]): Thread(conn=conn, **t) for t in threads}
+
+    @pydantic.validator("roles", pre=True)
+    def _validate_roles(cls, roles, **kwargs) -> Dict[Snowflake, Role]:
+        conn = kwargs["values"]["conn"]
+
+        return {int(r["id"]): Role(conn=conn, **r) for r in roles}
 
     @pydantic.validator("emojis", pre=True)
     def _validate_emojis(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
@@ -443,6 +449,18 @@ class Guild(pydantic.BaseModel, Hashable):
             )
         )
         return Ban(**(await r.json()))
+
+    async def fetch_roles(self) -> Iterator[Role]:
+        """|coro|
+
+        Fetches roles in guild
+        """
+        r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/roles"))
+
+        for role in (await r.json()):
+            r = Role(**role)
+            self.roles.update({r.id: r})
+            yield r
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
