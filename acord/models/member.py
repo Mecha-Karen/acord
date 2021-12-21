@@ -176,7 +176,7 @@ class Member(pydantic.BaseModel, Hashable):
     async def add_roles(self, *roles, reason: str = None) -> Member:
         """|coro|
 
-        Adds many roles to the user in one go,
+        Adds many roles to the member in one go,
         utility method for :meth:`Member.edit`.
 
         Parameters
@@ -219,3 +219,25 @@ class Member(pydantic.BaseModel, Hashable):
 
         if role in self.roles:
             self.roles.remove(role)
+
+    async def remove_roles(self, *roles, reason: str = None) -> Member:
+        """|coro|
+
+        Removes many roles from the member in one go,
+        utility method for :meth:`Member.edit`.
+
+        Parameters
+        ----------
+        *roles: :class:`Role`
+            Roles to be updated, 
+            must be provided individually as args!
+        reason: :class:`str`
+            Reason for removing roles
+        """
+        n_roles = self.roles
+
+        for role in roles:
+            if role in n_roles:
+                n_roles.remove(role)
+
+        return await self.edit(roles=n_roles, reason=reason)
