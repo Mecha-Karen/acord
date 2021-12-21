@@ -201,7 +201,7 @@ class Guild(pydantic.BaseModel, Hashable):
         conn = kwargs['values']['conn']
         id = kwargs['values']['id']
 
-        return {int(s['id']): Sticker(conn=conn, guild_id=id, **s) for s in stickers}
+        return {int(s['id']): Sticker(conn=conn, **s) for s in stickers}
 
     """ End of list -> mapping """ 
 
@@ -227,9 +227,11 @@ class Guild(pydantic.BaseModel, Hashable):
     ) -> List[Union[TextChannel, Any]]:
         mapping = dict()
         conn = kwargs["values"]["conn"]
+        id = kwargs['values']['id']
 
         for channel in channels:
-            ch = _d_to_channel(channel, conn)
+            channel.update({'guild_id': id})
+            ch, _ = _d_to_channel(channel, conn)
 
             conn.client.INTERNAL_STORAGE["channels"].update({ch.id: ch})
             mapping.update({ch.id: ch})
