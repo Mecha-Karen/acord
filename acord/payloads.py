@@ -2,7 +2,16 @@ from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
 import datetime
 
-from acord.bases import File, Embed, AllowedMentions, PermissionsOverwrite, MessageFlags
+from acord.bases import (
+    File, 
+    Embed,
+    Color,
+    Permissions,
+    AllowedMentions, 
+    PermissionsOverwrite, 
+    MessageFlags,
+    )
+from acord.bases.embeds import _rgb_to_hex
 from .models import Message, MessageReference, Role, Snowflake
 
 
@@ -199,3 +208,28 @@ class MemberEditPayload(pydantic.BaseModel):
     deaf: Optional[bool]
     channel_id: Optional[Snowflake]
     communication_disabled_until: Optional[datetime.datetime]
+
+
+class RoleCreatePayload(pydantic.BaseModel):
+    name: Optional[str]
+    permissions: Optional[Permissions]
+    color: Optional[Color]
+    hoist: Optional[bool]
+    icon: Optional[File]
+    unicode_emoji: Optional[str]
+    mentionable: Optional[bool]
+
+    def dict(self, *args, **kwargs) -> dict:
+        # :meta private:
+        # Override pydantic to return `Color` as a hex
+        data = super(RoleCreatePayload, self).dict(*args, **kwargs)
+
+        if self.color:
+            color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
+            data["color"] = color
+        
+        if self.icon:
+            data["icon"] = self.icon.fp.read()
+            self.icon.close()
+
+        return data
