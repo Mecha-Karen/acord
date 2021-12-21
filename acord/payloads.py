@@ -160,3 +160,31 @@ class ThreadEditPayload(pydantic.BaseModel):
     def _validate_slowmode(cls, sm) -> int:
         assert 0 <= sm <= 21600, "Slowmode cannot be greater then 21600 and less then 0"
         return sm
+
+
+class ChannelCreatePayload(pydantic.BaseModel):
+    name: str
+
+    type: Optional[int]
+    topic: Optional[str]
+    bitrate: Optional[int]
+    user_limit: Optional[int]
+    rate_limit_per_user: Optional[int]
+    position: Optional[int]
+    permission_overwrites: Optional[List[PermissionsOverwrite]]
+    parent_id: Optional[Snowflake]
+    nsfw: Optional[bool]
+
+    @pydantic.validator("name")
+    def _validate_name(cls, name) -> str:
+        assert 0 < len(name) <= 100, "Name of thread must be greater then 0 but less then 100"
+        return name
+
+    @pydantic.validator("topic")
+    def _validate_topic(cls, topic) -> str:
+        assert 0 < len(topic) <= 1024, "Topic must be greater then 0 but less then 1024"
+
+    @pydantic.validator("rate_limit_per_user")
+    def _validate_slowmode(cls, sm) -> int:
+        assert 0 <= sm <= 21600, "Slowmode cannot be greater then 21600 and less then 0"
+        return sm
