@@ -9,6 +9,7 @@ from acord.models import Message, Snowflake
 from acord.payloads import ChannelEditPayload, InviteCreatePayload, ThreadCreatePayload
 from acord.utils import _payload_dict_to_json
 from acord.errors import APIObjectDepreciated
+from acord.bases import PermissionsOverwrite
 
 from .textExt import ExtendedTextMethods
 from .base import Channel
@@ -26,7 +27,7 @@ class TextChannel(Channel, ExtendedTextMethods):
     """ ID of guild were text channel belongs """
     position: int
     """ Text channel position """
-    permission_overwrites: List[Any]
+    permission_overwrites: Optional[List[PermissionsOverwrite]] = list()
     """ Channel Permissions """
     name: str
     """ Name of channel """
