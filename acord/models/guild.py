@@ -199,7 +199,6 @@ class Guild(pydantic.BaseModel, Hashable):
     @pydantic.validator("stickers", pre=True)
     def _validate_stickers(cls, stickers, **kwargs) -> Dict[Snowflake, Sticker]:
         conn = kwargs['values']['conn']
-        id = kwargs['values']['id']
 
         return {int(s['id']): Sticker(conn=conn, **s) for s in stickers}
 
