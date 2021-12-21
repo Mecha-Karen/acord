@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, List, Literal, Optional, Text, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 import pydantic
 import datetime
 
@@ -21,6 +21,7 @@ from acord.bases import (
     VerificationLevel
 )
 from acord.utils import _d_to_channel
+from acord.payloads import ChannelCreatePayload
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -512,3 +513,50 @@ class Guild(pydantic.BaseModel, Hashable):
         else:
             member = self.members.get(user_id)
         return member
+
+    async def create_channel(self, *, reason: str = None, **data) -> Channel:
+        """|coro|
+
+        Creates a new channel in the guild
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of channel
+        type: :class:`ChannelTypes`
+            Type of channel to create
+        topic: :class:`str`
+            Channel topic
+        bitrate: :class:`int`
+            Bitrate for channel, **VOICE ONLY**
+        user_limit: :class:`int`
+            User limit for channel, **VOICE ONLY**
+        rate_limit_per_user: :class:`int`
+            Slowmode for channel
+        position: :class:`integer`
+            Sorting position of channel
+        permission_overwrite: List[:class:`PermissionsOverwrite`]
+            channel permission overwrites
+        parent_id: :class:`Snowflake`
+            id of the parent category for channel
+        nsfw: :class:`bool`
+            Whether to mark channel as NSFW
+        """
+        payload = ChannelCreatePayload(**data)
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': reason})
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/channels"),
+            data=payload.json(),
+            headers=headers
+        )
+
+        channel, _ = _d_to_channel((await r.json()), self.conn)
+
+        self.conn.client.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+        self.channels.update({channel.id: channel})
+
+        return channel
