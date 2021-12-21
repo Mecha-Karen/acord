@@ -6,7 +6,7 @@ import datetime
 
 from acord.bases import Hashable, Embed, MessageFlags
 from acord.core.abc import Route
-from acord.models import User, Emoji, Sticker, Snowflake
+from acord.models import User, Emoji, Sticker, Snowflake, Attachment
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Union
@@ -41,8 +41,8 @@ class Message(pydantic.BaseModel, Hashable):
     """ sent with Rich Presence-related chat embeds """  # TODO: Message Activity
     application: Any
     """ sent with Rich Presence-related chat embeds """  # TODO: Application Object
-    attachments: List[Any]
-    """ List of file objects """  # TODO: Asset object
+    attachments: List[Attachment]
+    """ List of Attachment objects """ 
     author: User
     """ User object of who sent the message """
     channel_id: int
