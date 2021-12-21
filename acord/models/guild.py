@@ -541,6 +541,8 @@ class Guild(pydantic.BaseModel, Hashable):
             id of the parent category for channel
         nsfw: :class:`bool`
             Whether to mark channel as NSFW
+        reason: :class:`str`
+            Reason for creating channel
         """
         payload = ChannelCreatePayload(**data)
         headers = dict({"Content-Type": "application/json"})
