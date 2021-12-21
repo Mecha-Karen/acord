@@ -7,7 +7,7 @@ class BaseFlagMeta(EnumMeta):
     # Alternative for using bitwise operators
 
     def __call__(cls, value: int = 0, **kwds: Dict[str, bool]):
-        """If you dont like using bitwise operators, 
+        """If you dont like using bitwise operators,
         or would like a simple way of creating flags.
 
         Look no further!
@@ -32,7 +32,7 @@ class BaseFlagMeta(EnumMeta):
             Name of flags you want to use,
             value must be set to ``True``!
         """
-        value = getattr(value, 'value', value)
+        value = getattr(value, "value", value)
         # get the value of an Enum
 
         enum = super(cls.__class__, cls).__call__(int(value))
@@ -40,5 +40,5 @@ class BaseFlagMeta(EnumMeta):
         for key, value in kwds.items():
             if value is True:
                 enum |= getattr(cls, key)
-        
+
         return enum

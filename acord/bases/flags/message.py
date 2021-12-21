@@ -7,11 +7,11 @@ class MessageFlags(Flag, metaclass=BaseFlagMeta):
     Message flags are used by discord to parse your message in a specified way.
 
     .. rubric:: Example
-    
-    For example, 
+
+    For example,
     :attr:`MessageFlags.SUPPRESS_EMBEDS` tells discord to not allow embeds
 
-    All message flags are assigned as a attribute, 
+    All message flags are assigned as a attribute,
     to combine flags, use the ``|`` operator, as shown below.
 
     .. code-block:: py
@@ -24,7 +24,7 @@ class MessageFlags(Flag, metaclass=BaseFlagMeta):
             ...
         )
 
-    If bitwise operators are not to your taste, 
+    If bitwise operators are not to your taste,
     you can try using :meth:`BaseFlagMeta.__call__`.
     """
 

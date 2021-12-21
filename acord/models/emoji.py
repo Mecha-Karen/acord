@@ -81,8 +81,8 @@ class Emoji(pydantic.BaseModel, Hashable):
         self, *, reason: Optional[str] = None, guild_id: Optional[int]
     ) -> None:
         """|coro|
-         
-        Deletes emoji """
+
+        Deletes emoji"""
         if guild_id and guild_id != self.guild_id:
             raise ValueError(
                 f"Mismatching guild_id provided, expected {self.guild_id} got {guild_id}"
@@ -105,7 +105,7 @@ class Emoji(pydantic.BaseModel, Hashable):
         reason: Optional[str] = None,
     ) -> Emoji:
         """|coro|
-        
+
         Edits emoji
 
         Parameters

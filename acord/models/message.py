@@ -42,7 +42,7 @@ class Message(pydantic.BaseModel, Hashable):
     application: Any
     """ sent with Rich Presence-related chat embeds """  # TODO: Application Object
     attachments: List[Attachment]
-    """ List of Attachment objects """ 
+    """ List of Attachment objects """
     author: User
     """ User object of who sent the message """
     channel_id: int
@@ -88,14 +88,12 @@ class Message(pydantic.BaseModel, Hashable):
     thread: Optional[Any]
     """ Thread were message was sent """  # TODO: Channel Thread Object
     timestamp: datetime.datetime
-    """ List of reactions """ # TODO: reaction object
-    referenced_message: Optional[
-        Union[Message, MessageReference]  
-    ]
+    """ List of reactions """  # TODO: reaction object
+    referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """
-    thread: Optional[Any]  
-    """ Thread were message was sent """ # TODO: Channel Thread Object
-    timestamp: datetime.datetime  
+    thread: Optional[Any]
+    """ Thread were message was sent """  # TODO: Channel Thread Object
+    timestamp: datetime.datetime
     """ Timestamp of when message was sent """
     tts: bool
     """ Is a text to speech message """
@@ -143,20 +141,21 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def refetch(self) -> Optional[Message]:
         """|coro|
-        
+
         Attempts to fetch the same message from the API again"""
         return await self.conn.client.fetch_message(self.channel_id, self.id)
 
     @pydantic.validate_arguments
-    async def get_reactions(self,
+    async def get_reactions(
+        self,
         emoji: Union[str, Emoji],
-        *, 
+        *,
         update: bool = True,
         after: Union[User, Snowflake],
-        limit: int = 25
+        limit: int = 25,
     ) -> List[User]:
         """|coro|
-        
+
         Fetches users from a reaction
 
         Parameters
@@ -174,15 +173,16 @@ class Message(pydantic.BaseModel, Hashable):
         assert 1 <= limit <= 100, "Limit must be between 1 and 100"
         res = await self.conn.request(
             Route(
-                "GET", 
+                "GET",
                 path=f"/channels/{self.channel_id}/messages/{self.id}/reactions/{emoji}",
-                after=getattr(after, 'id', after),
+                after=getattr(after, "id", after),
                 limit=limit,
-                bucket=(await self._get_bucket())
-            ))
+                bucket=(await self._get_bucket()),
+            )
+        )
         data = await res.json()
         users = list(map(lambda x: User(x), data))
-        
+
         if update:
             pass
 
@@ -207,32 +207,36 @@ class Message(pydantic.BaseModel, Hashable):
         )
 
     async def pin(self, *, reason: str = "") -> None:
-        """ Adds message to channel pins """
+        """Adds message to channel pins"""
         channel = self.channel
 
         if self.pinned:
-            raise ValueError('This message has already been pinned')
-            
+            raise ValueError("This message has already been pinned")
+
         await self.conn.request(
-            Route("PUT", path=f"/channels/{channel.id}/pins/{self.id}", bucket=(await self._get_bucket())),
-            headers={'X-Audit-Log-Reason': str(reason)}
+            Route(
+                "PUT",
+                path=f"/channels/{channel.id}/pins/{self.id}",
+                bucket=(await self._get_bucket()),
+            ),
+            headers={"X-Audit-Log-Reason": str(reason)},
         )
         self.pinned = True
 
     async def unpin(self, *, reason: str = "") -> None:
-        """ Removes message from channel pins """
+        """Removes message from channel pins"""
         channel = self.channel
 
         if not self.pinned:
-            raise ValueError('This message has not been pinned')
+            raise ValueError("This message has not been pinned")
 
         await self.conn.request(
             Route(
-                "DELETE", 
-                path=f"/channels/{channel.id}/pins/{self.id}", 
-                bucket=(await self._get_bucket())
+                "DELETE",
+                path=f"/channels/{channel.id}/pins/{self.id}",
+                bucket=(await self._get_bucket()),
             ),
-            headers={'X-Audit-Log-Reason': str(reason)}
+            headers={"X-Audit-Log-Reason": str(reason)},
         )
         self.pinned = False
 
@@ -307,7 +311,7 @@ class Message(pydantic.BaseModel, Hashable):
 
     async def reply(self, **data) -> Message:
         """Shortcut for `Message.Channel.send(..., reference=self)`"""
-        data.update(message_reference=self)     # If provided gets overwritten
+        data.update(message_reference=self)  # If provided gets overwritten
 
         return await self.channel.send(**data)
 
@@ -316,19 +320,21 @@ class Message(pydantic.BaseModel, Hashable):
         channel = self.channel
 
         if not channel:
-            raise ValueError('Target channel no longer exists')
+            raise ValueError("Target channel no longer exists")
         if self.flags & MessageFlags.CROSSPOSTED == MessageFlags.CROSSPOSTED:
-            raise ValueError('This message has already been crossposted')
+            raise ValueError("This message has already been crossposted")
         if not channel.type == 5:
             # ChannelTypes.GUILD_NEWS
-            raise ValueError('Cannot crosspost message as channel is not a news channel')
+            raise ValueError(
+                "Cannot crosspost message as channel is not a news channel"
+            )
 
         resp = await self.conn.request(
             Route("POST", path=f"/channels/{channel.id}/messages/{self.id}/crosspost")
         )
-        message =  Message(**(await resp.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update(
-            {f'{message.channel_id}:{message.id}': message}
+        message = Message(**(await resp.json()))
+        self.conn.client.INTERNAL_STORAGE["messages"].update(
+            {f"{message.channel_id}:{message.id}": message}
         )
         return message
 
@@ -380,16 +386,16 @@ class Message(pydantic.BaseModel, Hashable):
             for index, file in enumerate(payload.files):
 
                 form_data.add_field(
-                    name=f'file{index}',
+                    name=f"file{index}",
                     value=file.fp,
                     filename=file.filename,
-                    content_type="application/octet-stream"
+                    content_type="application/octet-stream",
                 )
-            
+
         form_data.add_field(
             name="payload_json",
-            value=payload.json(exclude={'files'}),
-            content_type="application/json"
+            value=payload.json(exclude={"files"}),
+            content_type="application/json",
         )
 
         r = await self.conn.request(
@@ -398,23 +404,25 @@ class Message(pydantic.BaseModel, Hashable):
         )
 
         n_msg = Message(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
+        self.conn.client.INTERNAL_STORAGE["messages"].update(
+            {f"{self.id}:{n_msg.id}": n_msg}
+        )
         return n_msg
 
     @property
     def channel(self):
-        """ Returns the channel message was sent in """
+        """Returns the channel message was sent in"""
         channel = self.conn.client.get_channel(self.channel_id)
 
         if not channel:
-            raise ValueError('Target channel no longer exists')
+            raise ValueError("Target channel no longer exists")
         return channel
 
     @property
     def guild(self):
-        """ Returns the guild message was sent in """
+        """Returns the guild message was sent in"""
         guild = self.conn.client.get_guild(self.guild_id)
 
         if not guild:
-            raise ValueError('Target guild no longer exists')
+            raise ValueError("Target guild no longer exists")
         return guild

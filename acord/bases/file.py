@@ -25,10 +25,10 @@ class File(pydantic.BaseModel):
 
         return fp
 
-    @pydantic.validator('filename')
+    @pydantic.validator("filename")
     def _validate_filename(cls, filename, **kwargs):
         if not filename:
-            fp  = kwargs["values"]["fp"]
+            fp = kwargs["values"]["fp"]
             return fp.name or "unknown"
         return filename
 
@@ -43,7 +43,7 @@ class File(pydantic.BaseModel):
         return spoiler
 
     def reset(self, seek: Optional[bool] = False, position: Optional[int] = 0) -> None:
-        """ Resets a files position
+        """Resets a files position
 
         Parameters
         ----------
@@ -57,6 +57,6 @@ class File(pydantic.BaseModel):
         self.fp.seek(position)
 
     def close(self) -> None:
-        """ Closes the file, which prevents it from being sent again """
+        """Closes the file, which prevents it from being sent again"""
         self.fp.close()
         self.is_closed = True

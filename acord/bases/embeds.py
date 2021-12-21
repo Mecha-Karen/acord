@@ -11,18 +11,20 @@ def _rgb_to_hex(rgb) -> int:
     for i in rgb:
         val = hex(i)[2:]
         if len(val) == 1:
-            string += '0' + val
+            string += "0" + val
         else:
             string += val
     return string
+
 
 class Color(Color):
     def __init__(self, color) -> None:
         if isinstance(color, int):
             # Converts int into a 6 char hex code
-            color = f'#{color:0>6X}'
-        
+            color = f"#{color:0>6X}"
+
         super().__init__(color)
+
 
 class EmbedFooter(pydantic.BaseModel):
     text: str
@@ -49,6 +51,7 @@ class EmbedImage(pydantic.BaseModel):
     height: Optional[int]
     width: Optional[int]
 
+
 class EmbedThumbnail(pydantic.BaseModel):
     url: pydantic.AnyHttpUrl
     proxy_url: Optional[pydantic.AnyHttpUrl]
@@ -67,12 +70,15 @@ class EmbedProvidor(pydantic.BaseModel):
     name: Optional[str]
     url: Optional[pydantic.AnyHttpUrl]
 
+
 class Embed(pydantic.BaseModel):
-    """ An object representing a discord embed """
+    """An object representing a discord embed"""
 
     title: Optional[str]
     """ Embed title, must be under 256 chars if provided """
-    type: Optional[Literal["rich", "image", "video", "gifv", "article", "link"]] = "rich"
+    type: Optional[
+        Literal["rich", "image", "video", "gifv", "article", "link"]
+    ] = "rich"
     """ Embed type, defaults to rich """
     description: Optional[str]
     """ Embed description, must be under 4096 chars if provided """
@@ -112,32 +118,32 @@ class Embed(pydantic.BaseModel):
     fields: Optional[List[EmbedField]]
     """ Embed fields """
 
-    @pydantic.validator('title')
+    @pydantic.validator("title")
     def _validate_title(cls, title: str) -> str:
         if len(title) > 256:
-            raise ValueError('Title cannot be greater then 256 characters')
+            raise ValueError("Title cannot be greater then 256 characters")
         return title
 
-    @pydantic.validator('description')
+    @pydantic.validator("description")
     def _validate_desc(cls, desc: str) -> str:
         if len(desc) > 4096:
-            raise ValueError('Description cannot be greater then 4096 characters')
+            raise ValueError("Description cannot be greater then 4096 characters")
         return desc
 
     def characters(self) -> int:
-        """ Counts the total amount of characters in the embed """
+        """Counts the total amount of characters in the embed"""
         count = 0
 
         count += len((self.title or ""))
         count += len((self.description or ""))
-        
-        footer_text = getattr(self.footer, 'text', "")
+
+        footer_text = getattr(self.footer, "text", "")
         count += len(footer_text)
 
-        author_text = getattr(self.author, 'name', "")
+        author_text = getattr(self.author, "name", "")
         count += len(author_text)
 
-        for field in (self.fields or list()):
+        for field in self.fields or list():
             count += len((field.name or ""))
             count += len((field.value or ""))
 
@@ -195,8 +201,8 @@ class Embed(pydantic.BaseModel):
         fields = self.fields
 
         if (len(fields) + 1) > 21:
-            raise ValueError('Embed cannot contain more then 21 fields')
-        
+            raise ValueError("Embed cannot contain more then 21 fields")
+
         fields.append(field)
         self.fields = field
 
@@ -239,6 +245,6 @@ class Embed(pydantic.BaseModel):
 
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
-            data['color'] = color
+            data["color"] = color
 
         return data

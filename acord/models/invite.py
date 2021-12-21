@@ -16,7 +16,7 @@ class StageInstanceInvite(pydantic.BaseModel, Hashable):
 
 
 class Invite(pydantic.BaseModel, Hashable):
-    conn: Any   # Connection object - For internal use
+    conn: Any  # Connection object - For internal use
 
     code: str
     """the invite code (unique ID)"""
@@ -40,21 +40,19 @@ class Invite(pydantic.BaseModel, Hashable):
     """the expiration date of this invite"""
     stage_instance: Optional[StageInstanceInvite]
     """stage instance data if there is a public Stage instance in the Stage channel this invite is for"""
-    guild_scheduled_event: Optional[Any]    # TODO: scheduled event object
+    guild_scheduled_event: Optional[Any]  # TODO: scheduled event object
     """guild scheduled event"""
-
 
     @pydantic.validator("guild", pre=True)
     def _validate_guild(cls, partial_guild: dict, **kwargs):
-        conn =  kwargs['values']['conn']
-        guild_id = int(partial_guild['id'])
+        conn = kwargs["values"]["conn"]
+        guild_id = int(partial_guild["id"])
 
         return conn.client.get_guild(guild_id)
 
-    
     @pydantic.validator("channel", pre=True)
     def _validate_channel(cls, partial_channel: dict, **kwargs):
-        conn =  kwargs['values']['conn']
-        channel_id = int(partial_channel['id'])
-        
+        conn = kwargs["values"]["conn"]
+        channel_id = int(partial_channel["id"])
+
         return conn.client.get_channel(channel_id)

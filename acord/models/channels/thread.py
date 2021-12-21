@@ -82,7 +82,7 @@ class Thread(Channel, ExtendedTextMethods):
 
     async def add_member(self, *, member: Union[Member, Snowflake]) -> None:
         """|coro|
-        
+
         Adds a member to the thread
 
         Parameters
@@ -92,7 +92,9 @@ class Thread(Channel, ExtendedTextMethods):
         if member != "@me":
             member = member.id
 
-        await self.conn.request(Route("PUT", path=f'/channels/{self.id}/thread-members/{member}'))
+        await self.conn.request(
+            Route("PUT", path=f"/channels/{self.id}/thread-members/{member}")
+        )
 
     async def remove_member(self, *, member: Union[Member, Snowflake]) -> None:
         """|coro|
@@ -106,15 +108,14 @@ class Thread(Channel, ExtendedTextMethods):
         if isinstance(member, Union[Member, Snowflake]):
             member = member.id
 
-        await self.conn.request(Route("DELETE", path=f'/channels/{self.id}/thread-members/{member}'))
+        await self.conn.request(
+            Route("DELETE", path=f"/channels/{self.id}/thread-members/{member}")
+        )
         self.members.pop(member, None)
 
     async def fetch_member(
-        self, 
-        *, 
-        member: Union[Member, Snowflake],
-        as_guild_member: bool = False
-        ) -> Optional[Union[ThreadMember, Member]]:
+        self, *, member: Union[Member, Snowflake], as_guild_member: bool = False
+    ) -> Optional[Union[ThreadMember, Member]]:
         """|coro|
 
         Fetches member from thread
@@ -130,7 +131,7 @@ class Thread(Channel, ExtendedTextMethods):
             member = member.id
 
         r = await self.conn.request(
-            Route("GET", path=f'/channels/{self.id}/thread-members/{member}')
+            Route("GET", path=f"/channels/{self.id}/thread-members/{member}")
         )
 
         tmember = ThreadMember(**(await r.json()))
@@ -139,17 +140,15 @@ class Thread(Channel, ExtendedTextMethods):
         if not as_guild_member:
             member = tmember
         else:
-            id = (await r.json())['user_id']
+            id = (await r.json())["user_id"]
             guild = self.conn.client.get_guild(self.guild_id)
             member = guild.get_member(id)
 
         return member
 
     async def fetch_members(
-        self, 
-        *, 
-        as_guild_member: bool = False
-        ) -> Iterator[Union[Member, ThreadMember]]:
+        self, *, as_guild_member: bool = False
+    ) -> Iterator[Union[Member, ThreadMember]]:
         """|coro|
 
         Fetches all members in the thread
@@ -160,7 +159,7 @@ class Thread(Channel, ExtendedTextMethods):
             Whether to return the thread members as :class:`ThreadMember` or :class:`Member`
         """
         r = await self.conn.request(
-            Route("GET", path=f'/channels/{self.id}/thread-members')
+            Route("GET", path=f"/channels/{self.id}/thread-members")
         )
         members = await r.json()
         guild = self.conn.client.get_guild(self.guild_id)
@@ -170,7 +169,7 @@ class Thread(Channel, ExtendedTextMethods):
             self.members.update({nmember.user_id: nmember})
 
             if as_guild_member:
-                id = member['user_id']
+                id = member["user_id"]
                 yield guild.get_member(id)
             else:
                 yield nmember
@@ -189,7 +188,7 @@ class Thread(Channel, ExtendedTextMethods):
         archived: :class:`bool`
             Whether the thread should be archived or not
         auto_archive_duration: :class:`int`
-            New auto archive duration, 
+            New auto archive duration,
             is set from parent channel OR during creation
         rate_limit_per_user: :class:`int`
             New slowmode for users in thread
@@ -197,14 +196,14 @@ class Thread(Channel, ExtendedTextMethods):
         headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': str(reason)})
+            headers.update({"X-Audit-Log-Reason": str(reason)})
 
         bucket = dict(guild_id=self.guild_id, channel_id=self.id)
 
         r = await self.conn.request(
             Route("PATCH", path=f"/channels/{self.id}", bucket=bucket),
             data=_payload_dict_to_json(ThreadEditPayload, **options),
-            headers=headers
+            headers=headers,
         )
 
         guild = self.conn.client.get_guild(self.guild_id)

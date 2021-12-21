@@ -6,10 +6,16 @@ import datetime
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
-from acord.models import (Channel,
-    TextChannel, Thread, Emoji, Role, Member, 
-    User, Sticker,
-    Snowflake
+from acord.models import (
+    Channel,
+    TextChannel,
+    Thread,
+    Emoji,
+    Role,
+    Member,
+    User,
+    Sticker,
+    Snowflake,
 )
 
 from acord.bases import (
@@ -18,7 +24,7 @@ from acord.bases import (
     MFALevel,
     NSFWLevel,
     PremiumTierLevel,
-    VerificationLevel
+    VerificationLevel,
 )
 from acord.utils import _d_to_channel
 from acord.payloads import ChannelCreatePayload
@@ -105,7 +111,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Amount of members in this guild """
 
     members: Dict[Snowflake, Member]
-    """ Mapping of all members in guild """ 
+    """ Mapping of all members in guild """
 
     mfa_level: MFALevel
     """required MFA level for the guild
@@ -179,33 +185,35 @@ class Guild(pydantic.BaseModel, Hashable):
 
     @pydantic.validator("members", pre=True)
     def _validate_members(cls, members, **kwargs) -> Dict[Snowflake, Member]:
-        conn = kwargs['values']['conn']
-        id = kwargs['values']['id']
+        conn = kwargs["values"]["conn"]
+        id = kwargs["values"]["id"]
 
-        return {int(m['user']['id']): Member(conn=conn, guild_id=id, **m) for m in members}
+        return {
+            int(m["user"]["id"]): Member(conn=conn, guild_id=id, **m) for m in members
+        }
 
     @pydantic.validator("threads", pre=True)
     def _validate_threads(cls, threads, **kwargs) -> Dict[Snowflake, Thread]:
-        conn = kwargs['values']['conn']
+        conn = kwargs["values"]["conn"]
 
-        return {int(t['id']): Thread(conn=conn, **t) for t in threads}
+        return {int(t["id"]): Thread(conn=conn, **t) for t in threads}
 
     @pydantic.validator("emojis", pre=True)
     def _validate_emojis(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
-        conn = kwargs['values']['conn']
-        id = kwargs['values']['id']
+        conn = kwargs["values"]["conn"]
+        id = kwargs["values"]["id"]
 
-        return {int(e['id']): Emoji(conn=conn, guild_id=id, **e) for e in emojis}
+        return {int(e["id"]): Emoji(conn=conn, guild_id=id, **e) for e in emojis}
 
     @pydantic.validator("stickers", pre=True)
     def _validate_stickers(cls, stickers, **kwargs) -> Dict[Snowflake, Sticker]:
-        conn = kwargs['values']['conn']
+        conn = kwargs["values"]["conn"]
 
-        return {int(s['id']): Sticker(conn=conn, **s) for s in stickers}
+        return {int(s["id"]): Sticker(conn=conn, **s) for s in stickers}
 
-    """ End of list -> mapping """ 
+    """ End of list -> mapping """
 
-    @pydantic.validator('icon')
+    @pydantic.validator("icon")
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:
             return None
@@ -227,10 +235,10 @@ class Guild(pydantic.BaseModel, Hashable):
     ) -> List[Union[TextChannel, Any]]:
         mapping = dict()
         conn = kwargs["values"]["conn"]
-        id = kwargs['values']['id']
+        id = kwargs["values"]["id"]
 
         for channel in channels:
-            channel.update({'guild_id': id})
+            channel.update({"guild_id": id})
             ch, _ = _d_to_channel(channel, conn)
 
             conn.client.INTERNAL_STORAGE["channels"].update({ch.id: ch})
@@ -252,11 +260,11 @@ class Guild(pydantic.BaseModel, Hashable):
     def _validate_guild_spash(cls, splash: str, **kwargs) -> Optional[str]:
         if not splash:
             return None
-        
-        id = kwargs['values']['id']
-        return f'https://cdn.discordapp.com/splashes/{id}/{splash}.png'
 
-    @pydantic.validator('created_at')
+        id = kwargs["values"]["id"]
+        return f"https://cdn.discordapp.com/splashes/{id}/{splash}.png"
+
+    @pydantic.validator("created_at")
     def _validate_guild_created_at(cls, _, **kwargs) -> datetime.datetime:
         timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
         return datetime.datetime.fromtimestamp(timestamp)
@@ -279,18 +287,20 @@ class Guild(pydantic.BaseModel, Hashable):
         Fetches all channels in the guild,
         doesn't include threads!
         """
-        r = await self.conn.request(Route(
-            "GET", 
-            path=f"/guilds/{self.id}/channels", 
-            bucket=dict(guild_id=self.id)
-        ))
+        r = await self.conn.request(
+            Route(
+                "GET", path=f"/guilds/{self.id}/channels", bucket=dict(guild_id=self.id)
+            )
+        )
         channels = await r.json()
 
         for channel in channels:
             ch, _ = _d_to_channel(channel, self.conn)
             yield ch
 
-    async def fetch_active_threads(self, *, include_private: bool = True) -> Iterator[Thread]:
+    async def fetch_active_threads(
+        self, *, include_private: bool = True
+    ) -> Iterator[Thread]:
         """|coro|
 
         Fetches all active threads in guild
@@ -300,22 +310,29 @@ class Guild(pydantic.BaseModel, Hashable):
         include_private: :class:`bool`
             Whether to include private threads when yielding
         """
-        r = await self.conn.request(Route(
-            "GET",
-            path=f"/guilds/{self.id}/threads/active",
-            bucket=dict(guild_id=self.id)
-        ))
+        r = await self.conn.request(
+            Route(
+                "GET",
+                path=f"/guilds/{self.id}/threads/active",
+                bucket=dict(guild_id=self.id),
+            )
+        )
         body = await r.json()
 
-        for thread in body['threads']:
-            if thread['type'] == ChannelTypes.GUILD_PRIVATE_THREAD and not include_private:
+        for thread in body["threads"]:
+            if (
+                thread["type"] == ChannelTypes.GUILD_PRIVATE_THREAD
+                and not include_private
+            ):
                 continue
             tr = Thread(conn=self.conn, **thread)
 
             self.threads.update({tr.id: tr})
             yield tr
 
-    async def fetch_member(self, *, member: Union[Member, Snowflake]) -> Optional[Member]:
+    async def fetch_member(
+        self, *, member: Union[Member, Snowflake]
+    ) -> Optional[Member]:
         """|coro|
 
         Fetches a member from the guild
@@ -325,16 +342,20 @@ class Guild(pydantic.BaseModel, Hashable):
         member: Union[:class:`Member`, :class:`Snowflake`]
             Member to fetch
         """
-        r = await self.conn.request(Route(
-            "GET", 
-            path=f"/guilds/{self.id}/members/{member}", 
-            bucket=dict(guild_id=self.id)
-        ))
+        r = await self.conn.request(
+            Route(
+                "GET",
+                path=f"/guilds/{self.id}/members/{member}",
+                bucket=dict(guild_id=self.id),
+            )
+        )
         fetched_member = Member(conn=self.conn, **(await r.json()))
         self.members.update({fetched_member.id: fetched_member})
         return fetched_member
 
-    async def fetch_members(self, *, limit: int = 1, after: Snowflake = 0) -> Iterator[Member]:
+    async def fetch_members(
+        self, *, limit: int = 1, after: Snowflake = 0
+    ) -> Iterator[Member]:
         """|coro|
 
         Fetches guild members
@@ -342,7 +363,7 @@ class Guild(pydantic.BaseModel, Hashable):
         Parameters
         ----------
         limit: :class:`int`
-            How many many members to fetch, 
+            How many many members to fetch,
             must be less then 1000 and greater then 1.
             Defaults to **1**!
         after: :class:`Snowflake`
@@ -351,11 +372,8 @@ class Guild(pydantic.BaseModel, Hashable):
         assert 0 < limit <= 1000, "Limit must be less then 1000 and greater then 0"
 
         route = Route(
-            "GET", 
-            path=f"/guilds/{self.id}/members",
-            limit=int(limit),
-            after=int(after)
-            )
+            "GET", path=f"/guilds/{self.id}/members", limit=int(limit), after=int(after)
+        )
         r = await self.conn.request(route)
         members = await r.json()
 
@@ -364,7 +382,9 @@ class Guild(pydantic.BaseModel, Hashable):
             self.members.update({fmember.id: fmember})
             yield fmember
 
-    async def fetch_members_by_name(self, query: str, *, limit: int = 1) -> Iterator[Member]:
+    async def fetch_members_by_name(
+        self, query: str, *, limit: int = 1
+    ) -> Iterator[Member]:
         """|coro|
 
         Fetches members by there username(s) or nickname(s)
@@ -378,11 +398,11 @@ class Guild(pydantic.BaseModel, Hashable):
         assert 0 < limit <= 1000, "Limit must be less then 1000 and greater then 0"
 
         route = Route(
-            "GET", 
+            "GET",
             path=f"/guilds/{self.id}/members/search",
             query=str(query),
-            limit=int(limit)
-            )
+            limit=int(limit),
+        )
         r = await self.conn.request(route)
         members = await r.json()
 
@@ -396,12 +416,10 @@ class Guild(pydantic.BaseModel, Hashable):
 
         Returns all the users banned in the guild
         """
-        r = await self.conn.request(Route(
-            "GET", 
-            path=f"/guilds/{self.id}/bans", 
-            bucket=dict(guild_id=self.id)
-        ))
-        for ban in (await r.json()):
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/bans", bucket=dict(guild_id=self.id))
+        )
+        for ban in await r.json():
             yield Ban(**ban)
 
     async def fetch_ban(self, user_id: Union[User, Snowflake]) -> Optional[Ban]:
@@ -415,16 +433,20 @@ class Guild(pydantic.BaseModel, Hashable):
         user_id: Union[:class:`User`, :class:`Snowflake`]
             ID of user who was banned
         """
-        user_id = getattr(user_id, 'id', user_id)
+        user_id = getattr(user_id, "id", user_id)
 
-        r = await self.conn.request(Route(
-            "GET", 
-            path=f"/guilds/{self.id}/bans/{user_id}", 
-            bucket=dict(guild_id=self.id)
-        ))
+        r = await self.conn.request(
+            Route(
+                "GET",
+                path=f"/guilds/{self.id}/bans/{user_id}",
+                bucket=dict(guild_id=self.id),
+            )
+        )
         return Ban(**(await r.json()))
 
-    async def unban(self, user_id: Union[User, Snowflake], *, reason: str = None) -> None:
+    async def unban(
+        self, user_id: Union[User, Snowflake], *, reason: str = None
+    ) -> None:
         """|coro|
 
         Removes ban from user
@@ -434,15 +456,14 @@ class Guild(pydantic.BaseModel, Hashable):
         user_id: Union[:class:`User`, :class:`Snowflake`]
             user ID to be unbanned
         """
-        user_id = getattr(user_id, 'id', user_id)
+        user_id = getattr(user_id, "id", user_id)
         headers = dict()
 
         if reason:
             headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.id}/bans/{user_id}"),
-            headers=headers
+            Route("DELETE", path=f"/guilds/{self.id}/bans/{user_id}"), headers=headers
         )
 
     @pydantic.validate_arguments
@@ -455,7 +476,7 @@ class Guild(pydantic.BaseModel, Hashable):
         roles: List[Union[Role, Snowflake]] = None,
         mute: bool = None,
         deaf: bool = None,
-        reason: str = None
+        reason: str = None,
     ) -> Optional[Member]:
         """|coro|
 
@@ -482,30 +503,24 @@ class Guild(pydantic.BaseModel, Hashable):
         reason: :class:`str`
             Reason for adding member to guild
         """
-        roles = [getattr(i, 'id', i) for i in roles]
-        user_id = getattr(user_id, 'id', user_id)
+        roles = [getattr(i, "id", i) for i in roles]
+        user_id = getattr(user_id, "id", user_id)
         data = dict(
-            access_token=access_token,
-            nick=nick,
-            roles=roles,
-            mute=mute,
-            deaf=deaf
+            access_token=access_token, nick=nick, roles=roles, mute=mute, deaf=deaf
         )
         data = {k: v for k, v in data.keys() if v is not None}
         route = Route(
             "PUT",
             path=f"/guilds/{self.id}/members/{user_id}",
-            bucket=dict(guild_id=self.id)
+            bucket=dict(guild_id=self.id),
         )
 
         headers = {"Content-Type": "application/json"}
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
-        r = await self.conn.request(
-            route, data=data, headers=headers
-        )
+        r = await self.conn.request(route, data=data, headers=headers)
 
         if r.status == 201:
             member = Member(conn=self.conn, **(await r.json()))
@@ -548,17 +563,17 @@ class Guild(pydantic.BaseModel, Hashable):
         headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
             Route("POST", path=f"/guilds/{self.id}/channels"),
             data=payload.json(),
-            headers=headers
+            headers=headers,
         )
 
         channel, _ = _d_to_channel((await r.json()), self.conn)
 
-        self.conn.client.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+        self.conn.client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
         self.channels.update({channel.id: channel})
 
         return channel

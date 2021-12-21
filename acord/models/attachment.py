@@ -4,6 +4,7 @@ from typing import Optional
 from acord.models import Snowflake
 from acord.bases import Hashable
 
+
 class Attachment(pydantic.BaseModel, Hashable):
     id: Snowflake
     """
@@ -45,4 +46,3 @@ class Attachment(pydantic.BaseModel, Hashable):
     """
     Whether the file is ephemeral
     """
-

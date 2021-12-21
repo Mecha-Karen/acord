@@ -4,25 +4,25 @@ import os
 import sys
 from acord.bases import Hashable
 
-sys.path.append(os.path.abspath('../extensions'))
+sys.path.append(os.path.abspath("../extensions"))
 
-project = 'Documentation'
-copyright = '2021 - Present, Mecha Karen'
-author = 'Mecha Karen'
-release = '0.0.1a'
+project = "Documentation"
+copyright = "2021 - Present, Mecha Karen"
+author = "Mecha Karen"
+release = "0.0.1a"
 
 extensions = [
-   'sphinx.ext.autodoc', 
-   'sphinx.ext.coverage', 
-   'sphinx.ext.napoleon',
-   'sphinx.ext.extlinks',
-   'sphinx.ext.intersphinx',
-   'sphinx.ext.autosummary',
-   'attributetable'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "attributetable",
 ]
 
 intersphinx_mapping = {
-  'py': ('https://docs.python.org/3', None),
+    "py": ("https://docs.python.org/3", None),
 }
 
 autodoc_member_order = "groupwise"
@@ -38,57 +38,51 @@ rst_prolog = """
 .. _function_link: https://docs.python.org/3/reference/compound_stmts.html#function
 """
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
-exclude_patterns = ['*.md', '*.template']
+exclude_patterns = ["*.md", "*.template"]
 
 
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 html_logo = "_static/logo.png"
 
 html_theme_options = {
-   "favicons": [
-      {
-         "rel": "icon",
-         "sizes": "16x16",
-         "href": "logo.png",
-      },
-      {
-         "rel": "icon",
-         "sizes": "32x32",
-         "href": "logo.png",
-      },
-      {
-         "rel": "apple-touch-icon",
-         "sizes": "180x180",
-         "href": "logo.png"
-      },
-   ],
-
-   "icon_links": [
-      {
-        "name": "GitHub",
-        "url": "https://github.com/Mecha-Karen/",
-        "icon": "fab fa-github",
-      },
-      {
-        "name": "Discord",
-        "url": "https://discord.com/invite/JBjMAMag7a",
-        "icon": "fab fa-discord"
-      },
-      {
-        "name": "Dashboard",
-        "url": "https://mechakaren.xyz/dashboard",
-        "icon": "fas fa-box"
-      }
+    "favicons": [
+        {
+            "rel": "icon",
+            "sizes": "16x16",
+            "href": "logo.png",
+        },
+        {
+            "rel": "icon",
+            "sizes": "32x32",
+            "href": "logo.png",
+        },
+        {"rel": "apple-touch-icon", "sizes": "180x180", "href": "logo.png"},
     ],
-
-   "use_edit_page_button": True,
-   "collapse_navigation": False,
-   "show_prev_next": False,
-   "navigation_depth": 3,
-   "search_bar_text": "Search the docs ...",
-   "footer_items": ["copyright", "last-updated"],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/Mecha-Karen/",
+            "icon": "fab fa-github",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.com/invite/JBjMAMag7a",
+            "icon": "fab fa-discord",
+        },
+        {
+            "name": "Dashboard",
+            "url": "https://mechakaren.xyz/dashboard",
+            "icon": "fas fa-box",
+        },
+    ],
+    "use_edit_page_button": True,
+    "collapse_navigation": False,
+    "show_prev_next": False,
+    "navigation_depth": 3,
+    "search_bar_text": "Search the docs ...",
+    "footer_items": ["copyright", "last-updated"],
 }
 
 html_context = {
@@ -97,22 +91,17 @@ html_context = {
     "github_repo": "acord",
     "github_version": "main",
     "doc_path": "source",
-    "last_updated": datetime.datetime.utcnow().strftime('%d/%m/%Y'),
+    "last_updated": datetime.datetime.utcnow().strftime("%d/%m/%Y"),
 }
 
 html_sidebars = {
     "**": ["search-field", "sidebar-nav-bs"],
-    "index": ["search-field", "home-navbar"]
+    "index": ["search-field", "home-navbar"],
 }
 
-html_static_path = ['_static']
-html_css_files = [
-    'css/style.css',
-    'css/codeblocks.css'
-]
+html_static_path = ["_static"]
+html_css_files = ["css/style.css", "css/codeblocks.css"]
 
 html_title = "Acord"
 
-suppress_warnings = [
-   "image.not_readable"
-]
+suppress_warnings = ["image.not_readable"]

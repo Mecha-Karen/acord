@@ -11,6 +11,7 @@ from acord.utils import _payload_dict_to_json
 
 from .user import User
 
+
 class Member(pydantic.BaseModel, Hashable):
     """
     Represents a guild member.
@@ -41,9 +42,9 @@ class Member(pydantic.BaseModel, Hashable):
         ID of the guild member is in
     """
 
-    conn: Any # connection object
+    conn: Any  # connection object
 
-    user: Optional[User] # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
+    user: Optional[User]  # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
     nick: Optional[str]
     avatar: Optional[str]
     roles: List[Snowflake]
@@ -51,7 +52,7 @@ class Member(pydantic.BaseModel, Hashable):
     premium_since: Optional[datetime.datetime]
     deaf: bool
     mute: bool
-    pending: Optional[bool] # not included in non-GUILD_ events
+    pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
     guild_id: Snowflake
 
@@ -65,7 +66,7 @@ class Member(pydantic.BaseModel, Hashable):
         reason: :class:`str`
             Reason for banning member
         delete_message_days: :class:`int`
-            An integer between 0-7, 
+            An integer between 0-7,
             deletes members messages within the past n days.
         """
         assert 0 <= delete_message_days <= 7, "Integer must be between 0-7"
@@ -73,13 +74,13 @@ class Member(pydantic.BaseModel, Hashable):
         headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
         data = dict(delete_message_days=delete_message_days)
 
         await self.conn.request(
             Route("PUT", path=f"/guilds/{self.guild_id}/bans/{self.user.id}"),
             headers=headers,
-            data=data
+            data=data,
         )
 
     async def kick(self, *, reason: str = None) -> None:
@@ -95,11 +96,11 @@ class Member(pydantic.BaseModel, Hashable):
         headers = dict()
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
             Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),
-            headers=headers
+            headers=headers,
         )
 
     async def edit(self, *, reason: str = None, **data) -> Member:
@@ -116,10 +117,10 @@ class Member(pydantic.BaseModel, Hashable):
             roles will be updated exactly as provided.
             If you wish to keep existing roles, use :meth:`Member.add_role`.
         mute: :class:`bool`
-            whether the user is muted in voice channels. 
+            whether the user is muted in voice channels.
             Raises BadRequest if user is not in a VC.
         deaf: :class:`bool`
-            whether the user is deafened in voice channels. 
+            whether the user is deafened in voice channels.
             Raises BadRequest if user is not in a VC.
         channel_id: :class:`Snowflake`
             id of channel to move user to (if they are connected to voice).
@@ -128,15 +129,15 @@ class Member(pydantic.BaseModel, Hashable):
             If set to ``None``, removes timeout.
         """
         payload = _payload_dict_to_json(MemberEditPayload, **data)
-        headers = dict({'Content-Type': 'application/json'})
+        headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),
             headers=headers,
-            data=payload
+            data=payload,
         )
 
         member = Member(guild_id=self.guild_id, conn=self.conn, **(await r.json()))
@@ -163,11 +164,14 @@ class Member(pydantic.BaseModel, Hashable):
         headers = dict()
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("PUT", path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}"),
-            headers=headers
+            Route(
+                "PUT",
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",
+            ),
+            headers=headers,
         )
 
         if role not in self.roles:
@@ -182,7 +186,7 @@ class Member(pydantic.BaseModel, Hashable):
         Parameters
         ----------
         *roles: :class:`Role`
-            Roles to be updated, 
+            Roles to be updated,
             must be provided individually as args!
         reason: :class:`str`
             Reason for adding roles
@@ -210,11 +214,14 @@ class Member(pydantic.BaseModel, Hashable):
         headers = dict()
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}"),
-            headers=headers
+            Route(
+                "DELETE",
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",
+            ),
+            headers=headers,
         )
 
         if role in self.roles:
@@ -229,7 +236,7 @@ class Member(pydantic.BaseModel, Hashable):
         Parameters
         ----------
         *roles: :class:`Role`
-            Roles to be updated, 
+            Roles to be updated,
             must be provided individually as args!
         reason: :class:`str`
             Reason for removing roles

@@ -6,7 +6,7 @@ import os
 versionInfo = sys.version_info
 
 if (versionInfo.major < 3) and (versionInfo.minor < 8):
-    sys.exit('Cannot install ACord on python version below 3.8, Please upgrade!')
+    sys.exit("Cannot install ACord on python version below 3.8, Please upgrade!")
 
 version = ""
 
@@ -28,7 +28,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: GNU General Public License (GPL)",
-    
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: 3",
 ]
@@ -42,15 +41,10 @@ packages = [
     "acord.core",
     "acord.core.signals",
     "acord.models",
-    "acord.models.channels"
+    "acord.models.channels",
 ]
 
-extra_requires = {
-    "speedup": ['orjson>=3.5.4',
-                'aiodns>=1.1',
-                'brotli',
-                'cchardet']
-}
+extra_requires = {"speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"]}
 
 if not os.name == "nt":
     extra_requires["speedup"].append("uvloop")
@@ -73,5 +67,5 @@ setup(
     classifiers=classifiers,
     packages=packages,
     install_requires=["aiohttp", "pydantic"],
-    extra_requires=extra_requires
+    extra_requires=extra_requires,
 )

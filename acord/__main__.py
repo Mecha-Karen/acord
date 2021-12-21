@@ -4,12 +4,17 @@ import acord
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--v", "-version", 
-                    help="Display short version info", 
-                    action='store_true', default=None)
+parser.add_argument(
+    "--v",
+    "-version",
+    help="Display short version info",
+    action="store_true",
+    default=None,
+)
 
 default_usage = parser.format_usage()[7:]
-parser.usage = default_usage.replace('__main__.py', 'python -m acord')
+parser.usage = default_usage.replace("__main__.py", "python -m acord")
+
 
 def about() -> str:
     return f"""\
@@ -26,7 +31,8 @@ File Location: {acord.__file__}
 For any queries or questions don't hesitate to send us an email at \
 admin@mechakaren.xyz."""
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     args = {k: v for k, v in args.items() if v is not None}
@@ -35,7 +41,7 @@ if __name__ == '__main__':
         print(about())
         exit()
 
-    if args.get('v') or args.get('version'):
+    if args.get("v") or args.get("version"):
         print(acord.__version__)
 
     exit()

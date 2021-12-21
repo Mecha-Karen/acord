@@ -9,7 +9,7 @@ class Intents(Flag, metaclass=BaseFlagMeta):
 
     .. rubric:: Usage
 
-    All intents are assigned as a attribute, 
+    All intents are assigned as a attribute,
     to combine intents, use the ``|`` operator, as shown below.
 
     .. code-block:: py
@@ -23,7 +23,7 @@ class Intents(Flag, metaclass=BaseFlagMeta):
             ...
         )
 
-    If bitwise operators are not to your taste, 
+    If bitwise operators are not to your taste,
     you can try using :meth:`BaseFlagMeta.__call__`.
 
     .. rubric:: Valid Attributes

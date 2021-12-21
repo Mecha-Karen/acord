@@ -17,10 +17,12 @@ from .thread import Thread
 
 # Standard text channel in a guild
 
+
 async def _pop_task(client, channel_id, *messages) -> None:
     # Create task to pop all messages in bulk deletion
     for message in messages:
-        client.INTERNAL_STORAGE['messages'].pop(f'{channel_id}:{message}', None)
+        client.INTERNAL_STORAGE["messages"].pop(f"{channel_id}:{message}", None)
+
 
 class TextChannel(Channel, ExtendedTextMethods):
     guild_id: int
@@ -153,20 +155,24 @@ class TextChannel(Channel, ExtendedTextMethods):
 
         for message in data:
             msg = Message(**message)
-            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
+            self.conn.client.INTERNAL_STORAGE["messages"].update(
+                {f"{self.id}:{msg.id}": msg}
+            )
             yield msg
 
     @pydantic.validate_arguments
-    async def bulk_delete(self, *messages: Union[Message, Snowflake], reason: str = None) -> None:
+    async def bulk_delete(
+        self, *messages: Union[Message, Snowflake], reason: str = None
+    ) -> None:
         """|coro|
 
         Deletes messages in bulk, in a channel.
 
         .. warning::
             When deleting in bulk, you need atleast 2 messages and less then 100.
-            
-            You must also provide your own messages to delete, 
-            for a ``purge`` like method, 
+
+            You must also provide your own messages to delete,
+            for a ``purge`` like method,
             use messages from :meth:`TextChannel.fetch_messages`.
 
         Parameters
@@ -178,22 +184,24 @@ class TextChannel(Channel, ExtendedTextMethods):
         """
         headers = dict()
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         if 2 < len(messages) < 100:
-            raise ValueError('Messages to delete must be greater then 2 and less then 100')
+            raise ValueError(
+                "Messages to delete must be greater then 2 and less then 100"
+            )
 
-        ids = set(map(lambda x: getattr(x, 'id', x), messages))
+        ids = set(map(lambda x: getattr(x, "id", x), messages))
 
         await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/messages/bulk-delete"),
-            data={'messages': list(ids)},
-            headers=headers
+            data={"messages": list(ids)},
+            headers=headers,
         )
 
         self.conn.client.loop.create_task(
-            _pop_task(self.conn.client, self.id, *ids), 
-            name=f"acord: bulk delete: {len(ids)}"
+            _pop_task(self.conn.client, self.id, *ids),
+            name=f"acord: bulk delete: {len(ids)}",
         )
 
     # Circular imports - Fix typehint when importing
@@ -204,9 +212,7 @@ class TextChannel(Channel, ExtendedTextMethods):
         """
         from acord.models import Invite
 
-        r = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/invites")
-        )
+        r = await self.conn.request(Route("GET", path=f"/channels/{self.id}/invites"))
         invites = await r.json()
 
         return [Invite(**inv) for inv in invites]
@@ -242,21 +248,23 @@ class TextChannel(Channel, ExtendedTextMethods):
 
         headers = dict()
         if reason:
-            headers.update({'X-Audit-Reason': reason})
-        
+            headers.update({"X-Audit-Reason": reason})
+
         if data:
             data = InviteCreatePayload(**data)
 
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/invites"),
             data=data,
-            headers=headers
+            headers=headers,
         )
 
         return Invite(**(await r.json()))
 
     @pydantic.validate_arguments
-    async def follow(self, *, channel: Union[Channel, Snowflake]) -> Dict[str, Snowflake]:
+    async def follow(
+        self, *, channel: Union[Channel, Snowflake]
+    ) -> Dict[str, Snowflake]:
         """|coro|
 
         Follows a guild news channel
@@ -264,13 +272,13 @@ class TextChannel(Channel, ExtendedTextMethods):
         Parameters
         ----------
         channel: Union[:class:`Channel`, :class:`Snowflake`]
-            Target channel, 
+            Target channel,
             or channel to recieve messages from this channel.
 
         Returns
         -------
         A dictionary with the keys:
-        
+
         * channel_id: source channel id
         * webhook_id: created target webhook id
         """
@@ -278,18 +286,19 @@ class TextChannel(Channel, ExtendedTextMethods):
             channel = channel.id
 
         r = await self.conn.request(
-            Route("POST", path=f'/channels/{self.id}/followers'),
-            data={'webhook_channel_id': channel},
+            Route("POST", path=f"/channels/{self.id}/followers"),
+            data={"webhook_channel_id": channel},
         )
 
         return await r.json()
 
     async def create_thread(
-        self, 
-        *, 
+        self,
+        *,
         message: Union[Message, Snowflake] = None,
         reason: str = None,
-        **options) -> Optional[Thread]:
+        **options,
+    ) -> Optional[Thread]:
         """|coro|
 
         Creates a thread in this channel
@@ -300,21 +309,19 @@ class TextChannel(Channel, ExtendedTextMethods):
             Message to start thread with
         """
         if message:
-            message_id = int(getattr(message, 'id', message))
-            path = f'/channels/{self.id}/messages/{message_id}/threads'
+            message_id = int(getattr(message, "id", message))
+            path = f"/channels/{self.id}/messages/{message_id}/threads"
         else:
-            path = f'/channels/{self.id}/threads'
+            path = f"/channels/{self.id}/threads"
 
         data = ThreadCreatePayload(**options)
         headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': str(reason)})
+            headers.update({"X-Audit-Log-Reason": str(reason)})
 
         r = await self.conn.request(
-            Route("POST", path=path),
-            headers=headers,
-            data=data.json()
+            Route("POST", path=path), headers=headers, data=data.json()
         )
         thread = Thread(conn=self.conn, **(await r.json()))
         self.guild.threads.update({thread.id: thread})
@@ -334,25 +341,24 @@ class TextChannel(Channel, ExtendedTextMethods):
             instead implement :meth:`Guild.fetch_active_threads`
         """
         if int(self.conn.client.gateway_version[1]) >= 10:
-            raise APIObjectDepreciated("This method has been dropped,\
-                please use `Guild.active_threads`")
+            raise APIObjectDepreciated(
+                "This method has been dropped,\
+                please use `Guild.active_threads`"
+            )
 
         r = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/threads/active")
         )
         body = await r.json()
 
-        for thread in body['threads']:
+        for thread in body["threads"]:
             tr = Thread(**thread)
             self.guild.threads.update({tr.id: tr})
             yield tr
 
     async def fetch_public_archived_threads(
-        self,
-        *,
-        before: datetime.datetime = None,
-        limit: int = None
-        ) -> Iterator[Thread]:
+        self, *, before: datetime.datetime = None, limit: int = None
+    ) -> Iterator[Thread]:
         """|coro|
 
         Fetches all public archived thread in channel
@@ -364,22 +370,18 @@ class TextChannel(Channel, ExtendedTextMethods):
             body.update(limit=int(limit))
 
         r = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/threads/archived/public"),
-            data=body
+            Route("GET", path=f"/channels/{self.id}/threads/archived/public"), data=body
         )
         data = await r.json()
 
-        for thread in data['threads']:
+        for thread in data["threads"]:
             tr = Thread(**thread)
             self.guild.threads.update({tr.id: tr})
             yield tr
 
     async def fetch_private_archived_threads(
-        self,
-        *,
-        before: datetime.datetime = None,
-        limit: int = None
-        ) -> Iterator[Thread]:
+        self, *, before: datetime.datetime = None, limit: int = None
+    ) -> Iterator[Thread]:
         """|coro|
 
         Fetches all private archived thread in channel
@@ -392,21 +394,18 @@ class TextChannel(Channel, ExtendedTextMethods):
 
         r = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/threads/archived/private"),
-            data=body
+            data=body,
         )
         data = await r.json()
 
-        for thread in data['threads']:
+        for thread in data["threads"]:
             tr = Thread(**thread)
             self.guild.threads.update({tr.id: tr})
             yield tr
 
     async def fetch_joined_private_archived_threads(
-        self,
-        *,
-        before: datetime.datetime = None,
-        limit: int = None
-        ) -> Iterator[Thread]:
+        self, *, before: datetime.datetime = None, limit: int = None
+    ) -> Iterator[Thread]:
         """|coro|
 
         Fetches all private archived threads,
@@ -419,21 +418,23 @@ class TextChannel(Channel, ExtendedTextMethods):
             body.update(limit=int(limit))
 
         r = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/users/@me/threads/archived/private"),
-            data=body
+            Route(
+                "GET", path=f"/channels/{self.id}/users/@me/threads/archived/private"
+            ),
+            data=body,
         )
         data = await r.json()
 
-        for thread in data['threads']:
+        for thread in data["threads"]:
             tr = Thread(**thread)
             self.guild.threads.update({tr.id: tr})
             yield tr
 
     @property
     def guild(self):
-        """ Returns the guild were channel was created in """
+        """Returns the guild were channel was created in"""
         guild = self.conn.client.get_guild(self.guild_id)
-        
+
         if not guild:
-            raise ValueError('Target guild can no longer be found')
+            raise ValueError("Target guild can no longer be found")
         return guild

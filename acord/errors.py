@@ -22,6 +22,7 @@ class BadRequest(BaseResponseException):
     """Raised when requested recourse return 400,
     This is only raised for unhandled errors"""
 
+
 class Forbidden(BaseResponseException):
     """Raised when requested recourse returns 403,
     indicating that you don't have sufficient permissions"""

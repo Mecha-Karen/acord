@@ -11,7 +11,7 @@ from .enums.guild import (
     MFALevel,
     NSFWLevel,
     PremiumTierLevel,
-    VerificationLevel
+    VerificationLevel,
 )
 
 from .embeds import (
@@ -22,8 +22,8 @@ from .embeds import (
     EmbedThumbnail,
     EmbedVideo,
     EmbedProvidor,
-    Embed
-    )
+    Embed,
+)
 from .file import File
 from .mixins import Hashable, _C, T, H
 from .mentions import AllowedMentions

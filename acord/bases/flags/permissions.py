@@ -1,13 +1,14 @@
 from enum import Flag
 from .base import BaseFlagMeta
 
+
 class Permissions(Flag, metaclass=BaseFlagMeta):
     """
     Permissions define what actions a user can or cannot do,
     they are set and follow a hierachy.
     If you try break the hierachy 403 will be raised.
     E.g. Banning a member with a higher role then the client.
-    
+
     .. rubric:: Usage
 
     .. code-block:: py
@@ -19,9 +20,10 @@ class Permissions(Flag, metaclass=BaseFlagMeta):
             | Permissions.KICK_MEMBERS
         )
 
-    If bitwise operators are not to your taste, 
+    If bitwise operators are not to your taste,
     you can try using :meth:`BaseFlagMeta.__call__`.
     """
+
     NONE = 0
     """ No permissions """
 

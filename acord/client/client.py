@@ -53,12 +53,12 @@ class Client(object):
     session_id: :class:`str`
         Session ID recieved when connecting to gateway
     gateway_version: :class:`str`
-        Selected gateway version, available after connecting to gateway. 
+        Selected gateway version, available after connecting to gateway.
         In form ``v[0-9]``.
     user: :class:`User`
         Client user object
     INTERNAL_STORAGE: :class:`dict`
-        Cache of gateway objects, recomended to fetch using built in methods, 
+        Cache of gateway objects, recomended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
     """
 
@@ -100,11 +100,11 @@ class Client(object):
         self.INTERNAL_STORAGE["channels"] = dict()
 
     def bind_token(self, token: str) -> None:
-        """ Bind a token to the client, prevents new tokens from being set """
+        """Bind a token to the client, prevents new tokens from being set"""
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False):
-        """ Register an event to be dispatched on call.
+        """Register an event to be dispatched on call.
 
         This is a decorator,
         if you do not want to use the decorator consider trying:
@@ -125,6 +125,7 @@ class Client(object):
         once: :class:`bool`
             Whether the event should be ran once before being removed.
         """
+
         def inner(func):
             data = {"func": func, "once": once}
 
@@ -144,8 +145,8 @@ class Client(object):
 
     async def on_error(self, event_method):
         """|coro|
-        
-        Built in base error handler for events """
+
+        Built in base error handler for events"""
         acord.logger.error('Failed to run event "{}".'.format(event_method))
 
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
@@ -159,7 +160,7 @@ class Client(object):
         event_name: :class:`str`
             Name of event
         *args, **kwargs
-            Additional args or kwargs to be passed through 
+            Additional args or kwargs to be passed through
         """
         if not event_name.startswith("on_"):
             func_name = "on_" + event_name
@@ -198,37 +199,30 @@ class Client(object):
 
     async def resume(self) -> None:
         """|coro|
-        
-        Resumes a closed gateway connection, 
+
+        Resumes a closed gateway connection,
         should only be called internally.
         """
         payload = dict(
             op=6,
             d=dict(
-                token=self.http.token,
-                session_id=self.session_id,
-                seq=gateway.sequence
-            )
+                token=self.http.token, session_id=self.session_id, seq=gateway.sequence
+            ),
         )
 
         await self.http.ws.send_json(payload)
 
-    def run(self, 
-            token: str = None, 
-            *, 
-            reconnect: bool = True,
-            resumed: bool = False
-        ):
+    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs the client, loop blocking
 
         Parameters
         ----------
         token: :class:`str`
             Token to be passed through, if binded both :attr:`Client.token` and are overwritten.
-            Else, this token will be used to connect to gateway, 
+            Else, this token will be used to connect to gateway,
             if fails falls back onto :attr:`Client.token`.
         reconnect: :class:`bool`
-            Whether to reconnect it first connection fails, defaults to ``True``. 
+            Whether to reconnect it first connection fails, defaults to ``True``.
         """
         if (token or self.token) and getattr(self, "_lruPermanent", False):
             warnings.warn(
@@ -286,9 +280,8 @@ class Client(object):
                 self.loop.run_until_complete(self.http.disconnect())
 
                 return self.run(token=token, reconnect=reconnect, resumed=True)
-            
-            raise
 
+            raise
 
     # Fetch from cache:
 
@@ -314,32 +307,34 @@ class Client(object):
 
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
-        resp = await self.http.request(
-            Route("GET", path=f"/users/{user_id}")
-        )
+        resp = await self.http.request(Route("GET", path=f"/users/{user_id}"))
         user = await User(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE['users'].update({user.id: user})
+        self.INTERNAL_STORAGE["users"].update({user.id: user})
         return user
 
     async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
         """Fetches channel from API and caches it"""
-        resp = await self.http.request(
-            Route("GET", path=f"/channels/{channel_id}")
-        )
+        resp = await self.http.request(Route("GET", path=f"/channels/{channel_id}"))
         channel = await TextChannel(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE['channels'].update({channel.id: channel})
+        self.INTERNAL_STORAGE["channels"].update({channel.id: channel})
         return channel
 
-    async def fetch_message(self, channel_id: int, message_id: int) -> Optional[Message]:
+    async def fetch_message(
+        self, channel_id: int, message_id: int
+    ) -> Optional[Message]:
         """Fetches message from API and caches it"""
         resp = await self.http.request(
             Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
         )
         message = await Message(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE['messages'].update({f'{channel_id}:{message_id}': message})
+        self.INTERNAL_STORAGE["messages"].update(
+            {f"{channel_id}:{message_id}": message}
+        )
         return message
 
-    async def fetch_guild(self, guild_id: int, *, with_counts: bool = False) -> Optional[Guild]:
+    async def fetch_guild(
+        self, guild_id: int, *, with_counts: bool = False
+    ) -> Optional[Guild]:
         """Fetches guild from API and caches it.
 
         .. note::
@@ -350,7 +345,7 @@ class Client(object):
             Route("GET", path=f"/guilds/{guild_id}", with_counts=bool(with_counts)),
         )
         guild = await Guild(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE['guilds'].update({guild.id: guild})
+        self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
 
     # Get from cache or Fetch from API:
 

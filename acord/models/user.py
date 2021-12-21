@@ -50,16 +50,10 @@ class User(pydantic.BaseModel, Hashable):
     discriminator: str
     avatar: Optional[str]
     bot: Optional[bool]
-    system: Optional[
-        bool
-    ]
-    mfa_enabled: Optional[
-        bool
-    ]
+    system: Optional[bool]
+    mfa_enabled: Optional[bool]
     banner: Optional[str]
-    accent_color: Optional[
-        int
-    ]
+    accent_color: Optional[int]
     locale: Optional[str]
     verified: Optional[bool]
     flags: Optional[UserFlags]
@@ -87,4 +81,4 @@ class User(pydantic.BaseModel, Hashable):
         return [i for i in self.conn.client.guilds if i.has_user(self)]
 
     def __str__(self) -> str:
-        return f'{self.username}#{self.discriminator}'
+        return f"{self.username}#{self.discriminator}"

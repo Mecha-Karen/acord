@@ -14,7 +14,7 @@ except ImportError:
             If you are using windows simply ignore this warning.\
             \npip install uvloop",
         ImportWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
 import asyncio
@@ -23,7 +23,14 @@ import aiohttp
 import acord
 import sys
 
-from acord.errors import BadRequest, DiscordError, Forbidden, GatewayConnectionRefused, HTTPException, NotFound
+from acord.errors import (
+    BadRequest,
+    DiscordError,
+    Forbidden,
+    GatewayConnectionRefused,
+    HTTPException,
+    NotFound,
+)
 from . import abc
 from .heartbeat import KeepAlive
 from .decoders import *
@@ -212,8 +219,11 @@ class HTTPClient(object):
         await self._session.close()
 
     async def request(
-        self, route: abc.Route, data: dict = None, headers: dict = dict(),
-        **addtional_kwargs
+        self,
+        route: abc.Route,
+        data: dict = None,
+        headers: dict = dict(),
+        **addtional_kwargs,
     ) -> aiohttp.ClientResponse:
         trapped = self.trappedBuckets.get(route.bucket)
         if trapped:
@@ -263,12 +273,11 @@ class HTTPClient(object):
 
                 return await self.request(route, n_data, headers, **addtional_kwargs)
 
-
         if resp.status == 403:
             raise Forbidden(str(respData))
         if resp.status == 404:
             raise NotFound(str(respData))
-        
+
         raise BadRequest(str(respData))
 
     @property

@@ -1,6 +1,6 @@
 # text bases, allows methods to be shared between
 # - TextChannel
-# - Thread 
+# - Thread
 # Without needing to make files huge
 from typing import Optional, Iterator, Union
 from aiohttp import FormData
@@ -9,6 +9,7 @@ from pydantic import validate_arguments
 from acord.models import Message, Snowflake
 from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
+
 
 class ExtendedTextMethods:
     @validate_arguments
@@ -25,7 +26,9 @@ class ExtendedTextMethods:
         return self.conn.client.get_message(channel_id=self.id, message_id=message_id)
 
     @validate_arguments
-    async def fetch_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
+    async def fetch_message(
+        self, message_id: Union[Message, Snowflake]
+    ) -> Optional[Message]:
         """|coro|
 
         Fetch a message directly from channel/thread
@@ -41,11 +44,15 @@ class ExtendedTextMethods:
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
 
         resp = await self.conn.request(
-            Route("GET", path=f"/channels/{self.id}/messages/{message_id}", bucket=bucket)
+            Route(
+                "GET", path=f"/channels/{self.id}/messages/{message_id}", bucket=bucket
+            )
         )
 
         message = Message(**(await resp.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{message.id}': message})
+        self.conn.client.INTERNAL_STORAGE["messages"].update(
+            {f"{self.id}:{message.id}": message}
+        )
 
         return message
 
@@ -70,16 +77,14 @@ class ExtendedTextMethods:
         ob = MessageCreatePayload(**data)
 
         if not any(
-            i for i in ob.dict() 
-            if i in ['content', 'files', 'embeds', 'sticker_ids']
+            i for i in ob.dict() if i in ["content", "files", "embeds", "sticker_ids"]
         ):
-            raise ValueError('Must provide one of content, file, embeds, sticker_ids inorder to send a message')
+            raise ValueError(
+                "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
+            )
 
-        if any(
-            i for i in (ob.embeds or list())
-            if i.characters() > 6000
-        ):
-            raise ValueError('Embeds cannot contain more then 6000 characters')
+        if any(i for i in (ob.embeds or list()) if i.characters() > 6000):
+            raise ValueError("Embeds cannot contain more then 6000 characters")
 
         bucket = dict(channel_id=self.id, guild_id=self.guild_id)
         form_data = FormData()
@@ -88,25 +93,27 @@ class ExtendedTextMethods:
             for index, file in enumerate(ob.files):
 
                 form_data.add_field(
-                    name=f'file{index}',
+                    name=f"file{index}",
                     value=file.fp,
                     filename=file.filename,
-                    content_type="application/octet-stream"
+                    content_type="application/octet-stream",
                 )
-            
+
         form_data.add_field(
             name="payload_json",
-            value=ob.json(exclude={'files'}),
-            content_type="application/json"
+            value=ob.json(exclude={"files"}),
+            content_type="application/json",
         )
 
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/messages", bucket=bucket),
-            data=form_data
+            data=form_data,
         )
 
         n_msg = Message(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{n_msg.id}': n_msg})
+        self.conn.client.INTERNAL_STORAGE["messages"].update(
+            {f"{self.id}:{n_msg.id}": n_msg}
+        )
         return n_msg
 
     async def trigger_typing(self) -> None:
@@ -114,17 +121,19 @@ class ExtendedTextMethods:
 
         Creates a typing indicator in this channel/thread.
         """
-        await self.conn.request(Route("POST", path=f'/channels/{self.id}/typing'))
+        await self.conn.request(Route("POST", path=f"/channels/{self.id}/typing"))
 
     async def pins(self) -> Iterator[Message]:
         """|coro|
 
         Fetches channel/thread pins
         """
-        r = await self.conn.request(Route("GET", path=f'/channels/{self.id}/pins'))
+        r = await self.conn.request(Route("GET", path=f"/channels/{self.id}/pins"))
         messages = await r.json()
 
         for message in messages:
             msg = Message(**message)
-            self.conn.client.INTERNAL_STORAGE['messages'].update({f'{self.id}:{msg.id}': msg})
+            self.conn.client.INTERNAL_STORAGE["messages"].update(
+                {f"{self.id}:{msg.id}": msg}
+            )
             yield msg

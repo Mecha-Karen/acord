@@ -23,25 +23,25 @@ class AllowedMentions(pydantic.BaseModel):
     # Field should not be provided!
     # If provided just gets overwritten
 
-    @pydantic.validator('parse')
+    @pydantic.validator("parse")
     def _validate_parse(cls, _, **kwargs) -> list:
-        kwargs = kwargs['values']
+        kwargs = kwargs["values"]
 
-        if kwargs['deny_all']:
-            return ['everyone', 'roles', 'users']
+        if kwargs["deny_all"]:
+            return ["everyone", "roles", "users"]
 
         mentions = list()
 
-        roles = kwargs.get('roles') is not None
-        users = kwargs.get('users') is not None
-        everyone = kwargs.get('everyone') is not None
+        roles = kwargs.get("roles") is not None
+        users = kwargs.get("users") is not None
+        everyone = kwargs.get("everyone") is not None
 
         if roles:
-            mentions.append('roles')
+            mentions.append("roles")
         if users:
-            mentions.append('users')
+            mentions.append("users")
         if everyone:
-            mentions.append('everyone')
+            mentions.append("everyone")
         return mentions
 
     def dict(self, **kwargs):
@@ -52,12 +52,12 @@ class AllowedMentions(pydantic.BaseModel):
                 "parse": ["everyone", "roles", "users"],
                 "roles": [],
                 "users": [],
-                "replied_user": False
+                "replied_user": False,
             }
 
         parsed = super(AllowedMentions, self).dict(**kwargs)
 
-        parsed.pop('everyone')
-        parsed.pop('deny_all')
+        parsed.pop("everyone")
+        parsed.pop("deny_all")
 
         return parsed

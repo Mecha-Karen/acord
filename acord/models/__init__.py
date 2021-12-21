@@ -13,11 +13,11 @@ from .message import Message, MessageReference
 from .member import Member
 from .invite import Invite
 from .channels import (
-    Channel, 
-    TextChannel, 
-    Stage, 
-    Thread, 
-    ThreadMeta, 
+    Channel,
+    TextChannel,
+    Stage,
+    Thread,
+    ThreadMeta,
     ThreadMember,
     VoiceChannel,
     CategoryChannel,
@@ -29,6 +29,6 @@ from .guild_template import GuildTemplate
 
 Message.update_forward_refs()
 
-TextChannel.fetch_invites.__annotations__['return'] = List[Invite]
-TextChannel.create_invite.__annotations__['return'] = List[Invite]
-Invite.__annotations__['guild'] = Optional[Guild]
+TextChannel.fetch_invites.__annotations__["return"] = List[Invite]
+TextChannel.create_invite.__annotations__["return"] = List[Invite]
+Invite.__annotations__["guild"] = Optional[Guild]

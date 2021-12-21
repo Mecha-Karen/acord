@@ -29,7 +29,7 @@ class UserFlags(Flag, metaclass=BaseFlagMeta):
 
         hasFlags = User.flags & flags == flags
 
-    If bitwise operators are not to your taste, 
+    If bitwise operators are not to your taste,
     you can try using :meth:`BaseFlagMeta.__call__`.
 
     Attributes
@@ -61,7 +61,7 @@ class UserFlags(Flag, metaclass=BaseFlagMeta):
     VERIFIED_DEVELOPER
         early verified bot developer flag
     CERTIFIED_MODERATOR
-        discord certified moderator flag 
+        discord certified moderator flag
     """
 
     NONE = 0
