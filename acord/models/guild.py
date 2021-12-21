@@ -201,8 +201,9 @@ class Guild(pydantic.BaseModel, Hashable):
     @pydantic.validator("roles", pre=True)
     def _validate_roles(cls, roles, **kwargs) -> Dict[Snowflake, Role]:
         conn = kwargs["values"]["conn"]
+        id = kwargs["values"]["id"]
 
-        return {int(r["id"]): Role(conn=conn, guild_id=self.id, **r) for r in roles}
+        return {int(r["id"]): Role(conn=conn, guild_id=id, **r) for r in roles}
 
     @pydantic.validator("emojis", pre=True)
     def _validate_emojis(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
