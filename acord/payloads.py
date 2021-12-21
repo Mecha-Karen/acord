@@ -1,5 +1,6 @@
 from typing import Optional, Literal, Union, List, Dict, Any
 import pydantic
+import datetime
 
 from acord.bases import (
     File, 
@@ -8,7 +9,7 @@ from acord.bases import (
     PermissionsOverwrite, 
     MessageFlags
 )
-from .models import Message, MessageReference, Snowflake
+from .models import Message, MessageReference, Role, Snowflake
 
 
 class ChannelEditPayload(pydantic.BaseModel):
@@ -188,3 +189,12 @@ class ChannelCreatePayload(pydantic.BaseModel):
     def _validate_slowmode(cls, sm) -> int:
         assert 0 <= sm <= 21600, "Slowmode cannot be greater then 21600 and less then 0"
         return sm
+
+
+class MemberEditPayload(pydantic.BaseModel):
+    nick: Optional[str]
+    roles: Optional[List[Union[Role, Snowflake]]]
+    mute: Optional[bool]
+    deaf: Optional[bool]
+    channel_id: Optional[Snowflake]
+    communication_disabled_until: Optional[datetime.datetime]
