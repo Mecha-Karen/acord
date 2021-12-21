@@ -26,8 +26,8 @@ from acord.bases import (
     PremiumTierLevel,
     VerificationLevel,
 )
-from acord.utils import _d_to_channel
-from acord.payloads import ChannelCreatePayload
+from acord.utils import _d_to_channel, _payload_dict_to_json
+from acord.payloads import ChannelCreatePayload, RoleCreatePayload
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -202,7 +202,7 @@ class Guild(pydantic.BaseModel, Hashable):
     def _validate_roles(cls, roles, **kwargs) -> Dict[Snowflake, Role]:
         conn = kwargs["values"]["conn"]
 
-        return {int(r["id"]): Role(conn=conn, **r) for r in roles}
+        return {int(r["id"]): Role(conn=conn, guild_id=self.id, **r) for r in roles}
 
     @pydantic.validator("emojis", pre=True)
     def _validate_emojis(cls, emojis, **kwargs) -> Dict[Snowflake, Emoji]:
@@ -458,7 +458,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/roles"))
 
         for role in (await r.json()):
-            r = Role(**role)
+            r = Role(guild_id=self.id, **role)
             self.roles.update({r.id: r})
             yield r
 
@@ -595,3 +595,46 @@ class Guild(pydantic.BaseModel, Hashable):
         self.channels.update({channel.id: channel})
 
         return channel
+
+    async def create_role(self, *, reason: str = None, **data) -> Role:
+        """|coro|
+
+        Creates a new role in the guild
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of new role,
+            if not provided sets to ``new role``
+        permissions: :class:`Permissions`
+            Role permissions
+        color: :class:`Color`
+            Colour of role, 
+            for reference checkout :attr:`Embed.color`
+        hoist: :class:`bool`
+            Whether to dispay role seperatley
+        icon: :class:`File`
+            the role's icon image
+        unicode_emoji: :class:`str`
+            the role's icon as a unicode emoji
+        mentionable: :class:`bool`
+            whether the role can be mentioned
+        reason: :class:`str`
+            reason for creating role
+        """
+        data = _payload_dict_to_json(RoleCreatePayload, **data)
+        headers = dict({'Content-Type': 'application/json'})
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': reason})
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/roles"),
+            data=data,
+            headers=headers
+        )
+
+        role = Role(conn=self.conn, **(await r.json()))
+        self.roles.update({role.id: role})
+
+        return role

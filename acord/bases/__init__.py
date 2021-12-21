@@ -23,6 +23,7 @@ from .embeds import (
     EmbedVideo,
     EmbedProvidor,
     Embed,
+    Color,
 )
 from .file import File
 from .mixins import Hashable, _C, T, H
