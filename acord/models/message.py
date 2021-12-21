@@ -409,3 +409,12 @@ class Message(pydantic.BaseModel, Hashable):
         if not channel:
             raise ValueError('Target channel no longer exists')
         return channel
+
+    @property
+    def guild(self):
+        """ Returns the guild message was sent in """
+        guild = self.conn.client.get_guild(self.guild_id)
+
+        if not guild:
+            raise ValueError('Target guild no longer exists')
+        return guild
