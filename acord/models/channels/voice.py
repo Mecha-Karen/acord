@@ -16,7 +16,7 @@ class VoiceChannel(Channel):
     """ Whether the channel is marked as NSFW """
     position: int
     """ Position of channel """
-    permissions_overwrites: List[PermissionsOverwrite]
+    permission_overwrites: Optional[List[PermissionsOverwrite]] = list()
     """ Permissions for channel """
     bitrate: int
     """ the bitrate (in bits) of the voice channel """
