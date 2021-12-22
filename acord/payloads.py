@@ -10,6 +10,7 @@ from acord.bases import (
     AllowedMentions, 
     PermissionsOverwrite, 
     MessageFlags,
+    ActionRow
     )
 from acord.bases.embeds import _rgb_to_hex
 from .models import Message, MessageReference, Role, Snowflake
@@ -43,8 +44,7 @@ class MessageCreatePayload(pydantic.BaseModel):
     files: Optional[Union[List[File], File]] = list()
     message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
     tts: Optional[bool] = False
-    # Hold off for later releases
-    # components: List[Dict[str, Any]]
+    components: Optional[List[ActionRow]]
 
     @pydantic.validator("content")
     def _validate_content(cls, content: str) -> str:
@@ -82,6 +82,11 @@ class MessageCreatePayload(pydantic.BaseModel):
             return embeds
         return [embeds]
 
+    @pydantic.validator("components")
+    def _validate_components(cls, rows):
+        if len(rows) > 5:
+            raise ValueError('Message cannot contain more then 5 action rows')
+        return rows
 
 class MessageEditPayload(pydantic.BaseModel):
     content: Optional[str]
