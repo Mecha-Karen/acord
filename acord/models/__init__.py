@@ -6,7 +6,7 @@ Snowflake = TypeVar("Snowflake", bound=int)
 
 from .user import User
 from .roles import Role, RoleTags
-from .emoji import Emoji
+from .emoji import Emoji, PartialEmoji
 from .sticker import Sticker
 from .attachment import Attachment
 from .message import Message, MessageReference

@@ -6,7 +6,13 @@ import datetime
 
 from acord.core.abc import Route, isInt, DISCORD_EPOCH
 from acord.bases import Hashable
-from acord.models import User, Role
+from acord.models import Snowflake, User, Role
+
+
+class PartialEmoji(pydantic.BaseModel, Hashable):
+    id: Snowflake
+    name: str
+    animated: bool
 
 
 class Emoji(pydantic.BaseModel, Hashable):
