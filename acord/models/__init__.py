@@ -28,7 +28,3 @@ from .guild import Guild, Ban
 from .guild_template import GuildTemplate
 
 Message.update_forward_refs()
-
-TextChannel.fetch_invites.__annotations__["return"] = List[Invite]
-TextChannel.create_invite.__annotations__["return"] = List[Invite]
-Invite.__annotations__["guild"] = Optional[Guild]
