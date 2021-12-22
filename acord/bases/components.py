@@ -35,6 +35,9 @@ class ActionRow(Component):
         if any(i for i in components if isinstance(i, ActionRow)):
             raise ValueError('Action row cannot contain another action row')
 
+        if not all(i for i in components if isinstance(i, Button)):
+            raise ValueError('Action row cannot contain both buttons and select menu')
+
         if len(components) > 5:
             raise ValueError('Action Row cannot contain more then 5 components')
 
@@ -73,6 +76,12 @@ class Button(Component):
     """ A partial emoji object """
     url: Optional[pydantic.AnyHttpUrl]
     """ URL for link style buttons """
+
+    @pydantic.validator("label")
+    def _validate_label(cls, label):
+        if len(label) > 80:
+            raise ValueError("label must be less then 80 characters")
+        return label
 
     def __init__(self, **data: Any) -> None:
         data.update({'type': ComponentTypes.BUTTON})
