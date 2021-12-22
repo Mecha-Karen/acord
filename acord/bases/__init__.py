@@ -13,6 +13,7 @@ from .enums.guild import (
     PremiumTierLevel,
     VerificationLevel,
 )
+from .enums.components import ComponentTypes
 
 from .embeds import (
     EmbedFooter,
