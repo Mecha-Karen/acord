@@ -95,10 +95,14 @@ class SelectMenu(Component):
         if len(options) > 25:
             raise ValueError('Select menu cannot have more then 25 options')
 
+        return options
+
     @pydantic.validator("placeholder")
     def _validate_placeholder(cls, ph):
         if len(ph) > 100:
             raise ValueError('Placeholder cannot be greater then 100 chars')
+
+        return ph
 
     @pydantic.validator("min_values", "max_values")
     def _validate_mv(cls, **kwargs):
@@ -108,7 +112,12 @@ class SelectMenu(Component):
         assert 0 <= min_value <= 25, "Min value must be less then 25 and greater then 0"
         assert 0 <= max_value <= 25, "Max value must be less then 25 and greater then 0"
 
-        return min_value, max_value
+        return (min_value or 0), (max_value or 0)
+
+    def __init__(self, **data: Any) -> None:
+        data.update({'type': ComponentTypes.SELECT_MENU})
+
+        super().__init__(**data)
 
     @pydantic.validate_arguments
     def add_option(self, option: SelectOption) -> None:
