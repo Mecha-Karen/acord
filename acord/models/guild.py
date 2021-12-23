@@ -27,6 +27,7 @@ from acord.bases import (
     PremiumTierLevel,
     VerificationLevel,
     VoiceRegion,
+    Integration
 )
 from acord.utils import _d_to_channel, _payload_dict_to_json
 from acord.payloads import (
@@ -496,7 +497,7 @@ class Guild(pydantic.BaseModel, Hashable):
     async def fetch_regions(self) -> Iterator[VoiceRegion]:
         """|coro|
 
-        Returns a list of voice region objects for the guild.
+        Returns an iterator of voice region objects for the guild.
         """
         r = await self.conn.request(
             Route("GET", path=f"/guilds/{self.id}/regions")
@@ -505,6 +506,17 @@ class Guild(pydantic.BaseModel, Hashable):
         for region in (await r.json()):
             yield VoiceRegion(**region)
 
+    async def fetch_integrations(self) -> Iterator[Integration]:
+        """|coro|
+
+        Returns an iterator of integrations in the guild
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/integrations")
+        )
+
+        for integration in (await r.json()):
+            yield Integration(**integration)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
@@ -763,3 +775,17 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return (await r.json())['pruned']
+
+    async def delete_integration(self, integration: Integration) -> None:
+        """|coro|
+
+        Deletes an integration from the guild
+
+        Parameters
+        ----------
+        integration: :class:`Integration`
+            The integration to remove
+        """
+        await self.conn.request(
+            Route("DELETE", path=f"/guilds/{self.id}/integrations/{integration.id}")
+        )
