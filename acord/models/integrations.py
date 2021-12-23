@@ -4,7 +4,7 @@ from enum import IntEnum
 import pydantic
 import datetime
 
-from acord.models import Snowflake, User
+from acord.models import User, Snowflake
 
 
 class IntegrationExpBehaviour(IntEnum):
@@ -12,7 +12,7 @@ class IntegrationExpBehaviour(IntEnum):
     KICK = 1
 
 
-class IntegrationAccount(IntEnum):
+class IntegrationAccount(pydantic.BaseModel):
     id: Snowflake
     name: str
 

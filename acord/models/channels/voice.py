@@ -1,10 +1,18 @@
 from __future__ import annotations
 from typing import List, Optional
+import pydantic
 
 from acord.bases import PermissionsOverwrite
 from acord.models import Snowflake
-
 from .base import Channel
+
+
+class VoiceRegion(pydantic.BaseModel):
+    id: Snowflake
+    name: str
+    optimal: bool
+    depreciated: bool
+    custom: bool
 
 
 class VoiceChannel(Channel):
