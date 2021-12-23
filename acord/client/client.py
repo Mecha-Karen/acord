@@ -10,7 +10,7 @@ from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
 
-from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
+from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
 
 from acord import Intents
 from acord.bases.mixins import _C, T
@@ -124,6 +124,8 @@ class Client(object):
             consider checking out all `events <../events.html>`_
         once: :class:`bool`
             Whether the event should be ran once before being removed.
+        check: Callable[..., :class:`bool`]
+            Check to be ran before dispatching event
         """
 
         def inner(func):
@@ -134,16 +136,18 @@ class Client(object):
             else:
                 self._events.update({name: [data]})
 
-            try:
-                func.__event_name__ = name
-            except AttributeError:
-                func.__dict__.update(__event_name__=name)
+            # Tuples from wait_for
+            if callable(func):
+                try:
+                    func.__event_name__ = name
+                except AttributeError:
+                    func.__dict__.update(__event_name__=name)
 
-            return func
+                return func
 
         return inner
 
-    async def on_error(self, event_method):
+    def on_error(self, event_method):
         """|coro|
 
         Built in base error handler for events"""
@@ -179,11 +183,25 @@ class Client(object):
         for event in events:
             func = event["func"]
             try:
-                self.loop.create_task(
-                    func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
-                )
+
+                # Handle wait for events
+                try:
+                    print(func)
+                    fut, check = func
+                    print(fut, str(check))
+                except ValueError:
+                    self.loop.create_task(
+                        func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+                    )
+                else:
+                    if check(*args, **kwargs) is True:
+                        res = tuple(args) + tuple(kwargs.values())
+
+                        fut.set_result(res)
+                        to_rmv.append(event)
+
             except Exception:
-                self.on_error()
+                self.on_error(f'{func} ({func_name})')
             else:
                 if event.get("once", False):
                     to_rmv.append(event)
@@ -211,6 +229,43 @@ class Client(object):
         )
 
         await self.http.ws.send_json(payload)
+
+    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> Tuple[Any]:
+        """|coro|
+
+        Wait for a specific gateway event to occur.
+
+        .. rubric:: Examples
+
+        .. code-block:: py
+
+            # Simple Greeting
+            data = Client.wait_for(
+                "message", 
+                check=lambda message: message.content == "Hello",
+                timeout=30.0
+            )
+            message = data[0]
+
+            return message.reply(content=f"Hello, {message.author}")
+
+        Parameters
+        ----------
+        event: :class:`str`
+            Gateway event to wait for.
+        check: Callable[..., :class:`bool`]
+            Validate the gateway event recieved
+        timeout: :class:`int`
+            Time to wait for event to be recieved
+        """
+        if not check:
+            check = lambda *args, **kwargs: True
+
+        fut = self.loop.create_future()
+
+        self.on(event)((fut, check))
+
+        return asyncio.wait_for(fut, timeout=timeout)
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs the client, loop blocking
