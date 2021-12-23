@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Any, Optional
 from enum import IntEnum
 import pydantic
 import datetime
 
 from acord.models import User, Snowflake
+from acord.core.abc import Route
 
 
 class IntegrationExpBehaviour(IntEnum):
@@ -27,7 +28,10 @@ class IntegrationApplication(pydantic.BaseModel):
 
 
 class Integration(pydantic.BaseModel):
+    conn: Any
+
     id: Snowflake
+    guild_id: Snowflake
     name: str
     type: str
     enabled: bool
@@ -42,3 +46,23 @@ class Integration(pydantic.BaseModel):
     subscriber_count: Optional[int]
     revoked: Optional[bool]
     application: Optional[IntegrationApplication]
+
+    async def delete(self, *, reason: str = None) -> None:
+        """|coro|
+
+        Deletes integration
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            Reason for deleting integration
+        """
+        headers = dict()
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        await self.conn.request(
+            Route("DELETE", path=f"/guilds/{self.guild_id}/integrations/{self.id}"),
+            headers=headers
+        )
