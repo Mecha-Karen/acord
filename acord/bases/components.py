@@ -29,6 +29,7 @@ class SelectOption(pydantic.BaseModel):
 
 class ActionRow(Component):
     components: List[Component]
+    """ List of components to add to row """
 
     @pydantic.validator('components')
     def _validate_lengths(cls, components) -> List[Component]:
