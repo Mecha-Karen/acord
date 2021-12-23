@@ -91,7 +91,16 @@ Basic Example
 Dependencies
 ============
 Acord relies on ``Pydantic`` and ``aiohttp``, without them the module cannot function properly.
-We also recommend installing the ``uvloop`` module, as it can speed up Acord by a large margin, however, this is optional.
+We also recommend installing the speedup package, which can be done using:
+
+.. code-block:: sh
+
+    # pip3 for Linux/MacOS
+    pip install acord['speedup']
+
+    # pip3 for Linux/MacOS
+    pip install git+https://github.com/Mecha-Karen/ACord#egg=speedup
+
 
 Contents
 ========
@@ -102,5 +111,6 @@ Contents
     api/client.rst
     api/models.rst
     api/bases.rst
+    guides/index
 
 * :ref:`genindex`
