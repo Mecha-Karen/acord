@@ -1,4 +1,4 @@
-from typing import Optional, Literal, Union, List, Dict, Any
+from typing import Optional, Literal, Union, List, Dict
 import pydantic
 import datetime
 
@@ -228,6 +228,43 @@ class RoleCreatePayload(pydantic.BaseModel):
         # :meta private:
         # Override pydantic to return `Color` as a hex
         data = super(RoleCreatePayload, self).dict(*args, **kwargs)
+
+        if self.color:
+            color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
+            data["color"] = color
+        
+        if self.icon:
+            data["icon"] = self.icon.fp.read()
+            self.icon.close()
+
+        return data
+
+
+class RoleMovePayload(pydantic.BaseModel):
+    id: Snowflake
+    position: int
+
+    @pydantic.validator("id", pre=True)
+    def _validate_role(cls, id) -> None:
+        if isinstance(id, Role):
+            return id.id
+
+        return id
+
+
+class RoleEditPayload(pydantic.BaseModel):
+    name: Optional[str]
+    permissions: Optional[Permissions]
+    color: Optional[Color]
+    hoist: Optional[bool]
+    icon: Optional[File]
+    unicode_emoji: Optional[str]
+    mentionable: Optional[bool]
+
+    def dict(self, *args, **kwargs) -> dict:
+        # :meta private:
+        # Override pydantic to return `Color` as a hex
+        data = super(RoleEditPayload, self).dict(*args, **kwargs)
 
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
