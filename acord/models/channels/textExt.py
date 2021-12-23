@@ -75,7 +75,7 @@ class ExtendedTextMethods:
             An embed or a list of embeds to send
         components: List[:class:`ActionRow`]
             A list of action rows to send, 
-            refer to :ref:`me<../guides/components.html>` for a more detailed guide.
+            refer to `me <../guides/components.html>`_ for a more detailed guide.
         """
         ob = MessageCreatePayload(**data)
 
