@@ -10,6 +10,12 @@ from .mixins import Hashable, _C, T, H
 from .mentions import AllowedMentions
 from .permissions_overwrite import PermissionsOverwrite
 from .voice import VoiceRegion
+from .integrations import (
+    IntegrationExpBehaviour,
+    IntegrationAccount,
+    IntegrationApplication,
+    Integration
+)
 
 from .enums.guild import (
     GuildMessageNotification,
