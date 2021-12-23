@@ -22,6 +22,10 @@ from .enums.components import (
     ComponentTypes,
     ButtonStyles
 )
+from .enums.interactions import (
+    InteractionType,
+    ApplicationCommandType,
+)
 
 from .embeds import (
     EmbedFooter,
@@ -41,7 +45,3 @@ from .components import (
     Button,
     ActionRow
 )
-
-
-class MISSING(object):
-    """Identifer class, used to represent a value which doesn't exist, or should be set to 0"""
