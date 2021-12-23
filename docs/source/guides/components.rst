@@ -7,8 +7,6 @@
 
 .. currentmodule:: acord
 
-.. _ComponentsGuide:
-
 ****************
 Components Guide
 ****************
@@ -99,14 +97,11 @@ Lets say, somebody clicks that button of yours.
 And you want to respond with a nice message,
 well its never been more simpler!
 
-So lets get started, first send your message.
-In the demo below it will be defined as ``message``
+All you need to do is wait for it to occur!
 
 .. code-block:: py
 
-    message: Message = ...
-
-    inter = await Client.wait_for("interaction", callback=None, timeout=None)
+    inter = await Client.wait_for("interaction", timeout=None)
 
     await inter.respond(content="Look a response!")
 
@@ -114,4 +109,4 @@ The respond function can be found here, :meth:`Interaction.respond`.
 
 But in a nutshell, its the same as sending any message!
 
-*Psst*, you may wanna check out :meth:`Client.wait_for` for some examples.
+*Psst*, you may wanna check out :meth:`Client.wait_for` for some examples and guidance.
