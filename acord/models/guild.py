@@ -516,7 +516,7 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         for integration in (await r.json()):
-            yield Integration(**integration)
+            yield Integration(guild_id=self.id, **integration)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
@@ -775,22 +775,3 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return (await r.json())['pruned']
-
-    async def delete_integration(self, integration: Integration, *, reason: str = None) -> None:
-        """|coro|
-
-        Deletes an integration from the guild
-
-        Parameters
-        ----------
-        integration: :class:`Integration`
-            The integration to remove
-        """
-        headers = dict()
-
-        if reason:
-            headers.update({"X-Audit-Log-Reason": reason})
-
-        await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.id}/integrations/{integration.id}")
-        )
