@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, Iterator, List, Optional, Union
 import pydantic
 import datetime
+import json
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.bases import Hashable, ChannelTypes
@@ -27,7 +28,11 @@ from acord.bases import (
     VerificationLevel,
 )
 from acord.utils import _d_to_channel, _payload_dict_to_json
-from acord.payloads import ChannelCreatePayload, RoleCreatePayload
+from acord.payloads import (
+    ChannelCreatePayload, 
+    RoleCreatePayload,
+    RoleMovePayload,
+)
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -639,3 +644,40 @@ class Guild(pydantic.BaseModel, Hashable):
         self.roles.update({role.id: role})
 
         return role
+
+    @pydantic.validate_arguments
+    async def move_roles(self, *positons: RoleMovePayload, reason: str = None) -> Iterator[Role]:
+        """|coro|
+
+        Modify positon of roles in guild
+
+        Parameters
+        ----------
+        *positions: :class:`RoleMovePayload`
+            Arguments of role move payloads,
+            or dict with keys:
+
+            * id: :class:`Snowflake`
+            * position: :class:`int`
+
+            Were id is the role ID and position is its new position 
+        """
+        payload = json.dumps([i.dict() for i in positons])
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/guilds/{self.id}/roles"),
+            data=payload,
+            headers=headers
+        )
+
+        for role in (await r.json()):
+            role_ = Role(guild_id=self.id, **role)
+            self.roles.update({role_.id: role_})
+
+            yield role_
+
+    
