@@ -1,4 +1,4 @@
-from typing import List, Optional, TypeVar
+from typing import TypeVar
 
 Snowflake = TypeVar("Snowflake", bound=int)
 
@@ -20,9 +20,16 @@ from .channels import (
     ThreadMeta,
     ThreadMember,
     VoiceChannel,
+    VoiceRegion,
     CategoryChannel,
     DMChannel,
     GroupDMChannel,
+)
+from .integrations import (
+    IntegrationExpBehaviour,
+    IntegrationAccount,
+    IntegrationApplication,
+    Integration
 )
 from .guild import Guild, Ban
 from .guild_template import GuildTemplate

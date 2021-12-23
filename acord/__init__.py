@@ -3,7 +3,7 @@ ACord - An API wrapper for the discord API.
 
 Created by Mecha Karen, and is licensed under the GNU GENERAL PUBLIC LICENSE.
 """
-from typing import NamedTuple, Literal, Optional
+from typing import NamedTuple, Literal, List, Optional
 import logging
 
 from .bases import *

@@ -5,18 +5,6 @@ from .flags.channels import ChannelTypes, VoiceQuality
 from .flags.permissions import Permissions
 from .flags.message import MessageFlags
 
-from .file import File
-from .mixins import Hashable, _C, T, H
-from .mentions import AllowedMentions
-from .permissions_overwrite import PermissionsOverwrite
-from .voice import VoiceRegion
-from .integrations import (
-    IntegrationExpBehaviour,
-    IntegrationAccount,
-    IntegrationApplication,
-    Integration
-)
-
 from .enums.guild import (
     GuildMessageNotification,
     ExplicitContentFilterLevel,
@@ -34,6 +22,10 @@ from .enums.interactions import (
     ApplicationCommandType,
 )
 
+from .mixins import Hashable, _C, T, H
+from .file import File
+from .mentions import AllowedMentions
+from .permissions_overwrite import PermissionsOverwrite
 from .embeds import (
     EmbedFooter,
     EmbedAuthor,
