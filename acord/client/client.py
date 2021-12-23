@@ -186,9 +186,7 @@ class Client(object):
 
                 # Handle wait for events
                 try:
-                    print(func)
                     fut, check = func
-                    print(fut, str(check))
                 except ValueError:
                     self.loop.create_task(
                         func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
