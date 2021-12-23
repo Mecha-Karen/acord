@@ -21,6 +21,63 @@ Embed
 .. autoclass:: Embed
     :members:
 
+Components
+~~~~~~~~~~
+
+.. attributetable:: Component
+
+.. autoclass:: Component
+    :members:
+
+ActionRow
+=========
+
+.. attributetable:: ActionRow
+
+.. autoclass:: ActionRow
+    :members:
+
+Button
+======
+
+.. attributetable:: Button
+
+.. autoclass:: Button
+    :members:
+
+SelectMenu
+==========
+
+.. attributetable:: SelectMenu
+
+.. autoclass:: SelectMenu
+    :members:
+
+
+SelectOption
+============
+
+.. attributetable:: SelectOption
+
+.. autoclass:: SelectOption
+    :members:
+
+PermissionsOverwrite
+~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PermissionsOverwrite
+
+.. autoclass:: PermissionsOverwrite
+    :members:
+
+AllowedMentions
+~~~~~~~~~~~~~~~
+
+.. attributetable:: AllowedMentions
+
+.. autoclass:: AllowedMentions
+    :members:
+
 Flags
 ~~~~~
 
@@ -46,6 +103,79 @@ Permissions
 
 .. autoclass:: Permissions
     :members:
+
+Enums
+~~~~~
+
+GuildMessageNotification
+========================
+
+.. autoclass:: GuildMessageNotification
+    :members:
+    :undoc-members:
+
+ExplicitContentFilterLevel
+==========================
+
+.. autoclass:: ExplicitContentFilterLevel
+    :members:
+    :undoc-members:
+
+MFALevel
+========
+
+.. autoclass:: MFALevel
+    :members:
+    :undoc-members:
+
+NSFWLevel
+=========
+
+.. autoclass:: NSFWLevel
+    :members:
+    :undoc-members:
+
+PremiumTierLevel
+================
+
+.. autoclass:: PremiumTierLevel
+    :members:
+    :undoc-members:
+
+VerificationLevel
+=================
+
+.. autoclass:: VerificationLevel
+    :members:
+    :undoc-members:
+
+ComponentTypes
+==============
+
+.. autoclass:: ComponentTypes
+    :members:
+    :undoc-members:
+
+ButtonStyles
+============
+
+.. autoclass:: ButtonStyles
+    :members:
+    :undoc-members:
+
+InteractionType
+===============
+
+.. autoclass:: InteractionType
+    :members:
+    :undoc-members:
+
+ApplicationCommandType
+======================
+
+.. autoclass:: ApplicationCommandType
+    :members:
+    :undoc-members:
 
 File
 ~~~~
