@@ -468,6 +468,30 @@ class Guild(pydantic.BaseModel, Hashable):
             self.roles.update({r.id: r})
             yield r
 
+    @pydantic.validate_arguments
+    async def fetch_prune_count(self, *, days: int = 7, include_roles: List[Role] = list()) -> int:
+        """|coro|
+
+        Fetches guild prune count and returns the count,
+        without actually pruning members.
+
+        Parameters
+        ----------
+        days: :class:`int`
+            number of days to count prune for (1-30)
+        include_roles: List[:class:`Role`]
+            role(s) to include
+        """
+        assert 0 < days <= 30, "Number of days must be between 1 and 30"
+
+        roles = ",".join([i.id for i in include_roles])
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/prune", days=days, include_roles=roles)
+        )
+
+        return (await r.json())['pruned']
+
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
     ) -> None:
@@ -680,4 +704,48 @@ class Guild(pydantic.BaseModel, Hashable):
 
             yield role_
 
-    
+    @pydantic.validate_arguments
+    async def prune(
+        self,
+        *,
+        days: int = 7,
+        compute_prune_count: bool = True,
+        include_roles: List[Role] = list(),
+        reason: str = None
+    ) -> Optional[int]:
+        """|coro|
+
+        Prunes members,
+        returns amount of pruned IF
+        ``compute_prune_count`` is True.
+
+        Parameters
+        ----------
+        days: :class:`int`
+            number of days to count prune for (1-30)
+        compute_prune_count: :class:`bool`
+            whether to return amount of members pruned,
+            for larger guilds it is discouraged to use this.
+        include_roles: List[:class:`Role`]
+            role(s) to include
+        reason: :class:`str`
+            Reason for starting prune
+        """
+        assert 0 < days <= 30, "Number of days must be between 1 and 30"
+
+        roles = ",".join([i.id for i in include_roles])
+        headers = dict()
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        r = await self.conn.request(
+            Route("POST", 
+                path=f"/guilds/{self.id}/prune", 
+                days=days, include_roles=roles,
+                compute_prune_count=str(compute_prune_count).lower()
+                ),
+            headers=headers
+        )
+
+        return (await r.json())['pruned']
