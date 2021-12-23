@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Iterator, List, Optional, Union
+from enum import Enum
+from io import BytesIO
 import pydantic
 import datetime
 import json
@@ -18,6 +20,7 @@ from acord.models import (
     Sticker,
     VoiceRegion,
     Integration,
+    Invite,
     Snowflake,
 )
 
@@ -43,6 +46,31 @@ GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
 class Ban(pydantic.BaseModel):
     reason: str
     user: User
+
+
+class GuildWidget(pydantic.BaseModel):
+    enabled: bool
+    channel_id: Snowflake
+
+
+class GuildWidgetImageStyle(Enum):
+    shield = "shield"
+    banner1 = "banner1"
+    banner2 = "banner2"
+    banner3 = "banner3"
+    banner4 = "banner4"
+
+
+class WelcomeChannel(pydantic.BaseModel):
+    channel_id: Snowflake
+    description: str
+    emoji_id: Optional[Snowflake]
+    emoji_name: str
+
+
+class WelcomeScreen(pydantic.BaseModel):
+    description: str
+    welcome_channels: List[Any]
 
 
 class Guild(pydantic.BaseModel, Hashable):
@@ -518,6 +546,84 @@ class Guild(pydantic.BaseModel, Hashable):
         for integration in (await r.json()):
             yield Integration(guild_id=self.id, **integration)
 
+    async def fetch_widget_settings(self) -> GuildWidget:
+        """|coro|
+
+        Returns the guild widget settings
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/widget")
+        )
+
+        return GuildWidget(**(await r.json()))
+
+    async def fetch_widget(self) -> Dict[str, Any]:
+        """|coro|
+
+        Fetches guild widget,
+        returns the raw data as of now
+        """
+        # TODO: Wait for docs of `/widget.json` to be updated
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/widget.json")
+        )
+
+        return (await r.json())
+
+    async def fetch_vanity_invite(self) -> Invite:
+        """|coro|
+
+        Fetches guild vanity invite
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/vanity-url")
+        )
+        data = await r.json()
+
+        self.vanity_url_code = data["code"]
+
+        return Invite(
+            code=data["code"],
+            channel=None,
+            guild=self
+        )
+
+    async def fetch_guild_widget_image(
+        self, 
+        *, 
+        style: GuildWidgetImageStyle = GuildWidgetImageStyle.shield
+    ) -> BytesIO:
+        """|coro|
+
+        Fetches guild widget image, 
+        using one of :class:`GuildWidgetImageStyle`.
+        Returns :obj:`py:io.BytesIO` with the image in it.
+
+        Parameters
+        ----------
+        style: :class:`GuildWidgetImageStyle`
+            Style of banner
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/widget.png", style=style)
+        )
+
+        io = BytesIO(await r.read())
+        io.seek(0)
+
+        return io
+
+    async def fetch_welcome_screen(self) -> WelcomeScreen:
+        """|coro|
+
+        Fetches guild welcome screen
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/welcome-screen")
+        )
+
+        return WelcomeScreen(**(await r.json()))
+
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
     ) -> None:
@@ -775,3 +881,71 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return (await r.json())['pruned']
+
+    async def edit_widget(self, *, reason: str = None, **data) -> GuildWidget:
+        """|coro|
+
+        Edits guild widget
+
+        Parameters
+        ----------
+        enabled: :class:`bool`
+            whether the widget is enabled
+        channel_id: :class:`Snowflake`
+            the widget channel id
+        """
+        data = GuildWidget(**data)
+
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({'X-Audit-Log-Reason': reason})
+
+        r = await self.conn.request(
+            Route("PATH", path=f"/guilds/{self.id}/widget"),
+            headers=headers
+        )
+
+        return GuildWidget(**(await r.json()))
+
+    @pydantic.validate_arguments
+    async def edit_welcome_screen(
+        self, *,
+        enabled: bool,
+        welcome_channels: List[WelcomeChannel],
+        description: str,
+        reason: str
+    ) -> WelcomeScreen:
+        """|coro|
+
+        Modifies guild welcome screen
+
+        Parameters
+        ----------
+        enabled: :class:`bool`
+            whether screen is enabled or not
+        welcome_channels: List[:class:`WelcomeChannel`]
+            channels linked in the welcome screen and their display options
+        description: :class:`str`
+            the server description to show in the welcome screen
+        reason: :class:`str`
+            Reason for modifying guild welcome screen
+        """
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        data = {
+            "enabled": enabled,
+            "welcome_channels": [i.dict() for i in welcome_channels],
+            "description": description
+        }
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/guilds/{self.id}/welcome-screen"),
+            headers=headers,
+            data=json.dumps(data)
+        )
+
+        return WelcomeScreen(**(await r.json()))
