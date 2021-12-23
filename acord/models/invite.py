@@ -22,7 +22,7 @@ class Invite(pydantic.BaseModel, Hashable):
     """the invite code (unique ID)"""
     guild: Optional[Any]
     """the guild this invite is for"""
-    channel: Channel
+    channel: Optional[Channel]
     """the channel this invite is for"""
     inviter: Optional[User]
     """the user who created the invite"""
