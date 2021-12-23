@@ -45,7 +45,7 @@ class AllowedMentions(pydantic.BaseModel):
         return mentions
 
     def dict(self, **kwargs):
-        # :meta private:
+        """ :meta private: """
         # Override pydantic to return proper AllowedMention structure
         if self.deny_all:
             return {
