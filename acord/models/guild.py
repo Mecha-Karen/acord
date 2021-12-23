@@ -16,9 +16,17 @@ from acord.models import (
     Member,
     User,
     Sticker,
+    VoiceRegion,
+    Integration,
     Snowflake,
 )
 
+from acord.utils import _d_to_channel, _payload_dict_to_json
+from acord.payloads import (
+    ChannelCreatePayload, 
+    RoleCreatePayload,
+    RoleMovePayload,
+)
 from acord.bases import (
     GuildMessageNotification,
     ExplicitContentFilterLevel,
@@ -26,14 +34,6 @@ from acord.bases import (
     NSFWLevel,
     PremiumTierLevel,
     VerificationLevel,
-    VoiceRegion,
-    Integration
-)
-from acord.utils import _d_to_channel, _payload_dict_to_json
-from acord.payloads import (
-    ChannelCreatePayload, 
-    RoleCreatePayload,
-    RoleMovePayload,
 )
 
 
@@ -776,7 +776,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
         return (await r.json())['pruned']
 
-    async def delete_integration(self, integration: Integration) -> None:
+    async def delete_integration(self, integration: Integration, *, reason: str = None) -> None:
         """|coro|
 
         Deletes an integration from the guild
@@ -786,6 +786,11 @@ class Guild(pydantic.BaseModel, Hashable):
         integration: :class:`Integration`
             The integration to remove
         """
+        headers = dict()
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
         await self.conn.request(
             Route("DELETE", path=f"/guilds/{self.id}/integrations/{integration.id}")
         )
