@@ -73,6 +73,9 @@ class ExtendedTextMethods:
             Whether this is a TTS message
         embeds: *Union[List[:class:`Embed`], :class:`File`]*
             An embed or a list of embeds to send
+        components: List[:class:`ActionRow`]
+            A list of action rows to send, 
+            refer to :ref:`me<../guides/components.html>` for a more detailed guide.
         """
         ob = MessageCreatePayload(**data)
 
