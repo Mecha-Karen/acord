@@ -26,6 +26,7 @@ from acord.bases import (
     NSFWLevel,
     PremiumTierLevel,
     VerificationLevel,
+    VoiceRegion,
 )
 from acord.utils import _d_to_channel, _payload_dict_to_json
 from acord.payloads import (
@@ -491,6 +492,19 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return (await r.json())['pruned']
+
+    async def fetch_regions(self) -> Iterator[VoiceRegion]:
+        """|coro|
+
+        Returns a list of voice region objects for the guild.
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/regions")
+        )
+
+        for region in (await r.json()):
+            yield VoiceRegion(**region)
+
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
