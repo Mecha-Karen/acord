@@ -44,3 +44,14 @@ from .components import (
     Button,
     ActionRow
 )
+from .presence import (
+    ActivityType,
+    Activity,
+    StatusType,
+    Presence,
+    game,
+    listening,
+    watching,
+    competing,
+    streaming,
+)
