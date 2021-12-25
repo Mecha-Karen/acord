@@ -19,6 +19,7 @@ from .enums.components import (
 )
 from .enums.interactions import (
     InteractionType,
+    InteractionCallback,
     ApplicationCommandType,
 )
 
