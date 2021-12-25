@@ -12,6 +12,11 @@ from .attachment import Attachment
 from .message import Message, MessageReference
 from .member import Member
 from .invite import Invite
+from .interaction import  (
+    InteractionData,
+    Interaction,
+    IMessageFlags
+)
 from .channels import (
     Channel,
     TextChannel,
