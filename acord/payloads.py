@@ -1,4 +1,4 @@
-from typing import Optional, Literal, Union, List, Dict
+from typing import Any, Optional, Literal, Union, List, Dict
 import pydantic
 import datetime
 
@@ -14,6 +14,11 @@ from acord.bases import (
     )
 from acord.bases.embeds import _rgb_to_hex
 from .models import Message, MessageReference, Role, Snowflake
+
+
+class GenericWebsocketPayload(pydantic.BaseModel):
+    op: int
+    d: Any
 
 
 class ChannelEditPayload(pydantic.BaseModel):
