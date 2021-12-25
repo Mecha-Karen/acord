@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 from aiohttp import FormData
 import pydantic
+from pydantic.errors import NotNoneError
 
 from acord.models import Snowflake, Member, User, Message
 from acord.bases import (
@@ -22,7 +23,7 @@ class IMessageFlags(BaseFlagMeta):
 
 
 class IMessageCreatePayload(MessageCreatePayload):
-    flags: Optional[IMessageFlags]
+    flags: Optional[int]
 
 
 class InteractionData(pydantic.BaseModel, Hashable):
@@ -76,6 +77,28 @@ class Interaction(pydantic.BaseModel, Hashable):
         guild_id = kwargs["values"]["guild_id"]
         conn = kwargs["values"]["conn"]
         return Member(conn=conn, guild_id=guild_id, **member)
+
+    async def fetch_original_response(self) -> Message:
+        """|coro|
+
+        Fetches original message that was created when
+        interaction responded.
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/webhooks/{self.id}/{self.token}/messages/@original")
+        )
+
+        return Message(**(await r.json()))
+
+    async def delete_original_response(self) -> None:
+        """|coro|
+
+        Deletes original message that was created when
+        interaction responded
+        """
+        await self.conn.request(
+            Route("GET", path=f"/webhooks/{self.id}/{self.token}/messages/@original")
+        )
 
     async def respond(self, *, ack: bool = False, **data) -> None:
         """|coro|
