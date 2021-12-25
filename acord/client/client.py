@@ -9,11 +9,13 @@ from acord.core.abc import Route
 from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
+from acord.payloads import GenericWebsocketPayload
 
 from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
 
-from acord import Intents
-from acord.bases.mixins import _C, T
+from acord.bases import (
+    Intents, Presence
+)
 from acord.models import Message, User, Channel, Guild, TextChannel
 
 # Cleans up client class
@@ -264,6 +266,25 @@ class Client(object):
         self.on(event)((fut, check))
 
         return asyncio.wait_for(fut, timeout=timeout)
+
+    async def change_presence(self, presence: Presence) -> None:
+        """|coro|
+
+        Changes client presence
+
+        Parameters
+        ----------
+        presence: :class:`Presence`
+            New presence for client,
+            You may want to checkout the guide for presences.
+            Which can be found `here <../guides/presence.html>`_.
+        """
+        payload = GenericWebsocketPayload(
+            op=gateway.PRESENCE,
+            d=presence
+        )
+
+        await self.http.ws.send_str(payload.json())
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs the client, loop blocking
