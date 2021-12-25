@@ -57,6 +57,12 @@ async def handle_websocket(self, ws):
 
             continue
 
+        """ INTERACTIONS """
+        if EVENT == "INTERACTION_CREATE":
+            data = Interaction(conn=self.http, **DATA)
+
+            self.dispatch("interaction", data)
+
         """ MESSAGES """
 
         if EVENT == "MESSAGE_CREATE":
