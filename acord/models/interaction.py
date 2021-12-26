@@ -2,9 +2,8 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 from aiohttp import FormData
 import pydantic
-from pydantic.errors import NotNoneError
 
-from acord.models import Snowflake, Member, User, Message
+from acord.models import Snowflake, Member, User, Message, message
 from acord.bases import (
     Hashable, 
     InteractionType,
@@ -84,11 +83,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         Fetches original message that was created when
         interaction responded.
         """
-        r = await self.conn.request(
-            Route("GET", path=f"/webhooks/{self.id}/{self.token}/messages/@original")
-        )
-
-        return Message(**(await r.json()))
+        return await self.fetch_message("@original")
 
     async def delete_original_response(self) -> None:
         """|coro|
@@ -96,11 +91,29 @@ class Interaction(pydantic.BaseModel, Hashable):
         Deletes original message that was created when
         interaction responded
         """
+        return await self.delete_response("@original")
+
+    async def delete_response(self, message_id: Snowflake) -> None:
+        """|coro|
+
+        Deletes message that was created by this interaction
+        """
         await self.conn.request(
-            Route("GET", path=f"/webhooks/{self.id}/{self.token}/messages/@original")
+            Route("GET", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}")
         )
 
-    async def respond(self, *, ack: bool = False, **data) -> None:
+    async def fetch_message(self, message_id: Snowflake):
+        """|coro|
+
+        Fetches a followup message created by interaction
+        """
+        r = await self.conn.request(
+            Route("GET", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}")
+        )
+
+        return Message(**(await r.json()))
+
+    async def respond(self, *, ack: bool = False, followup: bool = False, **data) -> None:
         """|coro|
 
         Responds to an interaction.
@@ -113,6 +126,8 @@ class Interaction(pydantic.BaseModel, Hashable):
             Whether to return a loading status,
             requires you to resend request using,
             :meth:`Interaction.edit`
+        followup: :class:`bool`
+            Whether the message is a followup and not a response.
 
         Rest of the parameters are the same as,
         :meth:`TextChannel.send`
@@ -157,7 +172,84 @@ class Interaction(pydantic.BaseModel, Hashable):
             content_type="application/json",
         )
 
+        if not followup:
+            ending = "/callback"
+        else:
+            ending = "/"
+
         await self.conn.request(
-            Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
+            Route("POST", path=f"/interactions/{self.id}/{self.token}{ending}"),
+            data=form_data,
+        )
+
+    async def edit(self, *, ack: bool = False, **data) -> None:
+        """|coro|
+
+        Edits original message created by interaction
+
+        Parameters
+        ----------
+        ack: :class:`bool`
+            ACK an interaction and edit the original message later;
+            the user does not see a loading state
+        
+        Rest of the parameters are the same as,
+        :meth:`TextChannel.send`
+        """
+        return await self.edit_response("@original", ack=ack, **data)
+
+    async def edit_response(self, message_id: Snowflake, *, ack: bool = False, **data) -> None:
+        """|coro|
+
+        Edits a follow up message sent by interaction
+
+        Parameters
+        ----------
+        message_id: :class:`Snowflake`
+            ID of message to edit
+        ack: :class:`bool`
+            ACK an interaction and edit the original message later;
+            the user does not see a loading state
+
+        Rest of the parameters are the same as,
+        :meth:`TextChannel.send`
+        """
+        if ack:
+            rmsType = InteractionCallback.DEFERRED_UPDATE_MESSAGE
+        else:
+            rmsType = InteractionCallback.UPDATE_MESSAGE
+
+        payload = IMessageCreatePayload(**data)
+
+        if not any(
+            i for i in payload.dict() if i in ["content", "files", "embeds", "sticker_ids"]
+        ):
+            raise ValueError(
+                "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
+            )
+
+        if any(i for i in (payload.embeds or list()) if i.characters() > 6000):
+            raise ValueError("Embeds cannot contain more then 6000 characters")
+
+        form_data = FormData()
+
+        if payload.files:
+            for index, file in enumerate(payload.files):
+
+                form_data.add_field(
+                    name=f"file{index}",
+                    value=file.fp,
+                    filename=file.filename,
+                    content_type="application/octet-stream",
+                )
+
+        form_data.add_field(
+            name="payload_json",
+            value=payload.json(exclude={"files"}),
+            content_type="application/json",
+        )
+
+        await self.conn.request(
+            Route("PATCH", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}"),
             data=form_data,
         )
