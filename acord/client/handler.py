@@ -61,7 +61,20 @@ async def handle_websocket(self, ws):
         if EVENT == "INTERACTION_CREATE":
             data = Interaction(conn=self.http, **DATA)
 
-            self.dispatch("interaction", data)
+            self.dispatch("interaction_create", data)
+
+        if EVENT == "INTERACTION_UPDATE":
+            data = Interaction(conn=self.http, **DATA)
+
+            self.dispatch("interaction_update", data)
+
+        if EVENT == "INTERACTION_DELETE":
+            try:
+                id, guild_id, application_id = DATA.values()
+            except ValueError:
+                id, guild_id, application_id = DATA.values(), None
+
+            self.dispatch("interaction_delete", id, guild_id, application_id)
 
         """ MESSAGES """
 
