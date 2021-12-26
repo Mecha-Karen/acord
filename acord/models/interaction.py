@@ -161,10 +161,11 @@ class Interaction(pydantic.BaseModel, Hashable):
                     content_type="application/octet-stream",
                 )
 
-        payload = _FormPartHelper(
-            type=rmsType,
-            data=payload
-        )
+        if not followup:
+            payload = _FormPartHelper(
+                type=rmsType,
+                data=payload
+            )
 
         form_data.add_field(
             name="payload_json",
