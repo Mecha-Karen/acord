@@ -279,3 +279,37 @@ Parameters
 ==========
 thread_member: :class:`Thread`
     Updated thread, were :attr:`Thread.members` is updated
+
+on_interaction_create
+~~~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``INTERACTION_CREATE``,
+indication an interaction was created.
+
+Parameters
+==========
+interaction: :class:`Interaction`
+    Interaction created
+
+on_interaction_update
+~~~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``INTERACTION_UPDATE``,
+indication an interaction was updated.
+
+Parameters
+==========
+interaction: :class:`Interaction`
+    Interaction updated
+
+on_interaction_delete
+~~~~~~~~~~~~~~~~~~~~~
+Called when the gateway dispatches ``INTERACTION_DELETE``,
+indication an interaction was deleted.
+
+Parameters
+==========
+id: :class:`int`
+    ID of interaction deleted
+guild_id: :class:`Snowflake`
+    ID of guild were interaction was created
+application_id: :class:`Snowflake`
+    ID of the bot/OAuth2 application for this discord integration
