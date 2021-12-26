@@ -8,8 +8,11 @@ import logging
 
 from .bases import *
 from .models import *
-
 from .client import Client
+from .webhooks.main import (
+    Webhook,
+    PartialWebhook
+)
 
 
 logger = logging.getLogger("ACord")
