@@ -9,11 +9,6 @@ import logging
 from .bases import *
 from .models import *
 from .client import Client
-from .webhooks.main import (
-    Webhook,
-    PartialWebhook
-)
-
 
 logger = logging.getLogger("ACord")
 __file__ = __import__("os").path.abspath(__file__)
