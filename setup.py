@@ -42,6 +42,7 @@ packages = [
     "acord.core.signals",
     "acord.models",
     "acord.models.channels",
+    "acord.webhooks",
 ]
 
 extra_requires = {"speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"]}
