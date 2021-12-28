@@ -2,11 +2,13 @@ from __future__ import annotations
 from typing import Optional
 import pydantic
 import re
+from aiohttp import ClientSession
 
 from acord.models import (
     Snowflake,
     User
 )
+from acord.core.abc import buildURL
 from .types import WebhookType
 from .methods import WebhookMethods
 
@@ -25,6 +27,21 @@ class Webhook(WebhookMethods, pydantic.BaseModel):
     application_id: Snowflake
     url: Optional[str]
 
+    @classmethod
+    async def from_id(cls, id: Snowflake):
+        async with ClientSession() as client:
+            async with client.request(
+                "GET", buildURL(f"webhooks/{id}")
+            ) as r:
+                return cls(**(await r.json()))
+
+    @classmethod
+    async def from_token(cls, id: Snowflake, token: str):
+        async with ClientSession() as client:
+            async with client.request(
+                "GET", buildURL(f"webhooks/{id}/{token}")
+            ) as r:
+                return cls(**(await r.json()))
 
 class PartialWebhook(WebhookMethods, pydantic.BaseModel):
     id: Snowflake
