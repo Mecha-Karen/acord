@@ -320,3 +320,31 @@ class WebhookCreatePayload(pydantic.BaseModel):
 
         data["avatar"] = _file_to_image_data(avatar)
         return data
+
+
+class WebhookEditPayload(pydantic.BaseModel):
+    name: Optional[str]
+    avatar: Optional[File]
+    channel_id: Optional[Snowflake]
+
+    @pydantic.validator("name")
+    def _validate_name(cls, name: str) -> str:
+        assert len(name) <= 80, "Name of webhook must be less then 80 chars"
+
+        if name.lower() != "clyde":
+            raise ValueError("Webhooks cannot be named `clyde`")
+
+        return name
+
+    @pydantic.validator("avatar")
+    def _validate_av(cls, avatar: File) -> File:
+        assert avatar.is_closed() is False, "File must be open"
+        return file
+
+    def dict(self, **kwargs) -> dict:
+        """ :meta private: """
+        data = super(WebhookEditPayload, self).dict(**kwargs)
+        avatar: File = data.pop("avatar")
+
+        data["avatar"] = _file_to_image_data(avatar)
+        return data
