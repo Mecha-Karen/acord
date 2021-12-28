@@ -3,9 +3,8 @@ from __future__ import annotations
 from aiohttp import ClientSession, ClientResponse, FormData
 from typing import Any, Optional, Protocol, runtime_checkable
 from pydantic import BaseModel
-import pydantic
 
-from acord.models import Snowflake, Message
+from acord.models import Snowflake, WebhookMessage
 from acord.payloads import MessageCreatePayload, WebhookEditPayload
 from acord.core.abc import buildURL
 
@@ -22,15 +21,15 @@ class Adapter(Protocol):
 class WebhookMethods(BaseModel):
     adapter: Any
 
-    def __init__(self, adapter = None) -> None:
+    def __init__(self, adapter = None, **data) -> None:
         if not adapter:
             adapter = ClientSession()
 
         assert isinstance(adapter, Adapter), "Variable adapter must has an async request & close method"
 
-        super().__init__(adapter=adapter)
+        super().__init__(adapter=adapter, **data)
 
-    async def fetch_message(self, message_id: Snowflake, *, thread_id: Snowflake = None) -> Message:
+    async def fetch_message(self, message_id: Snowflake, *, thread_id: Snowflake = None) -> WebhookMessage:
         """|coro|
 
         Fetches a webhook message
@@ -47,14 +46,14 @@ class WebhookMethods(BaseModel):
         )
         r.raise_for_status()
 
-        return Message(**(await r.json()))
+        return WebhookMessage(**(await r.json()))
 
     async def execute(self, 
         *, 
         wait: bool = False, 
         thread_id: Snowflake = False,
         **data
-    ) -> Optional[Message]:
+    ) -> Optional[WebhookMessage]:
         """|coro|
         Creates a new message using webhook
 
@@ -111,13 +110,16 @@ class WebhookMethods(BaseModel):
         r.raise_for_status()
 
         try:
-            return Message(**(await r.json()))
+            return WebhookMessage(
+                token=self.token,
+                adapter=self.adapter, 
+                **(await r.json()))
         except Exception:
             # Message created wasn't returned
             # wait param was false
-            return
+            raise
 
-    async def edit(self, *, reason: str = None, with_token: bool = False, **data) -> Any:
+    async def edit(self, *, reason: str = None, with_token: bool = True, auth: str = None, **data) -> Any:
         """|coro|
 
         Edits webhook, 
@@ -138,10 +140,18 @@ class WebhookMethods(BaseModel):
         reason: :class:`str`
             reason for editing webhook
         with_token: :class:`bool`
-            Whether to modify with token or not
+            Whether to modify with token or not,
+            defaults to ``True``
+        auth: :class:`str`
+            If not with_token,
+            auth is your **BOT TOKEN**,
+            which will be used to make request
         """
         payload = WebhookEditPayload(**data)
         headers = dict({"Content-Type": "application/json"})
+
+        if auth:
+            headers.update({"Authorization": auth})
 
         if reason:
             headers.update({"X-Audit-Log-Reason": headers})
@@ -158,8 +168,45 @@ class WebhookMethods(BaseModel):
 
         return self.__class__(**(await r.json()))
 
+    async def delete(self, *, reason: str = None, with_token: bool = True, auth: str = None) -> None:
+        """|coro|
+
+        Deletes webhook
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            reason for deleting webhook
+        with_token: :class:`bool`
+            Whether to delete with token or not,
+            defaults to ``True``
+        auth: :class:`str`
+            If not with_token,
+            auth is your **BOT TOKEN**,
+            which will be used to make request
+        """
+        headers = dict({"Content-Type": "application/json"})
+
+        if auth:
+            headers.update({"Authorization": auth})
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": headers})
+
+        tk = ""
+        if with_token:
+            tk = self.token
+        
+        await self.adapter.request(
+            "DELETE", buildURL(f"/webhooks/{self.id}/{tk}"),
+            headers=headers,
+        )
+
     async def __aenter__(self, *args, **kwargs) -> Any:
-        return self.__class__(*args, **kwargs)
+        data = self.dict()
+        data.update(kwargs)
+
+        return self.__class__(*args, **data)
 
     async def __aexit__(self, *args, **kwargs) -> None:
         await self.adapter.close()
