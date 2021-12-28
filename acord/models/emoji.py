@@ -26,7 +26,7 @@ class Emoji(pydantic.BaseModel, Hashable):
     name: str
     """ Name of Emoji """
 
-    roles: Optional[List[Role]]  # TODO: Role object
+    roles: Optional[List[Role]] = list()
     """ List of roles """
 
     user: Optional[User]
@@ -148,11 +148,7 @@ class Emoji(pydantic.BaseModel, Hashable):
         """
         Checks whether the client is able to use this emoji
         """
-        return (
-            any(
-                i
-                for i in self.roles
-                if i in self.conn.client.get_guild(self.guild_id).me.roles
-            )
-            and self.available
-        )
+        client_roles = self.conn.client.get_guild(
+            self.guild_id).get_member(self.conn.client.user.id).roles
+
+        return any(i for i in client_roles if i in self.roles)
