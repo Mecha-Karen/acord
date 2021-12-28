@@ -43,14 +43,17 @@ class Webhook(WebhookMethods, pydantic.BaseModel):
             ) as r:
                 return cls(**(await r.json()))
 
-class PartialWebhook(WebhookMethods, pydantic.BaseModel):
+class PartialWebhook(WebhookMethods):
     id: Snowflake
     token: str
 
-    def __init__(self, *, url: str = None, **data):
-        if url:
+    def __init__(self, adapter = None, *, url: str = None, **data):
+        if url is not None:
             assert url_pattern.match(url) is not None
 
-            id, token = (url.split('/'))[:-2]
+            id, token = (url.split('/'))[-2:]
+            data.update(id=id, token=token)
+
+        data.update(adapter=adapter)
 
         super().__init__(**data)
