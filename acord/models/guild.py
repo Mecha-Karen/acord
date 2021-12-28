@@ -38,6 +38,7 @@ from acord.bases import (
     PremiumTierLevel,
     VerificationLevel,
 )
+from acord.webhooks.main import Webhook
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
@@ -623,6 +624,20 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return WelcomeScreen(**(await r.json()))
+
+    async def fetch_webhooks(self) -> Iterator[Webhook]:
+        """|coro|
+
+        Fetches all webhooks in guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/webhooks", bucket=bucket)
+        )
+
+        for hook in (await r.json()):
+            yield Webhook(adapter=self.conn, **hook)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None

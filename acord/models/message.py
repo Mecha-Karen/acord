@@ -5,7 +5,7 @@ import pydantic
 import datetime
 
 from acord.bases import Hashable, Embed, MessageFlags
-from acord.core.abc import Route
+from acord.core.abc import Route, buildURL
 from acord.models import User, Emoji, Sticker, Snowflake, Attachment
 from acord.errors import APIObjectDepreciated
 
@@ -104,7 +104,7 @@ class Message(pydantic.BaseModel, Hashable):
     stickers: Optional[List[Any]]
     # Depreciated raises error if provided
     webhook_id: Optional[int]
-    """ Webhook message ID """
+    """ Webhook ID """
 
     class Config:
         arbitrary_types_allowed = True
@@ -426,3 +426,72 @@ class Message(pydantic.BaseModel, Hashable):
         if not guild:
             raise ValueError("Target guild no longer exists")
         return guild
+
+
+class WebhookMessage(pydantic.BaseModel):
+    __annotations__ = Message.__annotations__
+    __annotations__.pop("conn")
+
+    adapter: Any
+    webhook_id: Snowflake
+    token: str
+
+    async def edit(self, **data) -> WebhookMessage:
+        """|coro|
+
+        Edits message
+
+        Parameters
+        ----------
+        All parameters are the same as,
+        :meth:`Message.edit`
+        """
+        from acord.payloads import MessageEditPayload
+
+        payload = MessageEditPayload(**data)
+        form_data = FormData()
+
+        if payload.files:
+            for index, file in enumerate(payload.files):
+
+                form_data.add_field(
+                    name=f"file{index}",
+                    value=file.fp,
+                    filename=file.filename,
+                    content_type="application/octet-stream",
+                )
+
+        form_data.add_field(
+            name="payload_json",
+            value=payload.json(exclude={"files"}),
+            content_type="application/json",
+        )
+
+        r = await self.adapter.request(
+            "PATCH", buildURL(f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+            data=form_data,
+        )
+
+        return WebhookMessage(
+            adapter=self.adapter,
+            token=self.token, 
+            **(await r.json()))
+
+    async def delete(self, *, reason: str = None, thread_id: Snowflake = None) -> None:
+        """
+        Deletes the message from the channel.
+        Raises 403 is you don't have sufficient permissions or 404 is the message no longer exists.
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            Reason for deleting message
+        """
+        headers = dict()
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+        
+        await self.adapter.request(
+            "DELETE", buildURL(f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+            headers=headers
+        )

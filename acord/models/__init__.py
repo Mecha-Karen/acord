@@ -9,7 +9,7 @@ from .roles import Role, RoleTags
 from .emoji import Emoji, PartialEmoji
 from .sticker import Sticker
 from .attachment import Attachment
-from .message import Message, MessageReference
+from .message import Message, MessageReference, WebhookMessage
 from .member import Member
 from .invite import Invite
 from .interaction import  (
