@@ -166,6 +166,20 @@ class TextChannel(Channel, ExtendedTextMethods):
             )
             yield msg
 
+    async def fetch_webhooks(self) -> Iterator[Webhook]:
+        """|coro|
+
+        Fetches all webhooks in channel
+        """
+        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/webhooks", bucket=bucket)
+        )
+
+        for hook in (await r.json()):
+            yield Webhook(**hook)
+
     @pydantic.validate_arguments
     async def bulk_delete(
         self, *messages: Union[Message, Snowflake], reason: str = None
