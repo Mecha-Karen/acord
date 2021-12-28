@@ -1,9 +1,12 @@
 from __future__ import annotations
+import re
 from typing import Any, List, Optional
 import pydantic
 import datetime
+from aiohttp import ClientSession
 
 from acord.bases import Hashable
+from acord.core.abc import Route, buildURL
 from .channels import Channel
 from .user import User
 
@@ -56,3 +59,51 @@ class Invite(pydantic.BaseModel, Hashable):
         channel_id = int(partial_channel["id"])
 
         return conn.client.get_channel(channel_id)
+
+    @classmethod
+    async def from_code(cls, code: str, **params) -> Invite:
+        """|coro|
+
+        Creates a new invite from its code,
+        fetches from API.
+
+        .. warning::
+            This will return an object without a conn parameters,
+            so methods like :meth:`Invite.delete` will not function.
+
+        Parameters
+        ----------
+        code: :class:`str`
+            code of invite to fetch
+        with_counts: :class:`bool`
+            whether the invite should contain approximate member counts
+        with_expiration: :class:`bool`
+            whether the invite should contain the expiration date
+        guild_scheduled_event_id: :class:`bool`
+            the guild scheduled event to include with the invite
+        """
+        params = {k: str(v).lower() for k, v in params.items()}
+
+        async with ClientSession() as session:
+            async with session.get(buildURL(f"invites/{code}")) as r:
+                return cls()
+
+    async def delete(self, *, reason: str) -> None:
+        """|coro|
+
+        Deletes this invite
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            Reason for deleting invite
+        """
+        headers = dict()
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        await self.conn.request(
+            Route("DELETE", path=f"/invites/{self.code}"),
+            headers=headers
+        )
