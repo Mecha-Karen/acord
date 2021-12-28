@@ -476,3 +476,22 @@ class WebhookMessage(pydantic.BaseModel):
             adapter=self.adapter,
             token=self.token, 
             **(await r.json()))
+
+    async def delete(self, *, reason: str = None, thread_id: Snowflake = None) -> None:
+        """
+        Deletes the message from the channel.
+        Raises 403 is you don't have sufficient permissions or 404 is the message no longer exists.
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            Reason for deleting message
+        """
+        headers = dict()
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+        
+        await self.adapter.request(
+            "DELETE", buildURL(f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+            headers=headers
+        )
