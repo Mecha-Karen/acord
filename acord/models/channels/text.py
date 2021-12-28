@@ -6,10 +6,16 @@ import pydantic
 
 from acord.core.abc import DISCORD_EPOCH, Route
 from acord.models import Message, Snowflake
-from acord.payloads import ChannelEditPayload, InviteCreatePayload, ThreadCreatePayload
+from acord.payloads import (
+    ChannelEditPayload,
+    InviteCreatePayload,
+    ThreadCreatePayload,
+    WebhookCreatePayload,
+)
 from acord.utils import _payload_dict_to_json
 from acord.errors import APIObjectDepreciated
 from acord.bases import PermissionsOverwrite
+from acord.webhooks.main import Webhook
 
 from .textExt import ExtendedTextMethods
 from .base import Channel
@@ -429,6 +435,34 @@ class TextChannel(Channel, ExtendedTextMethods):
             tr = Thread(**thread)
             self.guild.threads.update({tr.id: tr})
             yield tr
+
+    async def create_webhook(self, *, reason: str = None, **data) -> Webhook:
+        """|coro|
+
+        Creates a new webhook for this channel
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of new webhook
+        avatar: :class:`Avatar`
+            Avatar for webhook
+        reason: :class:`str`
+            Reason for creating webhook
+        """
+        payload = WebhookCreatePayload(**data)
+        headers = dict({"Content-Type": reason})
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        r = await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/webhooks"),
+            data=payload.json(),
+            headers=headers
+        )
+
+        return Webhook(**(await r.json()))
 
     @property
     def guild(self):
