@@ -3,9 +3,10 @@ from __future__ import annotations
 from aiohttp import ClientSession, ClientResponse, FormData
 from typing import Any, Optional, Protocol, runtime_checkable
 from pydantic import BaseModel
+import pydantic
 
 from acord.models import Snowflake, Message
-from acord.payloads import MessageCreatePayload
+from acord.payloads import MessageCreatePayload, WebhookEditPayload
 from acord.core.abc import buildURL
 
 
@@ -116,8 +117,49 @@ class WebhookMethods(BaseModel):
             # wait param was false
             return
 
-    async def __aenter__(self, *args, **kwargs) -> WebhookMethods:
-        return WebhookMethods(*args, **kwargs)
+    async def edit(self, *, reason: str = None, with_token: bool = False, **data) -> Any:
+        """|coro|
+
+        Edits webhook, 
+        returns parent class which be default can be any of:
+
+        * :class:`Webhook`
+        * :class:`PartialWebhook`
+
+        Parameters
+        ----------
+        name: :class:`str`
+            New name of webhook,
+            still cannot be called ``clyde``
+        avatar: :class:`File`
+            New avatar for webhook
+        channel_id: :class:`Snowflake`
+            New channel to move webhook to
+        reason: :class:`str`
+            reason for editing webhook
+        with_token: :class:`bool`
+            Whether to modify with token or not
+        """
+        payload = WebhookEditPayload(**data)
+        headers = dict({"Content-Type": "application/json"})
+
+        if reason:
+            headers.update({"X-Audit-Log-Reason": headers})
+
+        tk = ""
+        if with_token:
+            tk = self.token
+        
+        r = await self.adapter.request(
+            "POST", buildURL(f"/webhooks/{self.id}/{tk}"),
+            headers=headers,
+            data=payload.json()
+        )
+
+        return self.__class__(**(await r.json()))
+
+    async def __aenter__(self, *args, **kwargs) -> Any:
+        return self.__class__(*args, **kwargs)
 
     async def __aexit__(self, *args, **kwargs) -> None:
         await self.adapter.close()
