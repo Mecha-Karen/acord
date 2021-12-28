@@ -302,6 +302,10 @@ class WebhookCreatePayload(pydantic.BaseModel):
     @pydantic.validator("name")
     def _validate_name(cls, name: str) -> str:
         assert len(name) <= 80, "Name of webhook must be less then 80 chars"
+
+        if name.lower() != "clyde":
+            raise ValueError("Webhooks cannot be named `clyde`")
+
         return name
 
     @pydantic.validator("avatar")
