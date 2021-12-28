@@ -12,7 +12,7 @@ class ButtonStyles(IntEnum):
     """ Blurple """
     SECONDARY = 2
     """ Grey """
-    SUCESS = 3
+    SUCCESS = 3
     """ Green """
     DANGER = 4
     """ Red """
