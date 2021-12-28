@@ -178,7 +178,7 @@ class TextChannel(Channel, ExtendedTextMethods):
         )
 
         for hook in (await r.json()):
-            yield Webhook(**hook)
+            yield Webhook(adapter=self.conn, **hook)
 
     @pydantic.validate_arguments
     async def bulk_delete(

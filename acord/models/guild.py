@@ -637,7 +637,7 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         for hook in (await r.json()):
-            yield Webhook(**hook)
+            yield Webhook(adapter=self.conn, **hook)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
