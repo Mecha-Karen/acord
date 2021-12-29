@@ -4,6 +4,7 @@ from .flags.user import UserFlags
 from .flags.channels import ChannelTypes, VoiceQuality
 from .flags.permissions import Permissions
 from .flags.message import MessageFlags
+from .flags.guild import SystemChannelFlags
 
 from .enums.guild import (
     GuildMessageNotification,
