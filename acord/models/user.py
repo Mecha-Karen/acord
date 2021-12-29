@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import pydantic
+import json
 from acord.bases import Hashable, UserFlags
+from acord.core.abc import Route
 from typing import Any, List, Optional
 
 
@@ -82,3 +84,22 @@ class User(pydantic.BaseModel, Hashable):
 
     def __str__(self) -> str:
         return f"{self.username}#{self.discriminator}"
+
+    async def create_dm(self):
+        """|coro|
+
+        creates a DM with this user
+        """
+        from acord.models import DMChannel
+        data = json.dumps({"recipient_id": self.id})
+
+        r = await self.conn.request(
+            Route("POST", path=f"/users/@me/channels"),
+            data=data,
+            headers={"Content-Type": "application/json"}
+        )
+
+        channel = DMChannel(conn=self.conn, **(await r.json()))
+        self.conn.client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+
+        return channel
