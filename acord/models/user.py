@@ -102,4 +102,18 @@ class User(pydantic.BaseModel, Hashable):
         channel = DMChannel(conn=self.conn, **(await r.json()))
         self.conn.client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
 
+        self.dm_id = channel.id
+
         return channel
+
+    async def send(self, **data) -> Any:
+        """|coro|
+
+        Automatically creates DM with user and sends message
+        """
+        if not getattr(self, "dm_id"):
+            dm = await self.create_dm()
+        else:
+            dm = self.conn.client.get_channel(self.dm_id)
+
+        return await dm.send(**data)
