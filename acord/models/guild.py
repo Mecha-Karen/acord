@@ -26,7 +26,8 @@ from acord.models import (
 
 from acord.utils import _d_to_channel, _payload_dict_to_json
 from acord.payloads import (
-    ChannelCreatePayload, 
+    ChannelCreatePayload,
+    GuildCreatePayload, 
     RoleCreatePayload,
     RoleMovePayload,
 )
@@ -964,3 +965,57 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return WelcomeScreen(**(await r.json()))
+
+    @classmethod
+    async def create(cls, client, **data) -> Optional[Guild]:
+        """|coro|
+
+        Creates a new guild,
+        were the client is the owner.
+
+        For bot accounts they must be in less then 10 servers!
+
+        Parameters
+        ----------
+        client: :class:`Client`
+            client being used to create guild
+        name: :class:`str`
+            name of the guild (2-100 characters)
+        icon: :class:`File`
+            image for the guild icon
+        verification_level: :class:`VerificationLevel`
+            verification level for guild
+        default_message_notifications: :class:`GuildMessageNotification`
+            default message notif for guild
+        explicit_content_filter: :class:`ExplicitContentFilterLevel`
+            explicit content filter for guild
+        roles: List[:class:`Role`]
+            list of roles for guild
+        channels: List[:class:`PartialChannel`]
+            list of partial channels for guild
+        afk_channel_id: :class:`Snowflake`
+            id for afk channel
+        afk_timeout: :class:`int`
+            afk timeout in seconds
+        system_channel_id: :class:`Snowflake`
+            the id of the channel where guild notices such as welcome messages and boost events are posted
+        system_channel_flags: :class:`SystemChannelFlags`
+            guild system channel flags
+        """
+        payload = GuildCreatePayload(**data)
+
+        r = await client.http.request(
+            Route("POST", path="/guilds"),
+            headers={"Content-Type": "application/json"},
+            data=payload.json()
+        )
+
+        return Guild(**(await r.json()))
+
+    async def delete(self) -> None:
+        """|coro|
+
+        Deletes this guild permanently,
+        client must be owner 
+        """
+        await self.conn.request(Route("DELETE", path=f"/guilds/{self.id}"))
