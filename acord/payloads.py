@@ -13,10 +13,19 @@ from acord.bases import (
     PermissionsOverwrite, 
     MessageFlags,
     ActionRow,
-    file
+    VerificationLevel,
+    GuildMessageNotification,
+    ExplicitContentFilterLevel,
+    SystemChannelFlags
     )
 from acord.bases.embeds import _rgb_to_hex
-from .models import Message, MessageReference, Role, Snowflake
+from .models import (
+    Message, 
+    MessageReference, 
+    Role, 
+    Snowflake, 
+    PartialChannel
+)
 
 
 def _file_to_image_data(file):
@@ -311,7 +320,7 @@ class WebhookCreatePayload(pydantic.BaseModel):
     @pydantic.validator("avatar")
     def _validate_av(cls, avatar: File) -> File:
         assert avatar.is_closed() is False, "File must be open"
-        return file
+        return avatar
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
@@ -339,7 +348,7 @@ class WebhookEditPayload(pydantic.BaseModel):
     @pydantic.validator("avatar")
     def _validate_av(cls, avatar: File) -> File:
         assert avatar.is_closed() is False, "File must be open"
-        return file
+        return avatar
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
@@ -348,3 +357,17 @@ class WebhookEditPayload(pydantic.BaseModel):
 
         data["avatar"] = _file_to_image_data(avatar)
         return data
+
+
+class GuildCreatePayload(pydantic.BaseModel):
+    name: str
+    icon: Optional[File]
+    verification_level: Optional[VerificationLevel]
+    default_message_notifications: Optional[GuildMessageNotification]
+    explicit_content_filter: Optional[ExplicitContentFilterLevel]
+    roles: Optional[List[Role]]
+    channels: Optional[List[PartialChannel]]
+    afk_channel_id: Optional[Snowflake]
+    afk_timeout: Optional[int]
+    system_channel_id: Optional[Snowflake]
+    system_channel_flags: Optional[SystemChannelFlags]
