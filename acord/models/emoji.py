@@ -9,38 +9,25 @@ from acord.bases import Hashable
 from acord.models import Snowflake, User, Role
 
 
-class PartialEmoji(pydantic.BaseModel, Hashable):
-    id: Snowflake
-    name: str
-    animated: bool
-
-
 class Emoji(pydantic.BaseModel, Hashable):
     """Reprentation of a discord Emoji"""
 
     conn: Any  # Connection Object - for internal use
 
-    id: int
+    id: Snowflake
     """ ID of Emoji """
-
     name: str
     """ Name of Emoji """
-
     roles: Optional[List[Role]] = list()
     """ List of roles """
-
     user: Optional[User]
     """ User who created the emoji """
-
     require_colons: Optional[bool]
     """ Whether this emoji must be wrapped in colons """
-
     managed: Optional[bool]
     """ Whether this emoji is managed """
-
     animated: Optional[bool]
     """ Emoji is animated or not """
-
     available: Optional[bool]
     """ Can be used or not - Lost due to server boosts """
 
