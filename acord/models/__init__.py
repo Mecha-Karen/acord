@@ -1,12 +1,15 @@
 from typing import TypeVar
 
 Snowflake = TypeVar("Snowflake", bound=int)
-
 # Simple snowflake object
 
+from .partials import (
+    PartialChannel,
+    PartialEmoji
+)
 from .user import User
 from .roles import Role, RoleTags
-from .emoji import Emoji, PartialEmoji
+from .emoji import Emoji
 from .sticker import Sticker
 from .attachment import Attachment
 from .member import Member
