@@ -110,6 +110,10 @@ class User(pydantic.BaseModel, Hashable):
         """|coro|
 
         Automatically creates DM with user and sends message
+
+        Parameters
+        ----------
+        all parameters are the same as :meth:`TextChannel.send`
         """
         if not getattr(self, "dm_id"):
             dm = await self.create_dm()
