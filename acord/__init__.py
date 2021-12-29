@@ -29,6 +29,7 @@ Invite.__annotations__["guild"] = Optional[Guild]
 Interaction.__annotations__["message"] = Message
 Message.__annotations__["interaction"] = Optional[Interaction]
 Message.__annotations__["thread"] = Optional[Thread]
+Message.__annotations__["mention_channels"] = Optional[List[Channel]]
 
 SelectOption.update_forward_refs()
 Button.update_forward_refs()
