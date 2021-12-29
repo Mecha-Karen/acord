@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 from aiohttp import FormData
 import pydantic
 
-from acord.models import Snowflake, Member, User, Message, message
+from acord.models import Snowflake, Member, Message, User
 from acord.bases import (
     Hashable, 
     InteractionType,
@@ -68,6 +68,12 @@ class Interaction(pydantic.BaseModel, Hashable):
     message: Optional[Message]
     """ for components, the message they were attached to """
 
+    @pydantic.validator("user", "member", "message")
+    def _validate_conns(cls, v, **kwargs):
+        conn = kwargs["values"]["conn"]
+        v.conn = conn
+        return v
+
     @pydantic.validator("member", pre=True)
     def _validate_member(cls, member, **kwargs) -> Optional[Member]:
         if not member:
@@ -77,7 +83,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         conn = kwargs["values"]["conn"]
         return Member(conn=conn, guild_id=guild_id, **member)
 
-    async def fetch_original_response(self) -> Message:
+    async def fetch_original_response(self) -> Any:
         """|coro|
 
         Fetches original message that was created when
@@ -107,6 +113,8 @@ class Interaction(pydantic.BaseModel, Hashable):
 
         Fetches a followup message created by interaction
         """
+        from acord import Message
+
         r = await self.conn.request(
             Route("GET", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}")
         )
