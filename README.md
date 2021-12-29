@@ -9,6 +9,8 @@
 
 License: **GPL-3.0 License** (see the LICENSE file for details) covers all files in the **acord** repository unless stated otherwise.
 
+> This library is in its planning stage, so bugs may be encountered!
+
 ## Features
 * Uses modern pythonic, ``await`` and ``async`` syntax
 * Flexible and customisable
@@ -19,17 +21,9 @@ License: **GPL-3.0 License** (see the LICENSE file for details) covers all files
 ## Installation
 **Python >=3.8 is required**
 
-### Stable
-```sh
-# Linux/Mac OS
-pip3 install -U acord
-
-# Windows
-pip install -U acord
-```
 ### Development
 ```sh
-# Install directly from github
+# Install directly from github, this is the best option as of now!
 
 ## Linux/Mac OS
 pip3 install -U git+https://github.com/Mecha-Karen/acord

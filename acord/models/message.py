@@ -4,9 +4,17 @@ from aiohttp.formdata import FormData
 import pydantic
 import datetime
 
-from acord.bases import Hashable, Embed, MessageFlags
+from acord.bases import Hashable, Embed, MessageFlags, ActionRow
 from acord.core.abc import Route, buildURL
-from acord.models import User, Emoji, Sticker, Snowflake, Attachment
+from acord.models import (
+    User, 
+    Emoji,
+    Sticker,
+    Snowflake,
+    Attachment,
+    Member,
+    Thread
+)
 from acord.errors import APIObjectDepreciated
 
 from typing import Any, List, Optional, Union
@@ -47,7 +55,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ User object of who sent the message """
     channel_id: int
     """ id of the channel were the message was send """
-    components: List[Any]
+    components: List[List[ActionRow]]
     """ List of all components in the message """
     content: str
     """ Message content """
@@ -64,11 +72,11 @@ class Message(pydantic.BaseModel, Hashable):
     id: Snowflake
     """ Message ID """
     interaction: Optional[Any]
-    """ Message Interaction """  # TODO: Interaction object
+    """ Message Interaction """
     guild_id: Optional[int]
     """ Guild ID of were message was sent """
-    member: Optional[Any]
-    """ Member object of who sent the message """  # TODO: Member object
+    member: Optional[Member]
+    """ Member object of who sent the message """
     mentions: List[Union[User, Any]]
     """ List of mentioned users """
     mention_everyone: bool
@@ -84,17 +92,13 @@ class Message(pydantic.BaseModel, Hashable):
     reactions: Optional[List[Any]] = list()
     """ List of reactions """  # TODO: reaction object
     referenced_message: Optional[Union[Message, MessageReference]]
-    """ Replied message """  # TODO: partial message
-    thread: Optional[Any]
+    """ Replied message """
+    thread: Optional[Thread]
     """ Thread were message was sent """  # TODO: Channel Thread Object
     timestamp: datetime.datetime
     """ List of reactions """  # TODO: reaction object
     referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """
-    thread: Optional[Any]
-    """ Thread were message was sent """  # TODO: Channel Thread Object
-    timestamp: datetime.datetime
-    """ Timestamp of when message was sent """
     tts: bool
     """ Is a text to speech message """
     type: int
