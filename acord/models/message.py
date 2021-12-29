@@ -5,6 +5,7 @@ import pydantic
 import datetime
 
 from acord.bases import Hashable, Embed, MessageFlags, ActionRow
+from acord.bases.components import Component
 from acord.core.abc import Route, buildURL
 from acord.models import (
     User, 
@@ -13,7 +14,6 @@ from acord.models import (
     Snowflake,
     Attachment,
     Member,
-    Thread
 )
 from acord.errors import APIObjectDepreciated
 
@@ -73,7 +73,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ Message ID """
     interaction: Optional[Any]
     """ Message Interaction """
-    guild_id: Optional[int]
+    guild_id: Optional[Snowflake]
     """ Guild ID of were message was sent """
     member: Optional[Member]
     """ Member object of who sent the message """
@@ -93,12 +93,10 @@ class Message(pydantic.BaseModel, Hashable):
     """ List of reactions """  # TODO: reaction object
     referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """
-    thread: Optional[Thread]
-    """ Thread were message was sent """  # TODO: Channel Thread Object
+    thread: Optional[Any]
+    """ Thread were message was sent """
     timestamp: datetime.datetime
-    """ List of reactions """  # TODO: reaction object
-    referenced_message: Optional[Union[Message, MessageReference]]
-    """ Replied message """
+    """ List of reactions """
     tts: bool
     """ Is a text to speech message """
     type: int
@@ -130,15 +128,34 @@ class Message(pydantic.BaseModel, Hashable):
             '"stickers" attribute has been dropped, please use "sticker_items"'
         )
 
-    @pydantic.validator("author")
-    def _validate_author(cls, data: User, **kwargs):
-        # :meta private:
-        data = data.dict()
+    @pydantic.validator("author", "member", "referenced_message")
+    def _validate_author(cls, v, **kwargs):
+        if not v:
+            return
+            
         conn = kwargs["values"]["conn"]
+        v.conn = conn
+        return v
 
-        data["conn"] = conn
+    @pydantic.validator("member", pre=True)
+    def _validate_member(cls, member, **kwargs) -> Optional[Member]:
+        if not member:
+            return
 
-        return User(**data)
+        guild_id = kwargs["values"]["guild_id"]
+        member["guild_id"] = guild_id
+        return member
+
+    @pydantic.validator("components", pre=True)
+    def _validate_components(cls, components):
+        parsed = []
+
+        for urow in components:
+            row = ActionRow()
+            for component in urow["components"]:
+                row.add_component(Component.from_data(component))
+
+        return parsed
 
     async def _get_bucket(self):
         return dict(channel_id=self.channel_id, guild_id=self.guild_id)
