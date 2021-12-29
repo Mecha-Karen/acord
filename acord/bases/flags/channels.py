@@ -1,4 +1,7 @@
-class ChannelTypes:
+from enum import IntEnum
+
+
+class ChannelTypes(IntEnum):
     GUILD_TEXT = 0
     DM = 1
     GUILD_VOICE = 2
@@ -12,6 +15,6 @@ class ChannelTypes:
     GUILD_STAGE_VOICE = 13
 
 
-class VoiceQuality:
+class VoiceQuality(IntEnum):
     AUTO = 1
     FULL = 2
