@@ -6,7 +6,6 @@ import datetime
 from acord.bases import Hashable
 from acord.core.abc import Route
 from acord.models import Snowflake, Role
-from acord.payloads import MemberEditPayload
 from acord.utils import _payload_dict_to_json
 
 from .user import User
@@ -55,6 +54,13 @@ class Member(pydantic.BaseModel, Hashable):
     pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
     guild_id: Snowflake
+
+    @pydantic.validator("user")
+    def _validate_user(cls, user, **kwargs):
+        conn = kwargs["values"]["conn"]
+        user.conn = conn
+
+        return user
 
     async def ban(self, *, reason: str = None, delete_message_days: int = 0) -> None:
         """|coro|
@@ -128,6 +134,8 @@ class Member(pydantic.BaseModel, Hashable):
             User communication timeout.
             If set to ``None``, removes timeout.
         """
+        from acord.payloads import MemberEditPayload
+
         payload = _payload_dict_to_json(MemberEditPayload, **data)
         headers = dict({"Content-Type": "application/json"})
 
