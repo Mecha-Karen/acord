@@ -84,7 +84,7 @@ class Message(pydantic.BaseModel, Hashable):
     mention_roles: List[Any]
     """ If message mentioned any roles """
     mention_channels: Optional[List[Any]]
-    """ List of mentioned channels """  # TODO: Channel Object
+    """ List of mentioned channels """
     nonce: Optional[int]
     """ Message nonce: used for verifying if message was sent """
     pinned: bool
