@@ -13,6 +13,14 @@ class Component(pydantic.BaseModel):
     disabled: Optional[bool] = False
     """ Whether component is disabled """
 
+    @classmethod
+    def from_data(cls, data) -> Component:
+        if data["type"] == ComponentTypes.BUTTON:
+            return Button(**data)
+        if data["type"] == ComponentTypes.SELECT_MENU:
+            return SelectMenu(**data)
+        return cls(**data)
+
 
 class SelectOption(pydantic.BaseModel):
     label: str
