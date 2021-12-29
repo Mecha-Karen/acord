@@ -12,6 +12,10 @@ from acord.core.abc import Route
 
 
 class ExtendedTextMethods:
+    def _get_bucket(self):
+        guild_id = getattr(self, 'guild_id', None)
+        return {"channel_id": self.id, "guild_id": guild_id}
+
     @validate_arguments
     def get_message(self, message_id: Union[Message, Snowflake]) -> Optional[Message]:
         """|func|
@@ -41,7 +45,7 @@ class ExtendedTextMethods:
         if isinstance(message_id, Message):
             message_id = message_id.id
 
-        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+        bucket = self._get_bucket()
 
         resp = await self.conn.request(
             Route(
@@ -89,7 +93,7 @@ class ExtendedTextMethods:
         if any(i for i in (ob.embeds or list()) if i.characters() > 6000):
             raise ValueError("Embeds cannot contain more then 6000 characters")
 
-        bucket = dict(channel_id=self.id, guild_id=self.guild_id)
+        bucket = self._get_bucket()
         form_data = FormData()
 
         if ob.files:
@@ -124,14 +128,16 @@ class ExtendedTextMethods:
 
         Creates a typing indicator in this channel/thread.
         """
-        await self.conn.request(Route("POST", path=f"/channels/{self.id}/typing"))
+        bucket = self._get_bucket()
+        await self.conn.request(Route("POST", path=f"/channels/{self.id}/typing", bucket=bucket))
 
     async def pins(self) -> Iterator[Message]:
         """|coro|
 
         Fetches channel/thread pins
         """
-        r = await self.conn.request(Route("GET", path=f"/channels/{self.id}/pins"))
+        bucket = self._get_bucket()
+        r = await self.conn.request(Route("GET", path=f"/channels/{self.id}/pins", bucket=bucket))
         messages = await r.json()
 
         for message in messages:
