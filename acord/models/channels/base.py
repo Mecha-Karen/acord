@@ -5,6 +5,7 @@ from acord.bases.flags.channels import ChannelTypes
 from acord.core.abc import Route
 from acord.bases import Hashable
 from acord.errors import Forbidden
+from acord.models.guild import Guild
 
 
 # All channel objects will inherit this class
@@ -19,12 +20,11 @@ class Channel(pydantic.BaseModel, Hashable):
         # If the channel is of a specific type, instead of making an extra call
         # Raise forbidden directly
         if getattr(self, "guild") and "COMMUNITY" in self.guild.features:
-            # TODO: Guild object
             if any(
                 [
-                    self.guild.rule_channels == self,
-                    self.guild.guidelines_channel == self,
-                    self.guild.community_updates_channel == self,
+                    self.guild.rules_channel_id == self.id,
+                    self.guild.system_channel_id == self.id,
+                    self.guild.public_updates_channel_id == self,
                 ]
             ):
                 raise Forbidden(
