@@ -1,5 +1,6 @@
 from typing import Any, Optional
 import pydantic
+from acord.bases.flags.channels import ChannelTypes
 
 from acord.core.abc import Route
 from acord.bases import Hashable
@@ -11,7 +12,7 @@ class Channel(pydantic.BaseModel, Hashable):
     conn: Any  # Connection object - Internal use only
 
     id: int  # Channel ID
-    type: int  # Channel type, e.g 0 -> GUILD_TEXT
+    type: ChannelTypes  # Channel type, e.g 0 -> GUILD_TEXT
 
     async def delete(self, *, reason: str) -> None:
         # Only applies for guilds:
