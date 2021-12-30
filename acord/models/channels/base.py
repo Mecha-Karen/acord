@@ -23,7 +23,7 @@ class Channel(pydantic.BaseModel, Hashable):
                 [
                     self.guild.rules_channel_id == self.id,
                     self.guild.system_channel_id == self.id,
-                    self.guild.public_updates_channel_id == self,
+                    self.guild.public_updates_channel_id == self.id,
                 ]
             ):
                 raise Forbidden(
