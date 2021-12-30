@@ -1,11 +1,10 @@
-from typing import Any, Optional
+from typing import Any
 import pydantic
 from acord.bases.flags.channels import ChannelTypes
 
 from acord.core.abc import Route
 from acord.bases import Hashable
 from acord.errors import Forbidden
-from acord.models.guild import Guild
 
 
 # All channel objects will inherit this class
