@@ -111,6 +111,7 @@ Contents
     api/client.rst
     api/models.rst
     api/bases.rst
-    guides/index
+    api/partials.rst
+    guides/index.rst
 
 * :ref:`genindex`
