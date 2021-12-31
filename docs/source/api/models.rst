@@ -17,6 +17,8 @@ These methods will not be shown in our docs, you can find them in the ``Pydantic
 Snowflake
 ~~~~~~~~~~
 A snowflake is a representation of a discord ID, which is a unique integer.
+When working with a class type hinted with :class:`Snowflake`,
+its exactly the same as working with a :class:`int`.
 
 Emoji
 ~~~~~
@@ -140,4 +142,73 @@ User
 .. attributetable:: User
 
 .. autoclass:: User
+   :members:
+
+Interaction
+~~~~~~~~~~~
+
+.. attributetable:: Interaction
+
+.. autoclass:: Interaction
+   :members:
+
+Attachment
+~~~~~~~~~~
+
+.. attributetable:: Attachment
+
+.. autoclass:: Attachment
+   :members:
+
+Category Channel
+~~~~~~~~~~~~~~~~
+
+.. attributetable:: CategoryChannel
+
+.. autoclass:: CategoryChannel
+   :members:
+
+DM Channels
+~~~~~~~~~~~
+
+DM Channel
+==========
+Between 1 user.
+
+.. attributetable:: DMChannel
+
+.. autoclass:: DMChannel
+   :members:
+
+Group DM Channel
+================
+Between multiple users
+
+.. attributetable:: GroupDMChannel
+
+.. autoclass:: GroupDMChannel
+   :members:
+
+Integration
+~~~~~~~~~~~
+
+.. attributetable:: Integration
+
+.. autoclass:: Integration
+   :members:
+
+Voice Channel
+~~~~~~~~~~~~~
+
+.. attributetable:: VoiceChannel
+
+.. autoclass:: VoiceChannel
+   :members:
+
+Webhook
+~~~~~~~
+
+.. attributetable:: Webhook
+
+.. autoclass:: Webhook
    :members:
