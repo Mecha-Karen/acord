@@ -136,9 +136,9 @@ class Interaction(pydantic.BaseModel, Hashable):
             :meth:`Interaction.edit`
         followup: :class:`bool`
             Whether the message is a followup and not a response.
-
-        Rest of the parameters are the same as,
-        :meth:`TextChannel.send`
+        **data:
+            Rest of the parameters are the same as,
+            :meth:`TextChannel.send`
         """
         if ack:
             rmsType = InteractionCallback.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
@@ -201,9 +201,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         ack: :class:`bool`
             ACK an interaction and edit the original message later;
             the user does not see a loading state
-        
-        Rest of the parameters are the same as,
-        :meth:`TextChannel.send`
+        **data:
+            Rest of the parameters are the same as,
+            :meth:`TextChannel.send`
         """
         return await self.edit_response("@original", ack=ack, **data)
 
@@ -219,9 +219,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         ack: :class:`bool`
             ACK an interaction and edit the original message later;
             the user does not see a loading state
-
-        Rest of the parameters are the same as,
-        :meth:`TextChannel.send`
+        **data:
+            Rest of the parameters are the same as,
+            :meth:`TextChannel.send`
         """
         if ack:
             rmsType = InteractionCallback.DEFERRED_UPDATE_MESSAGE
