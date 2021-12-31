@@ -17,4 +17,6 @@ class DMChannel(Channel, ExtendedTextMethods):
 
 class GroupDMChannel(DMChannel):
     icon: Optional[AnyHttpUrl]
+    """ Icon of the group DM """
     owner_id: Snowflake
+    """ ID of group owner """
