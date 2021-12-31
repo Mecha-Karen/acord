@@ -25,15 +25,22 @@ class ActivityType(IntEnum):
 
 class Activity(pydantic.BaseModel):
     name: str
+    """ name of activity """
     type: int
+    """ type of activity, consider using :class:`ActivityType` """
     url: Optional[str]
+    """ URL of activity, if STREAMING. must be one of ``youtube.com`` or ``twitch.tv`` """
 
 
 class Presence(pydantic.BaseModel):
     activities: List[Activity]
-    status: StatusType
+    """ List of activities for presence """
+    status: Optional[StatusType] = StatusType.online
+    """ Status of client, default to :attr:`StatusType.online` """
     afk: Optional[bool] = False
+    """ Whether the client is AFK """
     since: Optional[float]
+    """ Optional timestamp pointing to when client went idle, defaults to current call """
 
     @pydantic.validator("since", pre=True)
     def _validate_since(cls, _, **kwargs) -> int:
