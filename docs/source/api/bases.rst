@@ -104,6 +104,20 @@ Permissions
 .. autoclass:: Permissions
     :members:
 
+SystemChannelFlags
+==================
+
+.. autoclass:: SystemChannelFlags
+    :members:
+    :undoc-members:
+
+MessageFlags
+============
+
+.. autoclass:: MessageFlags
+    :members:
+    :undoc-members:
+
 Enums
 ~~~~~
 
@@ -177,6 +191,34 @@ ApplicationCommandType
     :members:
     :undoc-members:
 
+InteractionCallback
+===================
+
+.. autoclass:: InteractionCallback
+    :members:
+    :undoc-members:
+
+ChannelTypes
+============
+
+.. autoclass:: ChannelTypes
+    :members:
+    :undoc-members:
+
+VoiceQuality
+============
+
+.. autoclass:: VoiceQuality
+    :members:
+    :undoc-members:
+
+ActivityType
+============
+
+.. autoclass:: ActivityType
+    :members:
+    :undoc-members:
+
 File
 ~~~~
 
@@ -184,3 +226,34 @@ File
 
 .. autoclass:: File
     :members:
+
+Presence
+~~~~~~~~
+If working with the direct class itself is abit too much for you,
+consider using our helping functions.
+
+.. autofunction:: game
+
+.. autofunction:: listening
+
+.. autofunction:: watching
+
+.. autofunction:: competing
+
+.. autofunction:: streaming
+
+.. attributetable:: Presence
+
+.. autoclass:: Presence
+    :members:
+
+Activity
+========
+
+.. attributetable:: Activity
+
+.. autoclass:: Activity
+    :members:
+
+
+
