@@ -1,6 +1,6 @@
 from .flags.base import BaseFlagMeta
 from .flags.intents import Intents
-from .flags.user import UserFlags
+from .flags.user import UserFlags, ApplicationFlags
 from .flags.channels import ChannelTypes, VoiceQuality
 from .flags.permissions import Permissions
 from .flags.message import MessageFlags
