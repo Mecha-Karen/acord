@@ -6,6 +6,8 @@ from acord.bases import Hashable, UserFlags
 from acord.core.abc import Route
 from typing import Any, List, Optional
 
+from acord.models import Snowflake
+
 
 class User(pydantic.BaseModel, Hashable):
     """
@@ -63,6 +65,8 @@ class User(pydantic.BaseModel, Hashable):
     public_flags: Optional[UserFlags] = 0
     email: Optional[str]
 
+    dm_id: Optional[Snowflake]
+
     @pydantic.validator("avatar")
     def _validateEmail(cls, av: str, **kwargs) -> str:
         id = kwargs["values"]["id"]
@@ -115,7 +119,7 @@ class User(pydantic.BaseModel, Hashable):
         ----------
         all parameters are the same as :meth:`TextChannel.send`
         """
-        if not getattr(self, "dm_id"):
+        if not self.dm_id:
             dm = await self.create_dm()
         else:
             dm = self.conn.client.get_channel(self.dm_id)
