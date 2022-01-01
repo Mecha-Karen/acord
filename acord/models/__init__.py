@@ -8,6 +8,7 @@ from .partials import (
     PartialEmoji
 )
 from .user import User
+from .application import Application
 from .roles import Role, RoleTags
 from .emoji import Emoji
 from .sticker import Sticker
