@@ -6,6 +6,29 @@ from acord.bases import Hashable, ApplicationFlags
 from acord.models import Snowflake, User
 
 
+class TeamMember(pydantic.BaseModel):
+    membership_state: int
+    permissions: List[str]
+    team_id: Snowflake
+    user: User
+
+
+class Team(pydantic.BaseModel, Hashable):
+    icon: Optional[str]
+    id: Snowflake
+    members: List[TeamMember]
+    name: str
+    owner_user_id: Snowflake
+
+    @pydantic.validator("icon")
+    def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
+        if not icon:
+            return None
+
+        id = kwargs["values"]["id"]
+        return f"https://cdn.discordapp.com/team-icons/{id}/{icon}.png.png"
+
+
 class Application(pydantic.BaseModel, Hashable):
     id: Snowflake
     name: str
@@ -19,7 +42,7 @@ class Application(pydantic.BaseModel, Hashable):
     owner: Optional[User]
     summary: str
     verify_key: str
-    team: Optional[Any]     # TODO: Team object
+    team: Optional[Team]
     guild_id: Optional[Snowflake]
     primary_sku_id: Optional[Snowflake]
     slug: Optional[str]
@@ -33,5 +56,5 @@ class Application(pydantic.BaseModel, Hashable):
             return None
 
         id = kwargs["values"]["id"]
-        return f"https://cdn.discordapp.com/icons/{id}/{icon}.png"
+        return f"https://cdn.discordapp.com/app-icons/{id}/{icon}.png"
 
