@@ -308,7 +308,8 @@ class Client(object):
         if not token:
             raise ValueError("No token provided")
 
-        self.http = HTTPClient(loop=self.loop, token=self.token)
+        if not hasattr(self, "http"):
+            self.http = HTTPClient(loop=self.loop, token=self.token)
 
         self.http.client = self
 
