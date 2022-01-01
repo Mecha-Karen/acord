@@ -78,6 +78,12 @@ class HTTPClient(object):
         self.proxy_auth = proxy_auth
         self.use_clock = not unsync_clock
 
+        self._browser = "acord"
+        self._device = "acord"
+        self._os = sys.platform
+        self._referrer = None
+        self._referring_domain = None
+
         user_agent = "ACord - https://github.com/Mecha-Karen/ACord {0} Python{1[0]}.{1[1]} aiohttp/{2}"
         self.user_agent = user_agent.format(
             acord.__version__, sys.version, aiohttp.__version__
@@ -101,18 +107,14 @@ class HTTPClient(object):
                 "token": self.token,
                 "intents": intents,
                 "properties": {
-                    "$os": sys.platform,
-                    "$browser": "acord",
-                    "$device": "acord",
+                    "$os": self._os,
+                    "$browser": self._browser,
+                    "$device": self._device,
+                    "$referrer": self._referrer,
+                    "$referring_domain": self._referring_domain
                 },
             },
         }
-
-    def updatePayloadData(self, overwrite: bool = False, **newData) -> None:
-        if overwrite:
-            self.startingPayloadData = newData
-        else:
-            self.startingPayloadData = {**self.startingPayloadData, **newData}
 
     async def login(self, *, token: str) -> None:
         """Define a session for the http client to use."""
