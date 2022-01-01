@@ -313,7 +313,7 @@ class Guild(pydantic.BaseModel, Hashable):
         timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
         return datetime.datetime.fromtimestamp(timestamp)
 
-    def get_member(self, member_id: Snowflake) -> Optional[Member]:
+    def get_member(self, member_id: Snowflake, /) -> Optional[Member]:
         """|func|
 
         Gets a member from internal mapping
@@ -324,6 +324,25 @@ class Guild(pydantic.BaseModel, Hashable):
             ID of member to get
         """
         return self.members.get(member_id)
+
+    def get_channel(self, channel_id: Snowflake, /) -> Optional[Channel]:
+        """|func|
+
+        Gets a channel from cache,
+        which only belongs to this guild
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel to get
+        """
+        channel = self.conn.INTERNAL_STORAGE["channels"].get(channel_id)
+        if channel:
+            # check if channel guild id == self.id
+            # if not return
+            if not getattr(channel, "guild_id", 0) == self.id:
+                return
+            return channel
 
     async def fetch_channels(self) -> Iterator[Channel]:
         """|coro|
