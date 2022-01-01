@@ -8,6 +8,7 @@ from acord.bases import Hashable, Embed, MessageFlags, ActionRow
 from acord.bases.components import Component
 from acord.core.abc import Route, buildURL
 from acord.models import (
+    Application,
     User, 
     Emoji,
     Sticker,
@@ -47,8 +48,8 @@ class Message(pydantic.BaseModel, Hashable):
 
     activity: Any
     """ sent with Rich Presence-related chat embeds """  # TODO: Message Activity
-    application: Any
-    """ sent with Rich Presence-related chat embeds """  # TODO: Application Object
+    application: Optional[Application]
+    """ sent with Rich Presence-related chat embeds """
     attachments: List[Attachment]
     """ List of Attachment objects """
     author: User
