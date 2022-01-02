@@ -100,9 +100,6 @@ class Client(object):
         self.INTERNAL_STORAGE["users"] = dict()
         self.INTERNAL_STORAGE["guilds"] = dict()
         self.INTERNAL_STORAGE["channels"] = dict()
-    @property
-    def guilds(self):
-        return self.INTERNAL_STORAGE["guilds"]
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
         self._lruPermanent = token
@@ -434,3 +431,7 @@ class Client(object):
         if channel is None:
             return await self.fetch_channel(channel_id)
         return channel
+    
+    @property
+    def guilds(self):
+        return self.INTERNAL_STORAGE["guilds"]
