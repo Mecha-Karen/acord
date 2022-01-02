@@ -15,6 +15,11 @@ A clear and concise description of what the bug is.
 # Your code here
 ```
 
+**Full error message**
+```
+Error raised
+```
+
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
