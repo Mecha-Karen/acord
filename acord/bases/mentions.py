@@ -48,12 +48,7 @@ class AllowedMentions(pydantic.BaseModel):
         """ :meta private: """
         # Override pydantic to return proper AllowedMention structure
         if self.deny_all:
-            return {
-                "parse": ["everyone", "roles", "users"],
-                "roles": [],
-                "users": [],
-                "replied_user": False,
-            }
+            return {"parse": []}
 
         parsed = super(AllowedMentions, self).dict(**kwargs)
 
