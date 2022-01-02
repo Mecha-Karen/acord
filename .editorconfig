@@ -11,7 +11,7 @@ charset = utf-8
 [*.py]
 indent_style = space
 indent_size = 4
-known_first_party = cake
+known_first_party = acord
 multi_line_output = 4
 default_section = THIRDPARTY
 skip = .eggs
