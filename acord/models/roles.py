@@ -50,6 +50,12 @@ class Role(pydantic.BaseModel, Hashable):
         id = kwargs["values"]["id"]
         return f"https://cdn.discordapp.com/role-icons/{id}/{role_icon}.png"
 
+    @pydantic.validator("permissions", pre=True)
+    def _validate_permissions(cls, permissions: str):
+        if not permissions:
+            return 0
+        return int(permissions)
+
     async def edit(self, *, reason: str = None, **data) -> Role:
         """|coro|
 

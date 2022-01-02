@@ -41,7 +41,7 @@ class TextChannel(Channel, ExtendedTextMethods):
     """ Name of channel """
     topic: Optional[str]
     """ Channel topic """
-    nsfw: Optional[bool]
+    nsfw: Optional[bool] = False
     """ Whether channel is marked as NSFW """
     last_message_id: Optional[int]
     """ Last message in channel, may or may not be valid """
