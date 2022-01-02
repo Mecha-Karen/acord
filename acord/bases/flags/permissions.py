@@ -109,3 +109,5 @@ class Permissions(Flag, metaclass=BaseFlagMeta):
     """Allows for sending messages in threads"""
     START_EMBEDDED_ACTIVITIES = 1 << 39
     """Allows for launching activities (applications with the ``EMBEDDED``` flag) in a voice channel"""
+    MODERATE_MEMBERS = 1 << 40
+    """Allows for timing out users to prevent them from sending or reacting to messages in chat and threads, and from speaking in voice and stage channels"""
