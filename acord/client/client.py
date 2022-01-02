@@ -286,7 +286,7 @@ class Client(object):
         await self.http.ws.send_str(payload.json())
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
-        """Runs the client, loop blocking
+        """Starts the client with discord api, With loop blocking.
 
         Parameters
         ----------
@@ -361,9 +361,7 @@ class Client(object):
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("messages", dict()).get(
-            f"{channel_id}:{message_id}"
-        )
+        return self.INTERNAL_STORAGE.get("messages", dict()).get(f"{channel_id}:{message_id}")
 
     def get_user(self, user_id: int) -> Optional[User]:
         """Returns the user stored in the internal cache, may be outdated"""
@@ -434,4 +432,6 @@ class Client(object):
     
     @property
     def guilds(self):
+        """Returns guilds data, Only if the client is in that guild"""""
         return self.INTERNAL_STORAGE["guilds"]
+        

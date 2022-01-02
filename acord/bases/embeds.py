@@ -103,6 +103,8 @@ class Embed(pydantic.BaseModel):
         Embed(color=Hex)
         Embed(color="blue")
     """
+    colour: Optional[Color]
+    """Embed.color alias"""
     footer: Optional[EmbedFooter]
     """ Embed footer """
     image: Optional[EmbedImage]
@@ -242,7 +244,7 @@ class Embed(pydantic.BaseModel):
         # :meta private:
         # Override pydantic to return `Color` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
-
+        self.color = self.color or self.colour
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color

@@ -25,9 +25,9 @@ class ActivityType(IntEnum):
 
 class Activity(pydantic.BaseModel):
     name: str
-    """ name of activity """
+    """ Name of activity """
     type: int
-    """ type of activity, consider using :class:`ActivityType` """
+    """ Type of activity, consider using :class:`ActivityType` """
     url: Optional[str]
     """ URL of activity, if STREAMING. must be one of ``youtube.com`` or ``twitch.tv`` """
 
