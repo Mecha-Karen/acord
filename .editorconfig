@@ -1,0 +1,17 @@
+root = true
+
+# Other files:
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+# Python files:
+[*.py]
+indent_style = space
+indent_size = 4
+known_first_party = cake
+multi_line_output = 4
+default_section = THIRDPARTY
+skip = .eggs

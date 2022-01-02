@@ -1,0 +1,5 @@
+# Stops line endings from being cut off
+* text=auto
+
+*.py    diff=python
+*.sh    eol=lf
