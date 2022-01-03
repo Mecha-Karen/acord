@@ -103,8 +103,6 @@ class Embed(pydantic.BaseModel):
         Embed(color=Hex)
         Embed(color="blue")
     """
-    colour: Optional[Color]
-    """Embed.color alias"""
     footer: Optional[EmbedFooter]
     """ Embed footer """
     image: Optional[EmbedImage]
