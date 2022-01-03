@@ -383,14 +383,14 @@ class Client(object):
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
         resp = await self.http.request(Route("GET", path=f"/users/{user_id}"))
-        user = await User(conn=self.http, **(await resp.json()))
+        user = User(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["users"].update({user.id: user})
         return user
 
     async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
         """Fetches channel from API and caches it"""
         resp = await self.http.request(Route("GET", path=f"/channels/{channel_id}"))
-        channel = await TextChannel(conn=self.http, **(await resp.json()))
+        channel = TextChannel(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["channels"].update({channel.id: channel})
         return channel
 
@@ -401,7 +401,7 @@ class Client(object):
         resp = await self.http.request(
             Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
         )
-        message = await Message(conn=self.http, **(await resp.json()))
+        message = Message(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["messages"].update(
             {f"{channel_id}:{message_id}": message}
         )
@@ -419,7 +419,7 @@ class Client(object):
         resp = await self.http.request(
             Route("GET", path=f"/guilds/{guild_id}", with_counts=bool(with_counts)),
         )
-        guild = await Guild(conn=self.http, **(await resp.json()))
+        guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
 
     # Get from cache or Fetch from API:
