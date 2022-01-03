@@ -100,6 +100,7 @@ class Client(object):
         self.INTERNAL_STORAGE["users"] = dict()
         self.INTERNAL_STORAGE["guilds"] = dict()
         self.INTERNAL_STORAGE["channels"] = dict()
+        
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
         self._lruPermanent = token
