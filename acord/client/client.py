@@ -286,7 +286,7 @@ class Client(object):
         await self.http.ws.send_str(payload.json())
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
-        """Starts the client with discord api, With loop blocking.
+        """Runs client, loop blocking.
 
         Parameters
         ----------
@@ -432,6 +432,5 @@ class Client(object):
     
     @property
     def guilds(self):
-        """Returns guilds data, Only if the client is in that guild"""""
         return self.INTERNAL_STORAGE["guilds"]
         
