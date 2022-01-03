@@ -120,8 +120,7 @@ class MessageEditPayload(pydantic.BaseModel):
     embeds: Optional[str]
     flags: Optional[MessageFlags]
     allowed_mentions: Optional[AllowedMentions]
-    # Hold off for later releases
-    # components: List[Dict[str, Any]]
+    components: Optional[List[ActionRow]]
     files: Optional[List[File]]
 
     @pydantic.validator("content")
@@ -141,6 +140,12 @@ class MessageEditPayload(pydantic.BaseModel):
         ), "Invalid list of files, make sure they are not closed and are file objects"
 
         return files
+
+    @pydantic.validator("components")
+    def _validate_components(cls, rows):
+        if len(rows) > 5:
+            raise ValueError('Message cannot contain more then 5 action rows')
+        return rows
 
 
 class InviteCreatePayload(pydantic.BaseModel):
