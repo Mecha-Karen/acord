@@ -56,7 +56,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ User object of who sent the message """
     channel_id: int
     """ id of the channel were the message was send """
-    components: List[List[ActionRow]]
+    components: List[ActionRow]
     """ List of all components in the message """
     content: str
     """ Message content """
@@ -155,7 +155,7 @@ class Message(pydantic.BaseModel, Hashable):
             row = ActionRow()
             for component in urow["components"]:
                 row.add_component(Component.from_data(component))
-
+            parsed.append(row)
         return parsed
 
     async def _get_bucket(self):
