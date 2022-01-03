@@ -12,7 +12,7 @@ from acord.core.abc import buildURL
 from .types import WebhookType
 from .methods import WebhookMethods
 
-url_pattern = re.compile("(?P<scheme>https?):\/\/(?P<domain>(?:ptb\.|canary\.)?discord(?:app)?\.com)\/api(?:\/)?(?P<api_version>v\d{1,2})?\/webhooks\/(?P<webhook_identifier>\d{17,19})\/(?P<webhook_token>[\w\-]{68})")
+url_pattern = re.compile("(?P<scheme>https?):\/\/(?P<domain>(?:ptb\.|canary\.)?discord(?:app)?\.com)\/api(?:\/)?(?P<api_version>v\d{1,2})?\/webhooks\/(?P<webhook_identifier>\d{17,19})\/(?P<webhook_token>[\w-]{68})")
 
 
 class Webhook(WebhookMethods, pydantic.BaseModel):
