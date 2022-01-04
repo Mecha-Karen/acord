@@ -242,7 +242,7 @@ class Embed(pydantic.BaseModel):
         # :meta private:
         # Override pydantic to return `Color` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
-
+        self.color = self.color or self.colour
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color
