@@ -18,7 +18,7 @@ class AllowedMentions(pydantic.BaseModel):
     """ Whether to allow @everyone / @here pings """
     deny_all: Optional[bool] = False
     """ Simply reject every single mention on message """
-
+    none: Optional[bool]
     parse: Optional[List[str]] = list()
     # Field should not be provided!
     # If provided just gets overwritten
@@ -29,7 +29,8 @@ class AllowedMentions(pydantic.BaseModel):
 
         if kwargs["deny_all"]:
             return ["everyone", "roles", "users"]
-
+        if kwargs['none']:
+            return ["everyone", "roles", "users"]
         mentions = list()
 
         roles = kwargs.get("roles") is not None
@@ -54,5 +55,5 @@ class AllowedMentions(pydantic.BaseModel):
 
         parsed.pop("everyone")
         parsed.pop("deny_all")
-
+        parsed.pop('none')
         return parsed

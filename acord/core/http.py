@@ -16,13 +16,11 @@ except ImportError:
         ImportWarning,
         stacklevel=2,
     )
-
 import asyncio
 import typing
 import aiohttp
 import acord
 import sys
-
 from acord.errors import (
     BadRequest,
     DiscordError,
@@ -35,7 +33,6 @@ from . import abc
 from .heartbeat import KeepAlive
 from .decoders import *
 from .signals import gateway
-
 from aiohttp import FormData
 
 
