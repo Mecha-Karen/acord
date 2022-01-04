@@ -155,4 +155,4 @@ class MyClient(Client):
 
 if __name__ == "__main__":
     client = MyClient(intents=Intents.ALL)
-    client.run("NzQxNzE0NTcxNjYzNzY5NjUw.Xy7lhg.tLAuRdbFHggE0sXQeLfGjzQ5H50")
+    client.run("TOKEN")
