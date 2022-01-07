@@ -434,6 +434,7 @@ class Client(object):
     async def gof_channel(self, channel_id: int) -> Optional[Any]:
         """Attempts to get a channel, if not found fetches and adds to cache.
         Raises :class:`NotFound` if cannot be fetched"""
+        
         channel = self.get_channel(channel_id)
 
         if channel is None:
