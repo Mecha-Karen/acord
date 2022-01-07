@@ -83,39 +83,6 @@ class GuildTemplate(pydantic.BaseModel):
 
         return GuildTemplate(conn=self.conn, **(await r.json()))
 
-    async def create(self, **data) -> GuildTemplate:
-        """|coro|
-
-        Creates a guild template
-
-        Parameters
-        ----------
-        name: :class:`str`
-            name of template
-        description: :class:`str`
-            description of template
-        """
-        payload = TemplateCreatePayload(**data)
-
-        r = await self.conn.request(
-            Route("POST", path=f"/guilds/{self.source_guild_id}/templates"),
-            data=payload.json(),
-            headers={"Content-Type": "application/json"}
-        )
-
-        return GuildTemplate(conn=self.conn, **(await r.json()))
-    async def get(self) -> GuildTemplate:
-        """|coro|
-
-        Gets the guild template
-        """
-
-        r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.source_guild_id}/templates"),
-            headers={"Content-Type": "application/json"}
-        )
-
-        return GuildTemplate(conn=self.conn, **(await r.json()))
     async def delete(self) -> GuildTemplate:
         """|coro|
 
