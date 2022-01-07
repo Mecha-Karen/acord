@@ -30,12 +30,14 @@ Interaction.__annotations__["message"] = Message
 Message.__annotations__["interaction"] = Optional[Interaction]
 Message.__annotations__["thread"] = Optional[Thread]
 Message.__annotations__["mention_channels"] = Optional[List[Channel]]
+GuildTemplate.__annotations__["serialized_source_guild"] = Guild
 
 SelectOption.update_forward_refs()
 Button.update_forward_refs()
 Invite.update_forward_refs()
 Interaction.update_forward_refs()
 Message.update_forward_refs()
+GuildTemplate.update_forward_refs()
 
 
 class VersionInfo(NamedTuple):
