@@ -32,6 +32,7 @@ from acord.payloads import (
     RoleCreatePayload,
     RoleMovePayload,
     GuildTemplateCreatePayload,
+    TemplateCreatePayload,
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -1011,6 +1012,28 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return WelcomeScreen(**(await r.json()))
+
+    async def create_template(self, **data) -> GuildTemplate:
+        """|coro|
+
+        Create new guild template
+
+        Parameters
+        ----------
+        name: :class:`str`
+            name of template
+        description: :class:`str`
+            description of template
+        """
+        payload = TemplateCreatePayload(**data)
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/templates"),
+            data=payload.json(),
+            headers={"Content-Type": "application/json"}
+        )
+
+        return GuildTemplate(conn=self.conn, **(await r.json()))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
