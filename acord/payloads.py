@@ -376,3 +376,24 @@ class GuildCreatePayload(pydantic.BaseModel):
     afk_timeout: Optional[int]
     system_channel_id: Optional[Snowflake]
     system_channel_flags: Optional[SystemChannelFlags]
+
+    def dict(self, **kwargs) -> dict:
+        """ :meta private: """
+        data = super(GuildCreatePayload, self).dict(**kwargs)
+        icon: File = data.pop("icon")
+
+        data["icon"] = _file_to_image_data(icon)
+        return data
+
+
+class GuildTemplateCreatePayload(pydantic.BaseModel):
+    name: str
+    icon: Optional[File]
+
+    def dict(self, **kwargs) -> dict:
+        """ :meta private: """
+        data = super(GuildTemplateCreatePayload, self).dict(**kwargs)
+        icon: File = data.pop("icon")
+
+        data["icon"] = _file_to_image_data(icon)
+        return data

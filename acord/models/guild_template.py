@@ -13,7 +13,7 @@ class GuildTemplate(pydantic.BaseModel):
     """ the template code (unique ID) """
     name: str
     """ template name """
-    description: str
+    description: Optional[str]
     """ the description for the template """
     usage_count: int
     """ number of times this template has been used """
@@ -31,3 +31,12 @@ class GuildTemplate(pydantic.BaseModel):
     """ the guild snapshot this template contains """
     is_dirty: Optional[bool]
     """ whether the template has unsynced changes """
+
+    @pydantic.validator("creator")
+    def _validate_conns(cls, **kwargs):
+        conn = kwargs["values"]["conn"]
+
+        creator = kwargs["values"]["creator"]
+        creator.conn = conn
+
+        return creator
