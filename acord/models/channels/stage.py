@@ -19,3 +19,4 @@ class Stage(Channel, Hashable):
     # The privacy level of the Stage instance
     discoverable_disabled: bool
     # Whether or not Stage Discovery is disabled
+    async def fetch_stage_instance(self, channel_id: Snowflake, /) -> Stage:
