@@ -423,11 +423,12 @@ class Client(object):
 
     async def fetch_stage_instance(self, channel_id: int, /) -> Optional[Stage]:
         """Fetches stage from API and caches it""" 
-        
+
         resp = await self.http.request(Route("GET", path=f'/stage-instances/{channel_id}'))
         stage = Stage(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["channels"].update({stage.id: stage})
         return stage
+        
     # Get from cache or Fetch from API:
 
     async def gof_channel(self, channel_id: int) -> Optional[Any]:
