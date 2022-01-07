@@ -21,6 +21,7 @@ from acord.models import (
     VoiceRegion,
     Integration,
     Invite,
+    GuildTemplate,
     Snowflake,
 )
 
@@ -30,6 +31,7 @@ from acord.payloads import (
     GuildCreatePayload, 
     RoleCreatePayload,
     RoleMovePayload,
+    GuildTemplateCreatePayload,
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -76,6 +78,13 @@ class WelcomeScreen(pydantic.BaseModel):
 
 
 class Guild(pydantic.BaseModel, Hashable):
+    """Respresentation of a discord guild
+
+    .. note::
+        When working with the guild object,
+        :attr:`Guild.large` may be useful to prevent grabbing members which exist but are not cached.
+        This is only application when this value is ``True``.
+    """
     conn: Any  # Connection object - For internal use
 
     id: Snowflake
@@ -101,10 +110,7 @@ class Guild(pydantic.BaseModel, Hashable):
     channels: Dict[Snowflake, Channel]
     """ All channels in the guild """
     default_message_notifications: GuildMessageNotification
-    """ Default message notification
-
-    :class:`GuildMessageNotification`
-    """
+    """ Default message notification """
 
     description: Optional[str]
     """ the description of a Community guild """
@@ -151,18 +157,12 @@ class Guild(pydantic.BaseModel, Hashable):
     """ Mapping of all members in guild """
 
     mfa_level: MFALevel
-    """required MFA level for the guild
-
-    :class:`MFALevel`
-    """
+    """required MFA level for the guild"""
 
     nsfw: bool
     """ Whether the guild is marked as NSFW """
     nsfw_level: NSFWLevel
-    """Guild NSFW level
-
-    :class:`NSFWLevel`
-    """
+    """Guild NSFW level"""
 
     owner_id: Snowflake
     """ ID of the guild owner """
@@ -174,10 +174,7 @@ class Guild(pydantic.BaseModel, Hashable):
     premium_subscription_count: int
     """ Number of guild boosts """
     premium_tier: PremiumTierLevel
-    """ premium tier (Server Boost level)
-
-    :class:`PremiumTierLevel`
-    """
+    """ premium tier (Server Boost level) """
     presences: Optional[List[Dict[str, Any]]]
     """ presences of the members in the guild, will only include non-offline members if the size is greater than large threshold """
     public_updates_channel_id: Optional[Snowflake]
@@ -209,10 +206,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ the vanity url code for the guild """
 
     verification_level: VerificationLevel
-    """ verification level required for the guild
-
-    :class:`VerificationLevel`
-    """
+    """ verification level required for the guild """
 
     voice_states: Optional[List[Any]] = list()
     """ array of partial voice state objects """
@@ -341,6 +335,7 @@ class Guild(pydantic.BaseModel, Hashable):
             # check if channel guild id == self.id
             # if not return
             if not getattr(channel, "guild_id", 0) == self.id:
+                # if ID doesnt exists, "dm channels", set to 0 so can be compared
                 return
             return channel
 
@@ -657,7 +652,39 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         for hook in (await r.json()):
-            yield Webhook(adapter=self.conn, **hook)
+            yield Webhook(adapter=self.conn._session, **hook)
+
+    async def fetch_template(self, code: str, /) -> GuildTemplate:
+        """|coro|
+
+        Fetches a guild template
+
+        Parameters
+        ----------
+        code: :class:`str`
+            template code to fetch
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/templates/{code}", bucket=bucket)
+        )
+
+        return GuildTemplate(conn=self.conn, **(await r.json()))
+
+    async def fetch_templates(self) -> Iterator[GuildTemplate]:
+        """|coro|
+
+        Fetches all templates in the guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/templates", bucket=bucket)
+        )
+
+        for template in (await r.json()):
+            yield GuildTemplate(conn=self.conn, **template)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
@@ -992,7 +1019,8 @@ class Guild(pydantic.BaseModel, Hashable):
         Creates a new guild,
         were the client is the owner.
 
-        For bot accounts they must be in less then 10 servers!
+        .. warning::
+            Can only be used for bots in less then **10** guilds
 
         Parameters
         ----------
@@ -1029,7 +1057,37 @@ class Guild(pydantic.BaseModel, Hashable):
             data=payload.json()
         )
 
-        return Guild(**(await r.json()))
+        return cls(**(await r.json()))
+
+    @classmethod
+    async def create_from_template(cls, client, code: str, **data) -> Guild:
+        """|coro|
+
+        Creates a guild from a template
+
+        .. warning::
+            Can only be used for bots in less then **10** guilds
+
+        Parameters
+        ----------
+        client: :class:`Client`
+            client being used to create guild
+        code: :class:`str`
+            Template code to create guild from
+        name: :class:`str` *
+            Name of guild
+        icon: :class:`File`
+            Icon for guild
+        """
+        payload = GuildTemplateCreatePayload(**data)
+
+        r = await client.http.request(
+            Route("POST", path=f"/guilds/templates/{code}"),
+            data=payload.json(),
+            headers={"Content-Type": "application/json"}
+        )
+
+        return Guild(conn=client.http, **(await r.json()))
 
     async def delete(self) -> None:
         """|coro|
