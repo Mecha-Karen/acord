@@ -397,3 +397,7 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
 
         data["icon"] = _file_to_image_data(icon)
         return data
+
+class TemplateCreatePayload(pydantic.BaseModel):
+    name: str
+    description: Optional[str]
