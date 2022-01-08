@@ -34,6 +34,7 @@ from acord.payloads import (
     RoleMovePayload,
     GuildTemplateCreatePayload,
     TemplateCreatePayload,
+    ScheduledEventCreatePayload,
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -1067,6 +1068,46 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return GuildTemplate(conn=self.conn, **(await r.json()))
+
+    async def create_event(self, *, reason: str = None, **data) -> GuildScheduledEvent:
+        """|coro|
+
+        Creates a new guild scheduled event
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            reason for creating event
+        entity_type: :class:`ScheduledEventEntityType`
+            the entity type of the scheduled event
+        name: :class:`str`
+            name of the event
+        channel_id: :class:`Snowflake`
+            the channel id of the scheduled event.
+        entity_metadata: :class:`ScheduledEventMetaData`
+            the entity metadata of the scheduled event
+        privacy_level: :class:`ScheduledEventPrivacyLevel`
+            the privacy level of the scheduled event
+        scheduled_start_time: :class:`datetime.datetime`
+            the start time of the scheduled event
+        scheduled_end_time: :class:`datetime.datetime`
+            the end time of the scheduled event
+        description: :class:`str`
+            the description of the scheduled event
+        """
+        payload = ScheduledEventCreatePayload(**data)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/scheduled-events"),
+            headers=headers,
+            data=payload.json()
+        )
+
+        return GuildScheduledEvent(**(await r.json()))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
