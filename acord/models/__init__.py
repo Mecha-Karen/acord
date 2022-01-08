@@ -14,6 +14,11 @@ from .emoji import Emoji
 from .sticker import Sticker
 from .attachment import Attachment
 from .member import Member
+from .guild_sched_event import (
+    GuildScheduledEvent,
+    ScheduledEventUser,
+    ScheduledEventMetaData
+)
 from .message import Message, MessageReference, WebhookMessage
 from .interaction import  (
     InteractionData,
@@ -40,5 +45,5 @@ from .integrations import (
     IntegrationApplication,
     Integration
 )
-from .guild import Guild, Ban
 from .guild_template import GuildTemplate
+from .guild import Guild, Ban

@@ -22,6 +22,7 @@ from acord.models import (
     Integration,
     Invite,
     GuildTemplate,
+    GuildScheduledEvent,
     Snowflake,
 )
 
@@ -33,6 +34,7 @@ from acord.payloads import (
     RoleMovePayload,
     GuildTemplateCreatePayload,
     TemplateCreatePayload,
+    ScheduledEventCreatePayload,
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -687,6 +689,38 @@ class Guild(pydantic.BaseModel, Hashable):
         for template in (await r.json()):
             yield GuildTemplate(conn=self.conn, **template)
 
+    async def fetch_event(self, event_id: Snowflake) -> GuildScheduledEvent:
+        """|coro|
+
+        Fetches a scheduled event from the guild
+
+        Parameters
+        ----------
+        event_id: :class:`Snowflake`
+            ID of event to fetch
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/scheduled-events/{event_id}", bucket=bucket)
+        )
+
+        return GuildScheduledEvent(**(await r.json()))
+
+    async def fetch_events(self) -> Iterator[GuildScheduledEvent]:
+        """|coro|
+
+        Fetches all scheduled events for guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/scheduled-events", bucket=bucket)
+        )
+
+        for event in (await r.json()):
+            yield GuildScheduledEvent(conn=self.conn, **event)
+
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
     ) -> None:
@@ -1034,6 +1068,46 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return GuildTemplate(conn=self.conn, **(await r.json()))
+
+    async def create_event(self, *, reason: str = None, **data) -> GuildScheduledEvent:
+        """|coro|
+
+        Creates a new guild scheduled event
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            reason for creating event
+        entity_type: :class:`ScheduledEventEntityType`
+            the entity type of the scheduled event
+        name: :class:`str`
+            name of the event
+        channel_id: :class:`Snowflake`
+            the channel id of the scheduled event.
+        entity_metadata: :class:`ScheduledEventMetaData`
+            the entity metadata of the scheduled event
+        privacy_level: :class:`ScheduledEventPrivacyLevel`
+            the privacy level of the scheduled event
+        scheduled_start_time: :class:`datetime.datetime`
+            the start time of the scheduled event
+        scheduled_end_time: :class:`datetime.datetime`
+            the end time of the scheduled event
+        description: :class:`str`
+            the description of the scheduled event
+        """
+        payload = ScheduledEventCreatePayload(**data)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/scheduled-events"),
+            headers=headers,
+            data=payload.json()
+        )
+
+        return GuildScheduledEvent(**(await r.json()))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:

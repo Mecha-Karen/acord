@@ -23,7 +23,11 @@ from .enums.interactions import (
     InteractionCallback,
     ApplicationCommandType,
 )
-
+from .enums.events import (
+    ScheduledEventEntityType,
+    ScheduledEventPrivacyLevel,
+    ScheduledEventStatus
+)
 from .mixins import Hashable, _C, T, H
 from .file import File
 from .mentions import AllowedMentions
