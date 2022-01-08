@@ -407,11 +407,36 @@ class TemplateCreatePayload(pydantic.BaseModel):
 
 
 class ScheduledEventCreatePayload(pydantic.BaseModel):
+    entity_type: ScheduledEventEntityType
+    name: str
     channel_id: Optional[Snowflake]
     entity_metadata: Optional[ScheduledEventMetaData]
-    name: str
     privacy_level: ScheduledEventPrivacyLevel
     scheduled_start_time: datetime.datetime
     scheduled_end_time: Optional[datetime.datetime]
     description: Optional[str]
-    entity_type: ScheduledEventEntityType
+
+    @pydantic.validator("channel_id")
+    def _check_cid_is_external(cls, _, **kwargs):
+        if not _:
+            if kwargs["values"]["entity_type"] != ScheduledEventEntityType.EXTERNAL:
+                raise ValueError("Channel ID must be provided for none external events!")
+
+        return _
+
+    @pydantic.validator("scheduled_end_time")
+    def _check_set_is_external(cls, _, **kwargs):
+        if not _:
+            if kwargs["values"]["entity_type"] == ScheduledEventEntityType.EXTERNAL:
+                raise ValueError("end time must be provided for external events!")
+
+        return _
+
+    @pydantic.validator("entity_metadata")
+    def _validate_entity_meta(cls, data: ScheduledEventMetaData, **kwargs):
+        external = kwargs["values"]["entity_type"] == ScheduledEventEntityType.EXTERNAL
+        if external:
+            if not data.location:
+                raise ValueError("location needed for external events")
+        
+        return data
