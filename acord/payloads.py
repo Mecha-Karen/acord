@@ -16,7 +16,9 @@ from acord.bases import (
     VerificationLevel,
     GuildMessageNotification,
     ExplicitContentFilterLevel,
-    SystemChannelFlags
+    SystemChannelFlags,
+    ScheduledEventPrivacyLevel,
+    ScheduledEventEntityType
     )
 from acord.bases.embeds import _rgb_to_hex
 from .models import (
@@ -24,7 +26,8 @@ from .models import (
     MessageReference, 
     Role, 
     Snowflake, 
-    PartialChannel
+    PartialChannel,
+    ScheduledEventMetaData
 )
 
 
@@ -401,3 +404,14 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
 class TemplateCreatePayload(pydantic.BaseModel):
     name: str
     description: Optional[str]
+
+
+class ScheduledEventCreatePayload(pydantic.BaseModel):
+    channel_id: Optional[Snowflake]
+    entity_metadata: Optional[ScheduledEventMetaData]
+    name: str
+    privacy_level: ScheduledEventPrivacyLevel
+    scheduled_start_time: datetime.datetime
+    scheduled_end_time: Optional[datetime.datetime]
+    description: Optional[str]
+    entity_type: ScheduledEventEntityType
