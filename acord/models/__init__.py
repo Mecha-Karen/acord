@@ -40,5 +40,6 @@ from .integrations import (
     IntegrationApplication,
     Integration
 )
-from .guild import Guild, Ban
+from .guild_sched_event import GuildScheduledEvent
 from .guild_template import GuildTemplate
+from .guild import Guild, Ban
