@@ -12,6 +12,7 @@ from acord.bases import (
 )
 from acord.core.abc import Route
 from acord.models import User, Member, Snowflake
+from acord.utils import _payload_dict_to_json
 
 
 class ScheduledEventMetaData(pydantic.BaseModel):
@@ -157,7 +158,6 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         """
         from acord.payloads import ScheduledEventEditPayload
 
-        payload = ScheduledEventEditPayload(**data)
         headers = {"Content-Type": "application/json"}
 
         if reason is not None:
@@ -166,8 +166,8 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}"),
             headers=headers,
-            data=payload.json()
+            data=_payload_dict_to_json(ScheduledEventEditPayload, **data)
         )
 
-        return GuildScheduledEvent(**(await r.json()))
+        return GuildScheduledEvent(conn=self.conn, **(await r.json()))
 
