@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any, Iterator, List, Optional
 
 import pydantic
 import datetime
@@ -10,11 +10,22 @@ from acord.bases import (
     ScheduledEventPrivacyLevel,
     ScheduledEventStatus
 )
-from acord.models import User, Snowflake
+from acord.core.abc import Route
+from acord.models import User, Member, Snowflake
 
 
 class ScheduledEventMetaData(pydantic.BaseModel):
     location: Optional[str]
+
+
+class ScheduledEventUser(pydantic.BaseModel):
+    guild_scheduled_event_id: Snowflake
+    """ the scheduled event id which the user subscribed to """
+    user: User
+    """ user which subscribed to an event """
+    member: Optional[Member]
+    """ guild member for this user for the guild which this event belongs to, 
+    if any """
 
 
 class GuildScheduledEvent(pydantic.BaseModel, Hashable):
@@ -59,3 +70,57 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         conn = kwargs["values"]["conn"]
         creator.conn = conn
         return creator
+
+    async def delete(self) -> None:
+        """|coro|
+
+        Deletes this event
+        """
+        await self.conn.request(
+            Route("DELETE", path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}")
+        )
+
+
+    @pydantic.validate_arguments
+    async def fetch_users(self, *,
+        limit: int = 100,
+        with_member: bool = False,
+        before: Snowflake = None,
+        after: Snowflake = None
+    ) -> Iterator[ScheduledEventUser]:
+        """|coro|
+
+        Fetches members who have joined this event
+
+        Parameters
+        ----------
+        limit: :class:`int`
+            How many members to fetch
+        with_member: :class:`bool`
+            :attr:`ScheduledEventUser.member` will contain a member object,
+            of who suscribed to the event
+        before: :class:`Snowflake`
+            consider only users before given user id
+        after: :class:`Snowflake`
+            consider only users after given user id
+        """
+        r = await self.conn.request(
+            Route(
+                "GET", 
+                path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}/users",
+                limit=limit,
+                with_member=str(with_member).lower(),
+                before=before,
+                after=after
+                )
+        )
+
+        for sched_user in (await r.json()):
+            u = User(conn=self.conn, **sched_user["user"])
+
+            if with_member:
+                m = Member(conn=self.conn, user=u, **sched_user["member"])
+            else:
+                m = None
+
+            yield ScheduledEventUser(guild_scheduled_event_id=self.id, user=u, member=m)
