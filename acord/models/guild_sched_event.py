@@ -18,6 +18,8 @@ class ScheduledEventMetaData(pydantic.BaseModel):
 
 
 class GuildScheduledEvent(pydantic.BaseModel, Hashable):
+    conn: Any
+
     id: Snowflake
     """ the id of the scheduled event """
     guild_id: Snowflake
