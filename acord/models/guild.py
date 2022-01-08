@@ -721,6 +721,39 @@ class Guild(pydantic.BaseModel, Hashable):
         for event in (await r.json()):
             yield GuildScheduledEvent(conn=self.conn, **event)
 
+    async def fetch_sticker(self, sticker_id: Snowflake) -> Sticker:
+        """|coro|
+
+        Fetches a single sticker,
+        using provided ID
+
+        Parameters
+        ----------
+        sticker_id: :class:`Snowflake`
+            id of sticker to fetch
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/stickers/{sticker_id}", bucket=bucket)
+        )
+
+        return Sticker(conn=self.conn, **(await r.json()))
+
+    async def fetch_stickers(self) -> Iterator[Sticker]:
+        """|coro|
+
+        Fetches all stickers in guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/stickers/", bucket=bucket)
+        )
+
+        for sticker in (await r.json()):
+            yield Sticker(conn=self.conn, **sticker)
+
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
     ) -> None:
