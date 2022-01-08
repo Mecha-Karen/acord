@@ -1107,7 +1107,7 @@ class Guild(pydantic.BaseModel, Hashable):
             data=payload.json()
         )
 
-        return GuildScheduledEvent(**(await r.json()))
+        return GuildScheduledEvent(conn=self.conn, **(await r.json()))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
