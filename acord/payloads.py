@@ -18,7 +18,8 @@ from acord.bases import (
     ExplicitContentFilterLevel,
     SystemChannelFlags,
     ScheduledEventPrivacyLevel,
-    ScheduledEventEntityType
+    ScheduledEventEntityType,
+    ScheduledEventStatus
     )
 from acord.bases.embeds import _rgb_to_hex
 from .models import (
@@ -440,3 +441,16 @@ class ScheduledEventCreatePayload(pydantic.BaseModel):
                 raise ValueError("location needed for external events")
         
         return data
+
+
+class ScheduledEventEditPayload(ScheduledEventCreatePayload):
+    # dont need to re-add validators
+    entity_type: Optional[ScheduledEventEntityType]
+    name: Optional[str]
+    channel_id: Optional[Snowflake]
+    entity_metadata: Optional[ScheduledEventMetaData]
+    privacy_level: ScheduledEventPrivacyLevel
+    scheduled_start_time: Optional[datetime.datetime]
+    scheduled_end_time: Optional[datetime.datetime]
+    description: Optional[str]
+    status: Optional[ScheduledEventStatus]
