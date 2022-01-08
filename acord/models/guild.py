@@ -22,6 +22,7 @@ from acord.models import (
     Integration,
     Invite,
     GuildTemplate,
+    GuildScheduledEvent,
     Snowflake,
 )
 
@@ -686,6 +687,20 @@ class Guild(pydantic.BaseModel, Hashable):
 
         for template in (await r.json()):
             yield GuildTemplate(conn=self.conn, **template)
+
+    async def fetch_events(self) -> Iterator[GuildScheduledEvent]:
+        """|coro|
+
+        Fetches all scheduled events for a guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/scheduled-events", bucket=bucket)
+        )
+
+        for event in (await r.json()):
+            yield GuildScheduledEvent(conn=self.conn, **event)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
