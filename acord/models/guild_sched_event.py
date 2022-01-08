@@ -16,6 +16,7 @@ from acord.models import User, Member, Snowflake
 
 class ScheduledEventMetaData(pydantic.BaseModel):
     location: Optional[str]
+    """ location were event will take place """
 
 
 class ScheduledEventUser(pydantic.BaseModel):
@@ -124,3 +125,49 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
                 m = None
 
             yield ScheduledEventUser(guild_scheduled_event_id=self.id, user=u, member=m)
+
+    async def edit(self, *, reason: str = None, **data) -> GuildScheduledEvent:
+        """|coro|
+
+        Edits a scheduled event,
+        to start or end an event use this method.
+
+        Parameters
+        ----------
+        reason: :class:`str`
+            reason for editting event
+        entity_type: :class:`ScheduledEventEntityType`
+            the entity type of the scheduled event
+        name: :class:`str`
+            name of the event
+        channel_id: :class:`Snowflake`
+            the channel id of the scheduled event.
+        entity_metadata: :class:`ScheduledEventMetaData`
+            the entity metadata of the scheduled event
+        privacy_level: :class:`ScheduledEventPrivacyLevel`
+            the privacy level of the scheduled event
+        scheduled_start_time: :class:`datetime.datetime`
+            the start time of the scheduled event
+        scheduled_end_time: :class:`datetime.datetime`
+            the end time of the scheduled event
+        description: :class:`str`
+            the description of the scheduled event
+        status: :class:`ScheduledEventStatus`
+            the status of the scheduled event
+        """
+        from acord.payloads import ScheduledEventEditPayload
+
+        payload = ScheduledEventEditPayload(**data)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}"),
+            headers=headers,
+            data=payload.json()
+        )
+
+        return GuildScheduledEvent(**(await r.json()))
+
