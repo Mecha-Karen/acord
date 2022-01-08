@@ -688,10 +688,28 @@ class Guild(pydantic.BaseModel, Hashable):
         for template in (await r.json()):
             yield GuildTemplate(conn=self.conn, **template)
 
+    async def fetch_event(self, event_id: Snowflake) -> GuildScheduledEvent:
+        """|coro|
+
+        Fetches a scheduled event from the guild
+
+        Parameters
+        ----------
+        event_id: :class:`Snowflake`
+            ID of event to fetch
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/scheduled-events/{event_id}", bucket=bucket)
+        )
+
+        return GuildScheduledEvent(**(await r.json()))
+
     async def fetch_events(self) -> Iterator[GuildScheduledEvent]:
         """|coro|
 
-        Fetches all scheduled events for a guild
+        Fetches all scheduled events for guild
         """
         bucket = dict(guild_id=self.id)
 
