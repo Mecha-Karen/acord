@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterator, List, Optional, Union
 from enum import Enum
+from aiohttp import FormData
 from io import BytesIO
 import pydantic
 import datetime
@@ -35,6 +36,8 @@ from acord.payloads import (
     GuildTemplateCreatePayload,
     TemplateCreatePayload,
     ScheduledEventCreatePayload,
+    StickerCreatePayload,
+    _get_image_mimetype
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -1141,6 +1144,57 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return GuildScheduledEvent(conn=self.conn, **(await r.json()))
+
+    async def create_sticker(self, *, reason: str = None, **data) -> Sticker:
+        """|coro|
+
+        Creates a new guild sticker
+
+        Parameters
+        ----------
+        name: :class:`str`
+            name of sticker
+        description: :class:`str`
+            description of sticker
+        tags: :class:`str`
+            tags for autocompletion of sticker
+        file: :class:`File`
+            a file for the sticker image
+
+            .. warning::
+                File size should be below 500kB
+        """
+        payload = StickerCreatePayload(**data)
+        headers = {}
+        data = FormData()
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        # for those who complain about "what if the file is too large?"
+        # it should be less then 500kB which is up to the user to enforce
+        mime_type = _get_image_mimetype(payload.file)
+        if not mime_type:
+            mime_type = "application/octet-stream"
+
+        data.add_field(
+            name="file",
+            value=payload.file.fp,
+            filename=payload.file.filename,
+            content_type=mime_type,
+        )
+
+        for key, value in payload.dict(exclude={"file"}).items():
+            data.add_field(name=key, value=value)
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/stickers"),
+            headers=headers,
+            data=data
+        )
+        payload.file.close()
+
+        return Sticker(conn=self.conn, **(await r.json()))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
