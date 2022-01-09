@@ -32,14 +32,22 @@ from .models import (
 )
 
 
+def _get_image_mimetype(data: Union[File, bytes]):
+    if isinstance(data, File):
+        data = data.fp
+
+    fm = imghdr.what(data)
+    return f"image/{fm}"
+
+
 def _file_to_image_data(file):
-    format = imghdr.what(file.fp)
+    fm = _get_image_mimetype(file)
     file.reset(seek=True)
     data = base64.b64encode(file.fp.read()).decode("ascii")
 
     file.close()
 
-    data["avatar"] = f"data:image/{format};base64,{data}"
+    return f"data:{fm};base64,{data}"
 
 
 class GenericWebsocketPayload(pydantic.BaseModel):
@@ -454,3 +462,16 @@ class ScheduledEventEditPayload(ScheduledEventCreatePayload):
     scheduled_end_time: Optional[datetime.datetime]
     description: Optional[str]
     status: Optional[ScheduledEventStatus]
+
+
+class StickerCreatePayload(pydantic.BaseModel):
+    name: str
+    description: str
+    tags: str
+    file: File
+
+
+class StickerEditPayload(pydantic.BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    tags: Optional[str]
