@@ -31,6 +31,7 @@ Message.__annotations__["interaction"] = Optional[Interaction]
 Message.__annotations__["thread"] = Optional[Thread]
 Message.__annotations__["mention_channels"] = Optional[List[Channel]]
 GuildTemplate.__annotations__["serialized_source_guild"] = Guild
+Emoji.edit.__annotations__["return"] = Emoji
 
 SelectOption.update_forward_refs()
 Button.update_forward_refs()
