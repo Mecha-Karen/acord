@@ -21,7 +21,7 @@ class KeepAlive(Thread):
 
             await asyncio.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
-            await self._ws.send_json(await self.get_payload())
+            await self._ws.send_json(self.get_payload())
 
-    async def get_payload(self):
+    def get_payload(self):
         return {"op": gateway.HEARTBEAT, "d": gateway.SEQUENCE}
