@@ -56,6 +56,23 @@ class File(pydantic.BaseModel):
             return
         self.fp.seek(position)
 
+    def read_and_close(self, *, position: int = 0, decode: bool = False):
+        """Reads file from start and closes it
+
+        Parameters
+        ----------
+        position: :class:`int`
+            change were to read file from
+        """
+        self.reset(True, position)
+
+        data = self.fp.read()
+        if decode:
+            data = data.decode()
+            
+        self.close()
+        return data
+
     def close(self) -> None:
         """Closes the file, which prevents it from being sent again"""
         self.fp.close()
