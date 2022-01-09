@@ -107,8 +107,6 @@ class MyClient(Client):
         except KeyError:
             return
 
-        print(interaction.member.user.username)
-
         if (not message) or (message.id not in self.games) or (interaction.member.user.id != cur.id):
             return
 
