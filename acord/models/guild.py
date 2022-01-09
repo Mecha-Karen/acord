@@ -89,7 +89,7 @@ class Guild(pydantic.BaseModel, Hashable):
     .. note::
         When working with the guild object,
         :attr:`Guild.large` may be useful to prevent grabbing members which exist but are not cached.
-        This is only application when this value is ``True``.
+        This is only applicable when this value is ``True``.
     """
     conn: Any  # Connection object - For internal use
 
@@ -756,6 +756,39 @@ class Guild(pydantic.BaseModel, Hashable):
 
         for sticker in (await r.json()):
             yield Sticker(conn=self.conn, **sticker)
+
+    async def fetch_emoji(self, emoji_id: Snowflake) -> Emoji:
+        """|coro|
+
+        Fetches a single emoji,
+        using provided ID
+
+        Parameters
+        ----------
+        emoji_id: :class:`Snowflake`
+            id of emoji to fetch
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/emojis/{emoji_id}", bucket=bucket)
+        )
+
+        return Emoji(conn=self.conn, **(await r.json()))
+
+    async def fetch_emojis(self) -> Iterator[Emoji]:
+        """|coro|
+
+        Fetches all emojis in guild
+        """
+        bucket = dict(guild_id=self.id)
+
+        r = await self.conn.request(
+            Route("GET", path=f"/guilds/{self.id}/emojis/", bucket=bucket)
+        )
+
+        for emoji in (await r.json()):
+            yield Emoji(conn=self.conn, **emoji)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
