@@ -90,13 +90,14 @@ class Emoji(pydantic.BaseModel, Hashable):
             headers={"X-Audit-Log-Reason": reason},
         )
 
+    @pydantic.validate_arguments
     async def edit(
         self,
         *,
         name: Optional[str] = None,
         roles: Optional[List[Role]] = None,
         reason: Optional[str] = None,
-    ) -> Emoji:
+    ) -> Any:
         """|coro|
 
         Edits emoji
@@ -110,11 +111,13 @@ class Emoji(pydantic.BaseModel, Hashable):
         reason: :class:`str`
             Reason for editing emoji, shows in Audit Logs.
         """
-        if reason:
-            reason = str(reason)
+        headers = {"Content-Type": "application/json"}
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
 
         if not (name or roles):
             raise ValueError("No parameters provided to edit")
+
         if all(i for i in roles if isInt(i)):
             roles = roles
         elif all(i for i in roles if isinstance(i, Role)):
@@ -122,13 +125,17 @@ class Emoji(pydantic.BaseModel, Hashable):
         else:
             raise ValueError("Incorrect roles provided")
 
-        name = str(name or self.name)
-        roles = roles or list(map(lambda role: role.id, self.roles))
+        payload = {}
+
+        if name is not None:
+            payload["name"] = name
+        if roles is not None:
+            payload["roles"] = roles
 
         await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/emojis/{self.id}"),
-            data={"name": name, "roles": roles},
-            headers={"X-Audit-Log-Reason": reason},
+            data=payload,
+            headers=headers,
         )
 
     def is_useable(self):
