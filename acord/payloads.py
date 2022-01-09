@@ -41,6 +41,9 @@ def _get_image_mimetype(data: Union[File, bytes]):
 
 
 def _file_to_image_data(file):
+    if not file:
+        return
+
     fm = _get_image_mimetype(file)
     file.reset(seek=True)
     data = base64.b64encode(file.fp.read()).decode("ascii")
@@ -305,17 +308,18 @@ class RoleEditPayload(pydantic.BaseModel):
     unicode_emoji: Optional[str]
     mentionable: Optional[bool]
 
-    def dict(self, *args, **kwargs) -> dict:
+    def dict(self, **kwargs) -> dict:
         # :meta private:
         # Override pydantic to return `Color` as a hex
-        data = super(RoleEditPayload, self).dict(*args, **kwargs)
+        kwargs.update({"exclude": {"file"}})
+        data = super(RoleEditPayload, self).dict(**kwargs)
 
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color
         
         if self.icon:
-            data["icon"] = _file_to_image_data(data["icon"])
+            data["icon"] = _file_to_image_data(self.icon)
             self.icon.close()
 
         return data
@@ -341,8 +345,10 @@ class WebhookCreatePayload(pydantic.BaseModel):
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
+        kwargs.update({"exclude": {"avatar"}})
+
         data = super(WebhookCreatePayload, self).dict(**kwargs)
-        avatar: File = data.pop("avatar")
+        avatar: File = self.avatar
 
         data["avatar"] = _file_to_image_data(avatar)
         return data
@@ -369,8 +375,10 @@ class WebhookEditPayload(pydantic.BaseModel):
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
+        kwargs.update({"exclude": {"avatar"}})
+
         data = super(WebhookEditPayload, self).dict(**kwargs)
-        avatar: File = data.pop("avatar")
+        avatar: File = self.avatar
 
         data["avatar"] = _file_to_image_data(avatar)
         return data
@@ -391,8 +399,10 @@ class GuildCreatePayload(pydantic.BaseModel):
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
+        kwargs.update({"exclude": {"icon"}})
+
         data = super(GuildCreatePayload, self).dict(**kwargs)
-        icon: File = data.pop("icon")
+        icon: File = self.icon
 
         data["icon"] = _file_to_image_data(icon)
         return data
@@ -404,8 +414,11 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
 
     def dict(self, **kwargs) -> dict:
         """ :meta private: """
+        kwargs.update({"exclude": {"icon"}})
+
         data = super(GuildTemplateCreatePayload, self).dict(**kwargs)
-        icon: File = data.pop("icon")
+
+        icon: File = self.icon
 
         data["icon"] = _file_to_image_data(icon)
         return data
@@ -475,3 +488,19 @@ class StickerEditPayload(pydantic.BaseModel):
     name: Optional[str]
     description: Optional[str]
     tags: Optional[str]
+
+
+class EmojiCreatePayload(pydantic.BaseModel):
+    name: str
+    image: File
+    roles: List[Role] = list()
+
+    def dict(self, **kwargs) -> dict:
+        """ :meta private: """
+        kwargs.update({"exclude": {"file"}})
+
+        data = super(EmojiCreatePayload, self).dict(**kwargs)
+        image: File = self.image
+
+        data["image"] = _file_to_image_data(image)
+        return data
