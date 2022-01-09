@@ -1,10 +1,11 @@
 from __future__ import annotations
+from typing import Any, Optional
 import pydantic
 
 from acord.core.abc import Route
 from acord.bases import Hashable
 from acord.models import Snowflake, User
-from typing import Any, Optional
+from acord.utils import _payload_dict_to_json
 
 
 class Sticker(pydantic.BaseModel, Hashable):
@@ -74,3 +75,32 @@ class Sticker(pydantic.BaseModel, Hashable):
             Route("DELETE", path=f"/guilds/{self.guild_id}/stickers/{self.id}"), 
             headers=headers
             )
+
+    async def edit(self, *, reason: str = None, **data) -> Sticker:
+        """|coro|
+
+        Modifies sticker
+
+        Parameters
+        ----------
+        name: :class:`str`
+            name of sticker
+        description: :class:`str`
+            description of sticker
+        tags: :class:`str`
+            tags for autocompletion of sticker
+        """
+        from acord.payloads import StickerEditPayload
+
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/guilds/{self.guild_id}/stickers/{self.id}"),
+            headers=headers,
+            data=_payload_dict_to_json(StickerEditPayload, **data)
+        )
+
+        return Sticker(conn=self.conn, **(await r.json()))
