@@ -1,8 +1,21 @@
 """ Exceptions raised by the module """
+from typing import Any
 
 
 class BaseResponseException(Exception):
-    ...
+    def __init__(self, message, **attrs) -> None:
+        self._attrs = attrs
+
+        super().__init__(message)
+
+    def __getattribute__(self, __name: str) -> Any:
+        try:
+            attrs = object.__getattribute__(self, "_attrs")
+            return attrs[__name]
+        except KeyError:
+            pass
+  
+        return object.__getattribute__(self, __name)
 
 
 class HTTPException(BaseResponseException):
