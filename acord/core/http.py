@@ -276,11 +276,11 @@ class HTTPClient(object):
                 return await self.request(route, n_data, headers, **addtional_kwargs)
 
         if resp.status == 403:
-            raise Forbidden(str(respData))
+            raise Forbidden(str(respData), payload=respData, status_code=403)
         if resp.status == 404:
-            raise NotFound(str(respData))
+            raise NotFound(str(respData), payload=respData, status_code=404)
 
-        raise BadRequest(str(respData))
+        raise BadRequest(str(respData), payload=respData, status_code=resp.status)
 
     @property
     def connected(self):
