@@ -37,6 +37,7 @@ from acord.payloads import (
     TemplateCreatePayload,
     ScheduledEventCreatePayload,
     StickerCreatePayload,
+    EmojiCreatePayload,
     _get_image_mimetype
 )
 from acord.bases import (
@@ -1228,6 +1229,37 @@ class Guild(pydantic.BaseModel, Hashable):
         payload.file.close()
 
         return Sticker(conn=self.conn, **(await r.json()))
+
+    async def create_emoji(self, *, reason: str = None, **data) -> Emoji:
+        """|coro|
+
+        Creates new guild emoji
+
+        Parameters
+        ----------
+        name: :class:`str`
+            name for emoji
+        image: :class:`File`
+            file for image emoji,
+            cannot be greater then 256kB
+        roles: List[:class:`Role`]
+            list of roles allowed to use emoji
+        """
+        payload = EmojiCreatePayload(**data)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers.update({"X-Audit-Log-Reason": reason})
+
+        r = await self.conn.request(
+            Route("POST", path=f"/guilds/{self.id}/emojis"),
+            headers=headers,
+            data=payload.json()
+        )
+
+        emoji = Emoji(conn=self.conn, **(await r.json()))
+
+        return emoji
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
