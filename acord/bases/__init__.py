@@ -28,7 +28,7 @@ from .enums.events import (
     ScheduledEventPrivacyLevel,
     ScheduledEventStatus
 )
-from enums.audit_logs import (
+from .enums.audit_logs import (
     AuditLogEvent
 )
 from .mixins import Hashable, _C, T, H
