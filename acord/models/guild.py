@@ -9,7 +9,7 @@ import datetime
 import json
 
 from acord.core.abc import DISCORD_EPOCH, Route
-from acord.bases import Hashable, ChannelTypes
+from acord.bases import Hashable, ChannelTypes, AuditLogEvent
 from acord.models import (
     Channel,
     TextChannel,
@@ -24,6 +24,7 @@ from acord.models import (
     Invite,
     GuildTemplate,
     GuildScheduledEvent,
+    AuditLog,
     Snowflake,
 )
 
@@ -790,6 +791,41 @@ class Guild(pydantic.BaseModel, Hashable):
 
         for emoji in (await r.json()):
             yield Emoji(conn=self.conn, **emoji)
+
+    async def fetch_audit_logs(self, *,
+        user_id: Snowflake = None,
+        action_type: AuditLogEvent = None,
+        before: Snowflake = None,
+        limit: int = 50
+    ) -> AuditLog:
+        """|coro|
+
+        Fetches guilds audit log
+
+        Parameters
+        ----------
+        user_id: :class:`Snowflake`
+            Filter actions for only this user
+        action_type: :class:`AuditLogEvent`
+            the type of audit log event
+        before: :class:`Snowflake`
+            filter the log before a certain entry id
+        limit: :class:`int`
+            how many entries are returned (default 50, minimum 1, maximum 100)
+        """
+        bucket = dict(guild_id=self.id)
+        r = await self.conn.request(
+            Route(
+                "GET", bucket=bucket,
+                path=f"/guilds/{self.id}/audit-logs",
+                user_id=user_id,
+                action_type=getattr(action_type, "value", action_type),
+                before=before,
+                limit=limit
+            )
+        )
+
+        return AuditLog(conn=self.conn, guild_id=self.id, **(await r.json()))
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None
