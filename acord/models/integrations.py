@@ -3,6 +3,7 @@ from typing import Any, Optional
 from enum import IntEnum
 import pydantic
 import datetime
+from acord.bases.mixins import Hashable
 
 from acord.models import User, Snowflake
 from acord.core.abc import Route
@@ -13,12 +14,12 @@ class IntegrationExpBehaviour(IntEnum):
     KICK = 1
 
 
-class IntegrationAccount(pydantic.BaseModel):
+class IntegrationAccount(pydantic.BaseModel, Hashable):
     id: Snowflake
     name: str
 
 
-class IntegrationApplication(pydantic.BaseModel):
+class IntegrationApplication(pydantic.BaseModel, Hashable):
     id: Snowflake
     name: str
     icon: str
@@ -27,25 +28,14 @@ class IntegrationApplication(pydantic.BaseModel):
     bot: Optional[User]
 
 
-class Integration(pydantic.BaseModel):
+class PartialIntegration(pydantic.BaseModel, Hashable):
     conn: Any
 
     id: Snowflake
-    guild_id: Snowflake
     name: str
     type: str
-    enabled: bool
-    syncing: Optional[bool]
-    role_id: Optional[Snowflake]
-    enable_emoticons: Optional[bool]
-    expire_behavior: Optional[IntegrationExpBehaviour]
-    expire_grace_period: Optional[int]
-    user: Optional[User]
     account: IntegrationAccount
-    synced_at: Optional[datetime.datetime]
-    subscriber_count: Optional[int]
-    revoked: Optional[bool]
-    application: Optional[IntegrationApplication]
+    guild_id: Snowflake
 
     async def delete(self, *, reason: str = None) -> None:
         """|coro|
@@ -66,3 +56,19 @@ class Integration(pydantic.BaseModel):
             Route("DELETE", path=f"/guilds/{self.guild_id}/integrations/{self.id}"),
             headers=headers
         )
+
+
+class Integration(PartialIntegration):
+    conn: Any
+
+    enabled: bool
+    syncing: Optional[bool]
+    role_id: Optional[Snowflake]
+    enable_emoticons: Optional[bool]
+    expire_behavior: Optional[IntegrationExpBehaviour]
+    expire_grace_period: Optional[int]
+    user: Optional[User]
+    synced_at: Optional[datetime.datetime]
+    subscriber_count: Optional[int]
+    revoked: Optional[bool]
+    application: Optional[IntegrationApplication]
