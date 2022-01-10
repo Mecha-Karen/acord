@@ -43,7 +43,14 @@ from .integrations import (
     IntegrationExpBehaviour,
     IntegrationAccount,
     IntegrationApplication,
-    Integration
+    PartialIntegration,
+    Integration,
+)
+from .audit_logs import (
+    AuditLogChange,
+    AuditLogEntryInfo,
+    AuditLogEntry,
+    AuditLog
 )
 from .guild_template import GuildTemplate
 from .guild import Guild, Ban
