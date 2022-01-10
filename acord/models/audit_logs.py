@@ -33,21 +33,21 @@ class AuditLogChange(pydantic.BaseModel):
 
 
 class AuditLogEntryInfo(pydantic.BaseModel):
-    channel_id: Snowflake
+    channel_id: Optional[Snowflake]
     """ channel in which the entities were targeted """
-    count: int
+    count: Optional[int]
     """ number of entities targeted """
-    delete_member_days: int
+    delete_member_days: Optional[int]
     """ number of days after which inactive members were kicked """
-    id: Snowflake
+    id: Optional[Snowflake]
     """ id of the overwritten entity """
-    members_removed: int
+    members_removed: Optional[int]
     """ number of members removed by the prune """
-    message_id: Snowflake
+    message_id: Optional[Snowflake]
     """ id of the message that was targeted """
-    role_name: str
+    role_name: Optional[str]
     """ name of the role if type is "0" (not present if type is "1") """
-    type: str
+    type: Optional[str]
     """ type of overwritten entity - "0" for "role" or "1" for "member" """
 
 
@@ -55,7 +55,7 @@ class AuditLogEntry(pydantic.BaseModel, Hashable):
     target_id: Optional[str]
     """ ID of affected entity,
     can be an ID of anything implementing the :class:`Hashable` class. """
-    changes: List[AuditLogChange]
+    changes: Optional[List[AuditLogChange]]
     """ list of changes made to target """
     user_id: Optional[Snowflake]
     """ the user who made changes
@@ -91,6 +91,9 @@ class AuditLog(pydantic.BaseModel):
 
         if isinstance(_, Webhook):
             _.conn = conn._session
+        if isinstance(_, list):
+            for i in _:
+                i.conn = conn
         else:
             _.conn = conn
         return _
