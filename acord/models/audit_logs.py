@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, List, Optional
 import pydantic
 
-from acord.bases import Hashable
+from acord.bases import Hashable, AuditLogEvent
 from acord.models import (
     GuildScheduledEvent,
     Thread,
@@ -66,7 +66,7 @@ class AuditLogEntry(pydantic.BaseModel, Hashable):
     """
     id: Snowflake
     """ ID of entry """
-    action_type: Any
+    action_type: AuditLogEvent
     """ type of action made """
     options: Optional[AuditLogEntryInfo]
     """ additional info for certain action types """
