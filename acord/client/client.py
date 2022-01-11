@@ -98,6 +98,9 @@ class Client(object):
         self.gateway_version = None
         self.user = None
 
+        # When connecting to VC, temporarily stores session_id
+        self.awaiting_voice_connections = dict()
+
         self.INTERNAL_STORAGE = dict()
 
         self.INTERNAL_STORAGE["messages"] = dict()
@@ -493,4 +496,11 @@ class Client(object):
     @property
     def guilds(self):
         return self.INTERNAL_STORAGE["guilds"]
-        
+
+    # NOTE: default event handlers
+    async def on_voice_server_update(self, vc) -> None:
+        """ :meta private: """
+        # handles dispatch when client joins VC
+        # no need to worry about tasks and threads since this is run as a task
+        await vc.connect()
+        await vc._handle_voice()
