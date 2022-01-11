@@ -19,7 +19,8 @@ from acord.bases import (
     SystemChannelFlags,
     ScheduledEventPrivacyLevel,
     ScheduledEventEntityType,
-    ScheduledEventStatus
+    ScheduledEventStatus,
+    StagePrivacyLevel
     )
 from acord.bases.embeds import _rgb_to_hex
 from .models import (
@@ -504,3 +505,26 @@ class EmojiCreatePayload(pydantic.BaseModel):
 
         data["image"] = _file_to_image_data(image)
         return data
+
+
+class StageInstanceCreatePayload(pydantic.BaseModel):
+    channel_id: Snowflake
+    topic: str
+    privacy_level: Optional[StagePrivacyLevel] = StagePrivacyLevel.GUILD_ONLY
+
+    @pydantic.validator("topic")
+    def _validate_topic(cls, topic):
+        if topic and not 1 < len(topic) < 120:
+            raise ValueError("Stage topic must be less then 120 characters but greater then 1")
+        return topic
+
+
+class StageInstanceEditPayload(pydantic.BaseModel):
+    topic: Optional[str]
+    privacy_level: Optional[StagePrivacyLevel]
+
+    @pydantic.validator("topic")
+    def _validate_topic(cls, topic):
+        if topic and not 1 < len(topic) < 120:
+            raise ValueError("Stage topic must be less then 120 characters but greater then 1")
+        return topic
