@@ -211,7 +211,8 @@ class HTTPClient(object):
         # Keep links for API_OBJECTS
         self.ws.client = self
         
-        self._keep_alive = KeepAlive(self.getIdentityPacket(**identityPacketKwargs), ws, data).start()
+        self._keep_alive = KeepAlive(self.getIdentityPacket(**identityPacketKwargs), ws, data)
+        self._keep_alive.start()
 
         return ws
 
