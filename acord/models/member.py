@@ -11,6 +11,17 @@ from acord.utils import _payload_dict_to_json
 from .user import User
 
 
+class MemberVoiceState(pydantic.BaseModel):
+    mute: bool
+    self_deaf: bool
+    self_mute: bool
+    self_video: bool
+    suppress: bool
+    request_to_speak_timestamp: Optional[datetime.datetime]
+    guild_id: Snowflake
+    user_id: Snowflake
+
+
 class Member(pydantic.BaseModel, Hashable):
     """
     Represents a guild member.
@@ -54,6 +65,7 @@ class Member(pydantic.BaseModel, Hashable):
     pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
     guild_id: Snowflake
+    voice_state: Optional[MemberVoiceState]
 
     @pydantic.validator("user")
     def _validate_user(cls, user, **kwargs):
