@@ -7,6 +7,7 @@ from acord.bases import ChannelTypes
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]
 DM_CHANNELS = [ChannelTypes.DM, ChannelTypes.GROUP_DM]
+VOICE_CHANNELS = [ChannelTypes.GUILD_VOICE, ChannelTypes.GUILD_STAGE_VOICE]
 
 
 def _payload_dict_to_json(base, **keys) -> Any:
@@ -33,10 +34,8 @@ def _d_to_channel(DATA, conn):
 
     if DATA["type"] in GUILD_TEXT:
         channel = TextChannel(conn=conn, **DATA), "text"
-    elif DATA["type"] == ChannelTypes.GUILD_VOICE:
+    elif DATA["type"] in VOICE_CHANNELS:
         channel = VoiceChannel(conn=conn, **DATA), "voice"
-    elif DATA["type"] == ChannelTypes.GUILD_STAGE_VOICE:
-        channel = Stage(conn=conn, **DATA)
     elif DATA["type"] == ChannelTypes.GUILD_CATEGORY:
         channel = CategoryChannel(conn=conn, **DATA), "category"
     elif DATA["type"] == ChannelTypes.GROUP_DM:
