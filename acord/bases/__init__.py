@@ -31,6 +31,9 @@ from .enums.events import (
 from .enums.audit_logs import (
     AuditLogEvent
 )
+from .enums.stage import (
+    StagePrivacyLevel
+)
 from .mixins import Hashable, _C, T, H
 from .file import File
 from .mentions import AllowedMentions
