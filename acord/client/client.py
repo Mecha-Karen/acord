@@ -9,7 +9,11 @@ from acord.core.abc import Route
 from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
-from acord.payloads import GenericWebsocketPayload, StageInstanceCreatePayload
+from acord.payloads import (
+    GenericWebsocketPayload, 
+    StageInstanceCreatePayload,
+    VoiceStateUpdatePresence,
+) 
 
 from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
 
@@ -287,6 +291,60 @@ class Client(object):
 
         await self.http.ws.send_str(payload.json())
 
+    async def update_voice_state(self, **data) -> None:
+        """|coro|
+
+        Updates client voice state
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            id of the guild
+        channel_id: :class:`Snowflake`
+            id of the voice channel client wants to join (``None`` if disconnecting)
+        self_mute: :class:`bool`
+            is the client muted
+        self_deaf: :class:`bool`
+            is the client deafened
+        """
+        voice_payload = VoiceStateUpdatePresence(**data)
+        payload = GenericWebsocketPayload(
+            op=gateway.VOICE,
+            d=voice_payload
+        )
+
+        await self.http.ws.send_str(payload.json())
+
+    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
+        """|coro|
+
+        Creates a stage instance
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel to create stage instance,
+            channel type must be :attr:`ChannelTypes.GUILD_STAGE_VOICE`
+        topic: :class:`str`
+            The topic of the Stage instance (1-120 characters)
+        privacy_level: :class:`StagePrivacyLevel`
+            The privacy level of the Stage instance (default GUILD_ONLY)
+        """
+        payload = StageInstanceCreatePayload(**data)
+        bucket = dict(channel_id=payload.channel_id)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.http.request(
+            Route("POST", path=f"/stage-instances", bucket=bucket),
+            data=payload.json(),
+            headers=headers
+        )
+
+        return Stage(conn=self.http, **(await r.json()))
+
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs client, loop blocking.
 
@@ -420,36 +478,6 @@ class Client(object):
         )
         guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
-
-    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
-        """|coro|
-
-        Creates a stage instance
-
-        Parameters
-        ----------
-        channel_id: :class:`Snowflake`
-            ID of channel to create stage instance,
-            channel type must be :attr:`ChannelTypes.GUILD_STAGE_VOICE`
-        topic: :class:`str`
-            The topic of the Stage instance (1-120 characters)
-        privacy_level: :class:`StagePrivacyLevel`
-            The privacy level of the Stage instance (default GUILD_ONLY)
-        """
-        payload = StageInstanceCreatePayload(**data)
-        bucket = dict(channel_id=payload.channel_id)
-        headers = {"Content-Type": "application/json"}
-
-        if reason is not None:
-            headers["X-Audit-Log-Reason"] = reason
-
-        r = await self.http.request(
-            Route("POST", path=f"/stage-instances", bucket=bucket),
-            data=payload.json(),
-            headers=headers
-        )
-
-        return Stage(conn=self.http, **(await r.json()))
 
     # Get from cache or Fetch from API:
 
