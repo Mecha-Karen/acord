@@ -273,6 +273,7 @@ async def handle_websocket(self, ws):
             if not session_id:
                 continue
             data["d"]["session_id"] = session_id
+            data["d"]["user_id"] = self.user.id
 
             vc = VoiceWebsocket(data, self.loop)
             # Handled by default handler in Client.on_voice_server_update
