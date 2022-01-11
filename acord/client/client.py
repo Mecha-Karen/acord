@@ -9,14 +9,14 @@ from acord.core.abc import Route
 from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
-from acord.payloads import GenericWebsocketPayload
+from acord.payloads import GenericWebsocketPayload, StageInstanceCreatePayload
 
 from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
 
 from acord.bases import (
     Intents, Presence
 )
-from acord.models import Message, User, Channel, Guild, TextChannel
+from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -100,6 +100,7 @@ class Client(object):
         self.INTERNAL_STORAGE["users"] = dict()
         self.INTERNAL_STORAGE["guilds"] = dict()
         self.INTERNAL_STORAGE["channels"] = dict()
+        self.INTERNAL_STORAGE["stage_instances"] = dict()
         
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
@@ -419,6 +420,36 @@ class Client(object):
         )
         guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
+
+    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
+        """|coro|
+
+        Creates a stage instance
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel to create stage instance,
+            channel type must be :attr:`ChannelTypes.GUILD_STAGE_VOICE`
+        topic: :class:`str`
+            The topic of the Stage instance (1-120 characters)
+        privacy_level: :class:`StagePrivacyLevel`
+            The privacy level of the Stage instance (default GUILD_ONLY)
+        """
+        payload = StageInstanceCreatePayload(**data)
+        bucket = dict(channel_id=payload.channel_id)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.http.request(
+            Route("POST", path=f"/stage-instances", bucket=bucket),
+            data=payload.json(),
+            headers=headers
+        )
+
+        return Stage(conn=self.http, **(await r.json()))
 
     # Get from cache or Fetch from API:
 
