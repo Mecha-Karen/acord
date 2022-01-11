@@ -16,6 +16,7 @@ class VoiceWebsocket(object):
 
         self._ws = None
         self._keep_alive = None
+        self._ready_packet = None
 
     async def connect(self, *, v: int = 4) -> None:
         # connects to desired endpoint creating new websocket connection
@@ -50,6 +51,8 @@ class VoiceWebsocket(object):
             if data["op"] == 8:
                 self._keep_alive = VoiceKeepAlive(self._ws, data)
                 self._keep_alive.start()
+            if data["op"] == 2:
+                self._ready_packet = data
 
     @property
     def guild_id(self) -> str:
