@@ -528,3 +528,10 @@ class StageInstanceEditPayload(pydantic.BaseModel):
         if topic and not 1 < len(topic) < 120:
             raise ValueError("Stage topic must be less then 120 characters but greater then 1")
         return topic
+
+
+class VoiceStateUpdatePresence(pydantic.BaseModel):
+    guild_id: Snowflake
+    channel_id: Optional[Snowflake]
+    self_mute: bool
+    self_deaf: bool
