@@ -2,6 +2,7 @@ import datetime
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
+from acord.core.voice import VoiceWebsocket
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
@@ -27,9 +28,11 @@ async def handle_websocket(self, ws):
         EVENT = data["t"]
         OPERATION = data["op"]
         DATA = data["d"]
-        SEQUENCE = data["s"]
 
-        gateway.SEQUENCE = SEQUENCE
+        if EVENT != "VOICE_SERVER_UPDATE":
+            SEQUENCE = data["s"]
+            gateway.SEQUENCE = SEQUENCE
+
         UNAVAILABLE = list()
 
         if OPERATION == gateway.INVALIDSESSION:
@@ -249,3 +252,28 @@ async def handle_websocket(self, ws):
                 # Not all members may be in the thread
 
             self.dispatch("thread_members_update", thread)
+
+        if EVENT == "VOICE_STATE_UPDATE":
+            self.awaiting_voice_connections.update({DATA["guild_id"]: DATA["session_id"]})
+
+            m = Member(
+                conn=self.http, 
+                guild_id=DATA["guild_id"],
+                voice_state=DATA,
+                **DATA["member"]
+            )
+            channel_id = DATA["channel_id"]
+
+            self.dispatch("voice_state_update", channel_id, m)
+
+        # NOTE: VOICE EVENTS
+        if EVENT == "VOICE_SERVER_UPDATE":
+            session_id = self.awaiting_voice_connections.pop(DATA["guild_id"], None)
+
+            if not session_id:
+                continue
+            data["d"]["session_id"] = session_id
+
+            vc = VoiceWebsocket(data, self.loop)
+            # Handled by default handler in Client.on_voice_server_update
+            self.dispatch("voice_server_update", vc)
