@@ -98,7 +98,7 @@ We also recommend installing the speedup package, which can be done using:
     # pip3 for Linux/MacOS
     pip install acord['speedup']
 
-    # pip3 for Linux/MacOS
+    # pip for Windows
     pip install git+https://github.com/Mecha-Karen/ACord#egg=speedup
 
 
