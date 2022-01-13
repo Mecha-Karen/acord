@@ -45,7 +45,10 @@ packages = [
     "acord.webhooks",
 ]
 
-extra_requires = {"speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"]}
+extra_requires = {
+    "speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"],
+    "voice": ["pynacl"]
+}
 
 if not os.name == "nt":
     extra_requires["speedup"].append("uvloop")
