@@ -1,6 +1,5 @@
 # Voice websocket connection
 from __future__ import annotations
-from logging import debug
 from typing import Any
 
 from asyncio import AbstractEventLoop
