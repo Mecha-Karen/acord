@@ -18,9 +18,9 @@ from acord.payloads import (
 from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
 
 from acord.bases import (
-    Intents, Presence
+    Intents, Presence, _C
 )
-from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
+from acord.models import Message, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -113,7 +113,7 @@ class Client(object):
         """Bind a token to the client, prevents new tokens from being set"""
         self._lruPermanent = token
 
-    def on(self, name: str, *, once: bool = False):
+    def on(self, name: str, *, once: bool = False) -> Optional[_C]:
         """Register an event to be dispatched on call.
 
         This is a decorator,
@@ -156,15 +156,6 @@ class Client(object):
                 return func
 
         return inner
-
-    def on_error(self, event_method):
-        """|coro|
-
-        Built in base error handler for events"""
-        acord.logger.error('Failed to run event "{}".'.format(event_method))
-
-        print(f"Ignoring exception in {event_method}", file=sys.stderr)
-        traceback.print_exc()
 
     def dispatch(self, event_name: str, *args, **kwargs) -> None:
         """Dispatch a registered event
@@ -238,7 +229,7 @@ class Client(object):
 
         await self.http.ws.send_json(payload)
 
-    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> Tuple[Any]:
+    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> _C:
         """|coro|
 
         Wait for a specific gateway event to occur.
@@ -498,9 +489,19 @@ class Client(object):
         return self.INTERNAL_STORAGE["guilds"]
 
     # NOTE: default event handlers
+
     async def on_voice_server_update(self, vc) -> None:
         """ :meta private: """
         # handles dispatch when client joins VC
         # no need to worry about tasks and threads since this is run as a task
         await vc.connect()
         await vc._handle_voice()
+
+    def on_error(self, event_method):
+        """|coro|
+
+        Built in base error handler for events"""
+        acord.logger.error('Failed to run event "{}".'.format(event_method))
+
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
+        traceback.print_exc()
