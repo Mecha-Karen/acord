@@ -43,6 +43,8 @@ packages = [
     "acord.models",
     "acord.models.channels",
     "acord.webhooks",
+    "acord.voice",
+    "acord.voice.transports"
 ]
 
 extra_requires = {
