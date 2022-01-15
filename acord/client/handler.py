@@ -2,7 +2,7 @@ import datetime
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
-from acord.core.voice import VoiceWebsocket
+from acord.voice.core import VoiceWebsocket
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
