@@ -1,8 +1,14 @@
 # Voice websocket connection
 from __future__ import annotations
 
-from asyncio import AbstractEventLoop
-from asyncio.protocols import BaseProtocol
+from asyncio import (
+    AbstractEventLoop, 
+    BaseProtocol, 
+    StreamReader, 
+    StreamReaderProtocol, 
+    StreamWriter
+)
+import socket
 from aiohttp import ClientSession
 from traceback import print_exception
 
@@ -50,6 +56,37 @@ class DatagramProtocol(BaseProtocol):
         acord.logger.error(f"Connection lost, conn_id={self._conn}, with exc:\n{exc}")
         self.client.dispatch("upd_conn_lost", self.vc, exc)
 
+
+class UDPConnection(object):
+    def __init__(self, host, port, protocol, loop, **kwds) -> None:
+        self.host = host
+        self.port = port
+        self.loop = loop
+        self.proto = protocol(**kwds)
+        self.limit = 2 ** 16
+
+        self._sock = None
+        self._transport = None
+        self._writer = None
+        self._reader = None
+
+    async def connect(self) -> None:
+        # Creates a UDP connection between host and port
+        transport, _ = await self.loop.create_connection(
+            lambda: self.proto, self.host, self.port,
+            family=socket.SOCK_DGRAM
+        )
+        self._transport = transport
+
+        reader = StreamReader(limit=self.limit, loop=self.loop)
+        protocol = StreamReaderProtocol(reader, loop=self.loop)
+        writer = StreamWriter(transport, protocol, reader, self.loop)
+
+        self._writer = writer
+        self._reader = reader
+
+    async def send_data(self, data: bytes) -> None:
+        await self._writer.write(data)
 
 class VoiceWebsocket(object):
     def __init__(self, voice_packet: dict, loop: AbstractEventLoop, client, **kwargs) -> None:
@@ -116,18 +153,21 @@ class VoiceWebsocket(object):
             }
         }
 
-    async def upd_connect(self, addr: str, port: int) -> None:
+    async def upd_connect(self, addr: str, port: int, *, proto = DatagramProtocol, **kwargs) -> None:
         # Finishes handshake whilst connected to vc
         # self._sock will be a tuple with the transport and protocol
 
         acord.logger.debug(f"Attempting to complete UDP connection for conn_id={self._conn_id}")
-        transport, protocol = await self._loop.create_datagram_endpoint(
-            lambda: DatagramProtocol(self._client, self, self._conn_id),
-            remote_addr=(addr, port)
-        )
+        
+        conn = UDPConnection(
+            self._ready_packet["d"]["ip"], 
+            self._ready_packet["d"]["port"], 
+            proto, self._loop, **kwargs)
+        await conn.connect()
+
         acord.logger.info(f"Successfully connected to {addr}:{port} for conn_id={self._conn_id}")
 
-        self._sock = (transport, protocol)
+        self._sock = conn
 
     def _get_audio_packet(self, data: bytes) -> bytes:
         header = bytearray(12)
@@ -141,6 +181,26 @@ class VoiceWebsocket(object):
 
         encrypter = getattr(self, f"_encrypt_{self.chosen_mode}")
         return encrypter(header, data)
+
+    async def send_audio_packet(self, data: bytes, flags: int = 5, *, has_header: bool = False) -> None:
+        """|coro|
+
+        Sends an audio packet to discord
+
+        Parameters
+        ----------
+        data: :class:`bytes`
+            Bytes of data to send to discord
+        has_header: :class:`bool`
+            Whether the data has an RTC header attached to it.
+            Defaults to False and should only be True if you know what your doing.
+        """
+        if not has_header:
+            data = self._get_audio_packet(data)
+
+        self._sock.send_data(data)
+
+
 
     async def _handle_voice(self, **kwargs) -> None:
         """ Handles incoming data from websocket """
@@ -158,13 +218,16 @@ class VoiceWebsocket(object):
                 self._ready_packet = data
                 await self.upd_connect(
                     data["d"]["ip"],
-                    data["d"]["port"]
+                    data["d"]["port"],
+                    client=self._client,
+                    vc_Ws=self,
+                    conn=self._conn_id
                 )
                 await self._ws.send_json(self.udp_payload(**kwargs))
             elif data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
                 self.chosen_mode = data["d"]["mode"]
-            elif data["op"] == 12:
+            elif data["op"] == 13:
                 acord.logger.debug(f"Client disconnected from VC conn_id={self._conn_id}")
                 await self._ws.close()
 
