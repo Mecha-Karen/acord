@@ -2,85 +2,22 @@
 from __future__ import annotations
 
 from asyncio import (
-    AbstractEventLoop, 
-    BaseProtocol, 
-    StreamReader, 
-    StreamReaderProtocol, 
-    StreamWriter
+    AbstractEventLoop,
 )
-import socket
 from aiohttp import ClientSession
-from traceback import print_exception
 
 # For handling voice packets
 from struct import pack_into, pack
 import nacl.secret
-
 from acord.core.heartbeat import VoiceKeepAlive
-import acord
+from .udp import UDPConnection
+
+import logging
 
 global CONNECTIONS
-
-
 CONNECTIONS = 0
+logger = logging.getLogger(__name__)
 
-
-class DatagramProtocol(BaseProtocol):
-    __slots__ = ("client", "vc", "_conn")
-
-    def __init__(self, client, vc_Ws, conn):
-        self.client = client
-        self.vc = vc_Ws
-        self._conn = conn
-
-    def datagram_received(self, data, addr):
-        acord.logger.debug(f"Recieved data from {addr}:\n{data}")
-        self.client.dispatch("udp_recv", self.vc, data, addr)
-
-    def error_received(self, exc):
-        acord.logger.error(f"Error raised from conn {self._conn}:\n{exc}")
-        print_exception(exc)
-        self.client.dispatch("upd_error", self.vc, exc)
-
-    def connection_made(self, transport) -> None:
-        acord.logger.debug(f"Connection made, conn_id={self._conn}")
-        self.client.dispatch("upd_conn_create", self.vc, transport)
-
-    def connection_lost(self, exc) -> None:
-        acord.logger.error(f"Connection lost, conn_id={self._conn}, with exc:\n{exc}")
-        self.client.dispatch("upd_conn_lost", self.vc, exc)
-
-
-class UDPConnection(object):
-    def __init__(self, host, port, protocol, loop, **kwds) -> None:
-        self.host = host
-        self.port = port
-        self.loop = loop
-        self.proto = protocol(**kwds)
-        self.limit = 2 ** 16
-
-        self._sock = None
-        self._transport = None
-        self._writer = None
-        self._reader = None
-
-    async def connect(self) -> None:
-        # Creates a UDP connection between host and port
-        transport, _ = await self.loop.create_connection(
-            lambda: self.proto, self.host, self.port,
-            family=socket.SOCK_DGRAM
-        )
-        self._transport = transport
-
-        reader = StreamReader(limit=self.limit, loop=self.loop)
-        protocol = StreamReaderProtocol(reader, loop=self.loop)
-        writer = StreamWriter(transport, protocol, reader, self.loop)
-
-        self._writer = writer
-        self._reader = reader
-
-    async def send_data(self, data: bytes) -> None:
-        await self._writer.write(data)
 
 class VoiceWebsocket(object):
     supported_modes = (
@@ -110,13 +47,13 @@ class VoiceWebsocket(object):
         global CONNECTIONS
 
         # connects to desired endpoint creating new websocket connection
-        acord.logger.debug(f"Attempting to connect to {self._packet['d']['endpoint']}")
+        logger.debug(f"Attempting to connect to {self._packet['d']['endpoint']}")
         ws = await self._session.ws_connect(
            f"wss://{self._packet['d']['endpoint']}?v={v}"
         )
         CONNECTIONS += 1
         self._conn_id = CONNECTIONS
-        acord.logger.info(f"Successfully connected to {self._packet['d']['endpoint']}, awaiting UDP handshake")
+        logger.info(f"Successfully connected to {self._packet['d']['endpoint']}, awaiting UDP handshake")
 
         self._ws = ws
 
@@ -153,19 +90,19 @@ class VoiceWebsocket(object):
             }
         }
 
-    async def upd_connect(self, addr: str, port: int, *, proto = DatagramProtocol, **kwargs) -> None:
+    async def upd_connect(self, addr: str, port: int, **kwargs) -> None:
         # Finishes handshake whilst connected to vc
         # self._sock will be a tuple with the transport and protocol
 
-        acord.logger.debug(f"Attempting to complete UDP connection for conn_id={self._conn_id}")
+        logger.debug(f"Attempting to complete UDP connection for conn_id={self._conn_id}")
         
         conn = UDPConnection(
             self._ready_packet["d"]["ip"], 
-            self._ready_packet["d"]["port"], 
-            proto, self._loop, **kwargs)
+            self._ready_packet["d"]["port"],
+            self._loop, **kwargs)
         await conn.connect()
 
-        acord.logger.info(f"Successfully connected to {addr}:{port} for conn_id={self._conn_id}")
+        logger.info(f"Successfully connected to {addr}:{port} for conn_id={self._conn_id}")
 
         self._sock = conn
 
@@ -200,8 +137,6 @@ class VoiceWebsocket(object):
 
         self._sock.send_data(data)
 
-
-
     async def _handle_voice(self, **kwargs) -> None:
         """ Handles incoming data from websocket """
         if not self._ws:
@@ -221,14 +156,14 @@ class VoiceWebsocket(object):
                     data["d"]["port"],
                     client=self._client,
                     vc_Ws=self,
-                    conn=self._conn_id
+                    conn_id=self._conn_id
                 )
                 await self._ws.send_json(self.udp_payload(**kwargs))
             elif data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
                 self.chosen_mode = data["d"]["mode"]
             elif data["op"] == 13:
-                acord.logger.debug(f"Client disconnected from VC conn_id={self._conn_id}")
+                logger.debug(f"Client disconnected from VC conn_id={self._conn_id}")
                 await self._ws.close()
 
     # NOTE: encryption methods
