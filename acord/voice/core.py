@@ -28,12 +28,6 @@ CONNECTIONS = 0
 class DatagramProtocol(BaseProtocol):
     __slots__ = ("client", "vc", "_conn")
 
-    supported_modes = (
-        'xsalsa20_poly1305_lite',
-        'xsalsa20_poly1305_suffix',
-        'xsalsa20_poly1305',
-    )
-
     def __init__(self, client, vc_Ws, conn):
         self.client = client
         self.vc = vc_Ws
@@ -89,6 +83,12 @@ class UDPConnection(object):
         await self._writer.write(data)
 
 class VoiceWebsocket(object):
+    supported_modes = (
+        'xsalsa20_poly1305_lite',
+        'xsalsa20_poly1305_suffix',
+        'xsalsa20_poly1305',
+    )
+
     def __init__(self, voice_packet: dict, loop: AbstractEventLoop, client, **kwargs) -> None:
         # Defined in an async enviro so this is fine
         self._session = ClientSession(loop=loop, **kwargs)
