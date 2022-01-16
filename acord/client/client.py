@@ -100,6 +100,7 @@ class Client(object):
 
         # When connecting to VC, temporarily stores session_id
         self.awaiting_voice_connections = dict()
+        self.voice_connections = dict()
 
         self.INTERNAL_STORAGE = dict()
 
