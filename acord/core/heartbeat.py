@@ -34,11 +34,11 @@ class KeepAlive(Thread):
 
 
 class VoiceKeepAlive(Thread):
-    def __init__(self, ws, packet):
-        self._ws = ws
+    def __init__(self, cls, packet):
         self.integer_nonce = 0
         self.packet = packet
         self.loop = asyncio.get_event_loop()
+        self.cls = cls
 
         super().__init__(daemon=True)
 
@@ -49,7 +49,13 @@ class VoiceKeepAlive(Thread):
 
             time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
-            self.loop.create_task(self._ws.send_json(self.get_payload()))
+            try:
+                while not self.cls._ws:
+                    continue
+
+                self.loop.create_task(self.cls._ws.send_json(self.get_payload()))
+            except ConnectionResetError:
+                self.loop.create_task(self.cls.reconnect())
 
         self.join()
 
