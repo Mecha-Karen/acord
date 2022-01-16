@@ -3,6 +3,9 @@ from threading import Thread
 import asyncio
 import time
 from .signals import gateway  # type: ignore
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class KeepAlive(Thread):
@@ -18,14 +21,17 @@ class KeepAlive(Thread):
         packet = self.packet
 
         self.loop.create_task(self._ws.send_json(self.identity))
+        logger.info(f"Identity packet sent, contents:\n{self.identity}")
 
         while True:
             if packet["op"] != gateway.HELLO:
                 raise ValueError("Invalid hello packet provided")
 
+            logger.debug("Sending new heartbeat, waiting...")
             time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
             self.loop.create_task(self._ws.send_json(self.get_payload()))
+            logger.debug(f"Sent heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds")
 
         self.join()
 
@@ -54,8 +60,11 @@ class VoiceKeepAlive(Thread):
                     continue
 
                 self.loop.create_task(self.cls._ws.send_json(self.get_payload()))
+                logger.debug("Sent heartbeat for voice channel")
             except ConnectionResetError:
+                logger.warn("Connection reset for voice heartbeat, attempting reconnect ...")
                 self.loop.create_task(self.cls.reconnect())
+                self.join(0.0)
 
         self.join()
 
