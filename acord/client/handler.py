@@ -43,36 +43,38 @@ async def handle_websocket(self, ws):
                 "\n* Invalid intents"
             )
 
-        if OPERATION == gateway.RESUME:
+        elif OPERATION == gateway.RESUME:
             self.dispatch("resume")
 
-        if OPERATION == gateway.HEARTBEATACK:
+        elif OPERATION == gateway.HEARTBEATACK:
             self.dispatch("heartbeat")
 
-        if EVENT == "READY":
+        elif EVENT == "READY":
             self.dispatch("ready")
 
             self.session_id = DATA["session_id"]
             self.gateway_version = DATA["v"]
             self.user = User(conn=self.http, **DATA["user"])
+
             UNAVAILABLE = [i["id"] for i in DATA["guilds"]]
 
             self.INTERNAL_STORAGE["users"].update({self.user.id: self.user})
 
             continue
 
-        """ INTERACTIONS """
-        if EVENT == "INTERACTION_CREATE":
+        # NOTE: Interactions
+
+        elif EVENT == "INTERACTION_CREATE":
             data = Interaction(conn=self.http, **DATA)
 
             self.dispatch("interaction_create", data)
 
-        if EVENT == "INTERACTION_UPDATE":
+        elif EVENT == "INTERACTION_UPDATE":
             data = Interaction(conn=self.http, **DATA)
 
             self.dispatch("interaction_update", data)
 
-        if EVENT == "INTERACTION_DELETE":
+        elif EVENT == "INTERACTION_DELETE":
             try:
                 id, guild_id, application_id = DATA.values()
             except ValueError:
@@ -80,9 +82,9 @@ async def handle_websocket(self, ws):
 
             self.dispatch("interaction_delete", id, guild_id, application_id)
 
-        """ MESSAGES """
+        # NOTE: Messages
 
-        if EVENT == "MESSAGE_CREATE":
+        elif EVENT == "MESSAGE_CREATE":
             message = Message(conn=self.http, **DATA)
 
             try:
@@ -97,16 +99,20 @@ async def handle_websocket(self, ws):
 
             self.dispatch("message", message)
 
-        if EVENT == "CHANNEL_PINS_UPDATE":
+        elif EVENT == "CHANNEL_PINS_UPDATE":
             channel = self.get_channel(int(DATA["channel_id"]))
             ts = datetime.datetime.fromisoformat(DATA["last_pin_timestamp"])
 
             self.dispatch("message_pin", channel, ts)
 
-        """ GUILDS """
+        # NOTE: Guilds
 
-        if EVENT == "GUILD_CREATE":
+        elif EVENT == "GUILD_CREATE":
             guild = Guild(conn=self.http, **DATA)
+            print(guild.id in UNAVAILABLE)
+            print(str(guild.id) in UNAVAILABLE)
+            print(DATA["id"] in UNAVAILABLE)
+            print(UNAVAILABLE)
 
             if DATA["id"] in UNAVAILABLE:
                 UNAVAILABLE.remove(DATA["id"])
@@ -116,7 +122,7 @@ async def handle_websocket(self, ws):
 
             self.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
 
-        if EVENT == "GUILD_DELETE":
+        elif EVENT == "GUILD_DELETE":
             if DATA.get("unavailable", None) is not None:
                 guild = Guild(conn=self.http, **DATA)
                 UNAVAILABLE.remove(DATA["id"])
@@ -127,13 +133,13 @@ async def handle_websocket(self, ws):
                 guild = self.INTERNAL_STORAGE["guilds"].pop(DATA["id"])
                 self.dispatch("guild_remove", guild)
 
-        if EVENT == "GUILD_UPDATE":
+        elif EVENT == "GUILD_UPDATE":
             guild = Guild(conn=self.http, **DATA)
 
             self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
             self.dispatch("guild_update", guild)
 
-        if EVENT == "GUILD_BAN_ADD":
+        elif EVENT == "GUILD_BAN_ADD":
             guild = self.get_guild(int(DATA["guild_id"]))
             user = User(conn=self.http, **DATA["user"])
 
@@ -141,14 +147,14 @@ async def handle_websocket(self, ws):
             self.INTERNAL_STORAGE["users"].update({user.id: user})
             self.dispatch("guild_ban", guild, user)
 
-        if EVENT == "GUILD_BAN_REMOVE":
+        elif EVENT == "GUILD_BAN_REMOVE":
             guild = self.get_guild(int(DATA["guild_id"]))
             user = User(conn=self.http, **DATA["user"])
 
             self.INTERNAL_STORAGE["users"].update({user.id: user})
             self.dispatch("guild_ban_remove", guild, user)
 
-        if EVENT == "GUILD_EMOJIS_UPDATE":
+        elif EVENT == "GUILD_EMOJIS_UPDATE":
             guild = self.get_guild(int(DATA["guild_id"]))
             emojis = DATA["emojis"]
             bulk = list()
@@ -162,7 +168,7 @@ async def handle_websocket(self, ws):
 
             self.dispatch("emojis_update", bulk)
 
-        if EVENT == "GUILD_STICKERS_UPDATE":
+        elif EVENT == "GUILD_STICKERS_UPDATE":
             guild = self.get_guild(int(DATA["guild_id"]))
             stickers = DATA["stickers"]
             bulk = list()
@@ -176,27 +182,27 @@ async def handle_websocket(self, ws):
 
             self.dispatch("stickers_update", bulk)
 
-        """ CHANNELS """
+        # NOTE: channels
 
-        if EVENT == "CHANNEL_CREATE":
+        elif EVENT == "CHANNEL_CREATE":
             channel, _ = _d_to_channel(DATA, self.http)
 
             self.INTERNAL_STORAGE["channels"].update({channel.id: channel})
             self.dispatch("channel_create", channel)
 
-        if EVENT == "CHANNEL_UPDATE":
+        elif EVENT == "CHANNEL_UPDATE":
             channel, _ = _d_to_channel(DATA, self.http)
 
             self.INTERNAL_STORAGE["channels"].update({channel.id: channel})
             self.dispatch("channel_update", channel)
 
-        if EVENT == "CHANNEL_DELETE":
+        elif EVENT == "CHANNEL_DELETE":
             channel = self.INTERNAL_STORAGE["channels"].pop(int(DATA["id"]))
             self.dispatch("channel_delete", channel)
 
-        """ THREADS """
+        # NOTE: threads
 
-        if EVENT == "THREAD_CREATE":
+        elif EVENT == "THREAD_CREATE":
             thread = Thread(conn=self.http, **DATA)
 
             guild = self.get_guild(thread.guild_id)
@@ -204,7 +210,7 @@ async def handle_websocket(self, ws):
 
             self.dispatch("thread_create", thread)
 
-        if EVENT == "THREAD_UPDATE":
+        elif EVENT == "THREAD_UPDATE":
             thread = Thread(conn=self.http, **DATA)
 
             guild = self.get_guild(thread.guild_id)
@@ -212,13 +218,13 @@ async def handle_websocket(self, ws):
 
             self.dispatch("thread_update", thread)
 
-        if EVENT == "THREAD_DELETE":
+        elif EVENT == "THREAD_DELETE":
             guild = self.get_guild(int(DATA["guild_id"]))
             thread = guild.threads.pop(int(DATA["guild_id"]))
 
             self.dispatch("thread_delete")
 
-        if EVENT == "THREAD_SYNC_LIST":
+        elif EVENT == "THREAD_SYNC_LIST":
             guild = self.get_guild(int(DATA["guild_id"]))
             threads = list()
 
@@ -230,7 +236,7 @@ async def handle_websocket(self, ws):
 
             self.dispatch("thread_sync", threads)
 
-        if EVENT == "THREAD_MEMBER_UPDATE":
+        elif EVENT == "THREAD_MEMBER_UPDATE":
             guild = self.get_guild(int(DATA.pop("guild_id")))
             member = ThreadMember(**DATA)
 
@@ -238,7 +244,7 @@ async def handle_websocket(self, ws):
 
             self.dispatch("thread_member_update", member)
 
-        if EVENT == "THREAD_MEMBERS_UPDATE":
+        elif EVENT == "THREAD_MEMBERS_UPDATE":
             guild = self.get_guild(int(DATA.pop("guild_id")))
             thread = guild.threads[int(DATA.pop("id"))]
 
@@ -254,7 +260,7 @@ async def handle_websocket(self, ws):
 
             self.dispatch("thread_members_update", thread)
 
-        if EVENT == "VOICE_STATE_UPDATE":
+        elif EVENT == "VOICE_STATE_UPDATE":
             self.awaiting_voice_connections.update({DATA["guild_id"]: DATA["session_id"]})
 
             m = Member(
@@ -263,12 +269,13 @@ async def handle_websocket(self, ws):
                 voice_state=DATA,
                 **DATA["member"]
             )
+            self.INTERNAL_STORAGE["guilds"][m.guild_id].members.update({m.user.id: m})
             channel_id = DATA["channel_id"]
 
             self.dispatch("voice_state_update", channel_id, m)
 
         # NOTE: VOICE EVENTS
-        if EVENT == "VOICE_SERVER_UPDATE":
+        elif EVENT == "VOICE_SERVER_UPDATE":
             session_id = self.awaiting_voice_connections.pop(DATA["guild_id"], None)
 
             if not session_id:
