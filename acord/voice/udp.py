@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 from asyncio.events import AbstractEventLoop
 import socket
@@ -23,12 +24,12 @@ class SocketWrapper(socket.socket):
             None, super().close
         )
 
-    async def read(self, limit: int, flags: int = -1) -> bytes:
+    async def read(self, limit: int, flags: int = 0) -> bytes:
         return await self.loop.run_in_executor(
             None, super().recv, limit, flags
         )
 
-    async def write(self, data: bytes, flags: int = -1) -> None:
+    async def write(self, data: bytes, flags: int = 0) -> None:
         await self.loop.run_in_executor(
             None, super().send, data, flags 
         )
@@ -53,6 +54,7 @@ class UDPConnection(object):
         self.limit = 2 ** 16
 
         self._sock = None
+        self._sock_event = asyncio.Event()
 
     async def connect(self) -> None:
         # Creates a UDP connection between host and port
@@ -75,17 +77,28 @@ class UDPConnection(object):
 
         if not connected:
             logger.error(f"Failed to connect to {self.host}:{self.port} after 5 attempts")
-            raise ConnectionRefusedError(f"Unable to connect to UDP endpoint after {i} attempts,\
+            raise ConnectionRefusedError(f"Unable to connect to endpoint after {i} attempts,\
                  conn_id={self.conn_id}")
 
         self._sock = sock
+        self._sock_event.set()
+
+    def is_connected(self):
+        return self._sock_event.is_set()
+
+    async def wait_until_connected(self) -> None:
+        await self._sock_event.wait()
 
     async def close(self) -> None:
+        logger.debug(f"Closing connection with {self.host}:{self.port}")
         await self._sock.close()
 
-    async def read(self, *, limit: int = None, flags: int = -1) -> bytes:
+    async def read(self, *, limit: int = None, flags: int = 0) -> bytes:
         limit = limit or self.limit
+        
+        logger.debug(f"Reading {limit} bytes from {self._sock}")
         return await self._sock.read(limit, flags)
 
-    async def write(self, data: bytes, *, flags: int = -1) -> None:
+    async def write(self, data: bytes, *, flags: int = 0) -> None:
+        logger.debug(f"Sending {len(data)} bytes to {self.host}:{self.port}")
         return await self._sock.write(data, flags)
