@@ -47,7 +47,7 @@ class BaseReciever(BaseTransport):
 
         if cleanup:
             await self.cleanup()
-        
+        self.is_closed = True
 
     async def cleanup(self) -> None:
         self.last_packet = None
