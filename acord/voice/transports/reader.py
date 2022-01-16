@@ -17,7 +17,7 @@ class BaseReciever(BaseTransport):
 
         self._task = self.sock.loop.create_task(self.dispatcher(limit=limit, flags=flags))
 
-    async def __aiter__(self) -> Iterator[Optional[bytes]]:
+    def __aiter__(self) -> Iterator[Optional[bytes]]:
         return self
 
     async def __anext__(self):
