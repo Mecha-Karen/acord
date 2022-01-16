@@ -18,8 +18,13 @@ class SocketWrapper(socket.socket):
             None, super().connect, addr
         )
 
-    async def read(self, limit: int, flags: int = -1) -> bytes:
+    async def close(self) -> None:
         await self.loop.run_in_executor(
+            None, super().close
+        )
+
+    async def read(self, limit: int, flags: int = -1) -> bytes:
+        return await self.loop.run_in_executor(
             None, super().recv, limit, flags
         )
 
@@ -57,23 +62,30 @@ class UDPConnection(object):
 
         for i in range(5):
             try:
+                logger.debug(f"Attempting to connect to {self.host}:{self.port}, attempt {i}")
                 await sock.connect((self.host, self.port))
 
                 connected = True
                 break
             except Exception as exc:
                 if exc.args and exc.args[0] in (121, 10060):
-                    print("Failed %d" % i)
-                    print("\n", sock)
+                    logger.warn(f"Failed to connect to {self.host}:{self.port}, retrying ...")
                     continue
                 raise
 
         if not connected:
+            logger.error(f"Failed to connect to {self.host}:{self.port} after 5 attempts")
             raise ConnectionRefusedError(f"Unable to connect to UDP endpoint after {i} attempts,\
                  conn_id={self.conn_id}")
 
         self._sock = sock
 
+    async def close(self) -> None:
+        await self._sock.close()
+
     async def read(self, *, limit: int = None, flags: int = -1) -> bytes:
         limit = limit or self.limit
         return await self._sock.read(limit, flags)
+
+    async def write(self, data: bytes, *, flags: int = -1) -> None:
+        return await self._sock.write(data, flags)
