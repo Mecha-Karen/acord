@@ -276,5 +276,7 @@ async def handle_websocket(self, ws):
             data["d"]["user_id"] = self.user.id
 
             vc = VoiceWebsocket(data, self.loop, self)
+            self.voice_connections.update({DATA["guild_id"]: vc})
+
             # Handled by default handler in Client.on_voice_server_update
             self.dispatch("voice_server_update", vc)
