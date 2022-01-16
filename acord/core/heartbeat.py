@@ -46,12 +46,14 @@ class VoiceKeepAlive(Thread):
         self.loop = asyncio.get_event_loop()
         self.cls = cls
 
+        self.ended = False
+
         super().__init__(daemon=True)
 
     def run(self):
         packet = self.packet
 
-        while True:
+        while not self.ended:
 
             time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
@@ -65,8 +67,6 @@ class VoiceKeepAlive(Thread):
                 logger.warn("Connection reset for voice heartbeat, attempting reconnect ...")
                 self.loop.create_task(self.cls.reconnect())
                 self.join(0.0)
-
-        self.join()
 
     def get_payload(self):
         self.integer_nonce += 1
