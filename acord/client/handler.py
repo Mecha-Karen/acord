@@ -11,7 +11,8 @@ from acord.models import *
 async def handle_websocket(self, ws):
 
     async for message in ws:
-        self.dispatch("socket_recieve", message)
+        if self.dispatch_on_recv:
+            self.dispatch("socket_recieve", message)
 
         data = message.data
         if type(data) is bytes:
