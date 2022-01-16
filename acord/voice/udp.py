@@ -18,6 +18,16 @@ class SocketWrapper(socket.socket):
             None, super().connect, addr
         )
 
+    async def read(self, limit: int, flags: int = -1) -> bytes:
+        await self.loop.run_in_executor(
+            None, super().recv, limit, flags
+        )
+
+    async def write(self, data: bytes, flags: int = -1) -> None:
+        await self.loop.run_in_executor(
+            None, super().send, data, flags 
+        )
+
 
 class UDPConnection(object):
     def __init__(self, 
@@ -63,3 +73,7 @@ class UDPConnection(object):
                  conn_id={self.conn_id}")
 
         self._sock = sock
+
+    async def read(self, *, limit: int = None, flags: int = -1) -> bytes:
+        limit = limit or self.limit
+        return await self._sock.read(limit, flags)
