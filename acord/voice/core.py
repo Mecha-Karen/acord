@@ -3,7 +3,10 @@ from __future__ import annotations
 
 from asyncio import (
     AbstractEventLoop,
+    Event
 )
+from types import coroutine
+from typing import Type
 from aiohttp import ClientSession
 
 # For handling voice packets
@@ -11,6 +14,8 @@ from struct import pack_into, pack
 import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
 from .udp import UDPConnection
+
+from acord.bases import _C
 
 import logging
 
@@ -43,6 +48,11 @@ class VoiceWebsocket(object):
         self.timestamp: int = 0
         self.timeout: float = 0
 
+        self.connect_event = Event()
+
+    async def wait_until_connected(self):
+        await self.connect_event.wait()
+
     async def connect(self, *, v: int = 4) -> None:
         global CONNECTIONS
 
@@ -59,6 +69,17 @@ class VoiceWebsocket(object):
 
     async def disconnect(self, *, message: bytes = b"") -> None:
         await self._ws.close(code=4000, message=message)
+        self._keep_alive.join(0.0)
+
+        logger.info(f"Disconnected from {self._sock._sock}")
+
+    async def reconnect(self) -> None:
+        logger.info(f"Disconnecting from {self._sock._sock}")
+        await self.disconnect()
+
+        self._ws = None
+
+        await self.connect()
 
     def identity(self):
         return {
@@ -135,9 +156,9 @@ class VoiceWebsocket(object):
         if not has_header:
             data = self._get_audio_packet(data)
 
-        self._sock.send_data(data)
+        self._sock.write(data)
 
-    async def _handle_voice(self, **kwargs) -> None:
+    async def _handle_voice(self, *, after: _C = None, **kwargs) -> None:
         """ Handles incoming data from websocket """
         if not self._ws:
             raise ValueError("Not established websocket connecting")
@@ -147,7 +168,7 @@ class VoiceWebsocket(object):
             data = message.json()
 
             if data["op"] == 8:
-                self._keep_alive = VoiceKeepAlive(self._ws, data)
+                self._keep_alive = VoiceKeepAlive(self, data)
                 self._keep_alive.start()
             elif data["op"] == 2:
                 self._ready_packet = data
@@ -159,6 +180,14 @@ class VoiceWebsocket(object):
                     conn_id=self._conn_id
                 )
                 await self._ws.send_json(self.udp_payload(**kwargs))
+                self.connect_event.set()
+
+                if after:
+                    try:
+                        await after()
+                    except TypeError:
+                        after()
+
             elif data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
                 self.chosen_mode = data["d"]["mode"]
