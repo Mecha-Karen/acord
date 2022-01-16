@@ -15,13 +15,14 @@ class BaseTransport(abc.ABC):
     sock: :class:`UDPConnection`
         UDP socket class
     """
+    # recieve and send are not abstract methods as 1 needs to be overwritten for a given transport
+
     __slots__ = ("conn", "sock")
 
     def __init__(self, conn: VoiceWebsocket) -> None:
         self.conn = conn
         self.sock = conn._sock
 
-    @abc.abstractmethod
     async def recieve(self, *,
         limit: int = None,
         flags: int = -1,
@@ -46,8 +47,7 @@ class BaseTransport(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    async def send(self, data: bytes, *, flags: int = -1) -> None:
+    async def send(self, data: bytes, *, flags: int = 0) -> None:
         """|coro|
 
         Sends data through stream,
