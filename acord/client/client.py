@@ -420,6 +420,7 @@ class Client(object):
             # Kill connection
             logger.debug("User ended session using CTRL + C")
             self.loop.run_until_complete(self.http.disconnect())
+            sys.exit(0)
         except OSError as e:
             if e.args[0] == 104:
                 # kill connection and re-run
