@@ -1,7 +1,7 @@
 # A simple base client for handling responses from discord
 import asyncio
+import logging
 import warnings
-import acord
 import sys
 import traceback
 
@@ -15,7 +15,7 @@ from acord.payloads import (
     VoiceStateUpdatePresence,
 ) 
 
-from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
+from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
 
 from acord.bases import (
     Intents, Presence, _C
@@ -24,6 +24,8 @@ from acord.models import Message, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
+
+logger = logging.getLogger(__name__)
 
 
 class Client(object):
@@ -75,6 +77,7 @@ class Client(object):
         self,
         *,
         token: Optional[str] = None,
+        dispatch_on_recv: bool = False,
         # IDENTITY PACKET ARGS
         intents: Optional[Union[Intents, int]] = 0,
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
@@ -84,7 +87,7 @@ class Client(object):
 
         self.loop = loop
         self.token = token
-
+        self.dispatch_on_recv = dispatch_on_recv
         self.intents = intents
 
         self._events = dict()
@@ -112,6 +115,9 @@ class Client(object):
         
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
+        if getattr(self, "_lruPermanent", None):
+            raise ValueError("Token already binded")
+
         self._lruPermanent = token
 
     def on(self, name: str, *, once: bool = False) -> Optional[_C]:
@@ -170,7 +176,7 @@ class Client(object):
         """
         if not event_name.startswith("on_"):
             func_name = "on_" + event_name
-        acord.logger.info("Dispatching event: {}".format(event_name))
+        logger.info("Dispatching event: {}".format(event_name))
 
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
@@ -215,6 +221,8 @@ class Client(object):
             if event_name in self._events:
                 self._events.pop(event_name)
 
+        logger.info("Dispatched event: {}".format(event_name))
+
     async def resume(self) -> None:
         """|coro|
 
@@ -227,6 +235,8 @@ class Client(object):
                 token=self.http.token, session_id=self.session_id, seq=gateway.sequence
             ),
         )
+
+        logger.debug("Resuming gateway connection")
 
         await self.http.ws.send_json(payload)
 
@@ -284,7 +294,11 @@ class Client(object):
             d=presence
         )
 
+        logger.debug("Updating presence")
+
         await self.http.ws.send_str(payload.json())
+
+        logger.info("Sent presence payload")
 
     async def update_voice_state(self, **data) -> None:
         """|coro|
@@ -393,15 +407,18 @@ class Client(object):
         ws = self.loop.run_until_complete(coro)
 
         self.dispatch("connect")
-        acord.logger.info("Connected to websocket")
+        logger.info("Connected to websocket")
 
         if resumed:
+            logger.debug("Attempting resume")
             self.loop.run_until_complete(self.resume())
 
         try:
+            logger.debug("Handling websocket")
             self.loop.run_until_complete(handle_websocket(self, ws))
         except KeyboardInterrupt:
             # Kill connection
+            logger.debug("User ended session using CTRL + C")
             self.loop.run_until_complete(self.http.disconnect())
         except OSError as e:
             if e.args[0] == 104:
@@ -502,7 +519,7 @@ class Client(object):
         """|coro|
 
         Built in base error handler for events"""
-        acord.logger.error('Failed to run event "{}".'.format(event_method))
+        logger.error('Failed to run event "{}".'.format(event_method), exc_info=sys.exc_info())
 
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
