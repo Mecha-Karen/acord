@@ -49,6 +49,7 @@ class VoiceWebsocket(object):
         self.timeout: float = 0
 
         self.connect_event = Event()
+        self.disconnected = True
 
     async def wait_until_connected(self):
         await self.connect_event.wait()
@@ -66,6 +67,7 @@ class VoiceWebsocket(object):
         logger.info(f"Successfully connected to {self._packet['d']['endpoint']}, awaiting UDP handshake")
 
         self._ws = ws
+        self.disconnected = False
 
     async def disconnect(self, *, message: bytes = b"") -> None:
         await self._ws.close(code=4000, message=message)
@@ -192,8 +194,12 @@ class VoiceWebsocket(object):
                 self._decode_key = data["d"]["secret_key"]
                 self.chosen_mode = data["d"]["mode"]
             elif data["op"] == 13:
-                logger.debug(f"Client disconnected from VC conn_id={self._conn_id}")
+                logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
+                self._keep_alive.ended = True
                 await self._ws.close()
+                await self._sock.close()
+
+                logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
 
     # NOTE: encryption methods
 
