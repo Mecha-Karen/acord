@@ -22,6 +22,7 @@ import typing
 import aiohttp
 import acord
 import sys
+import logging
 
 from acord.errors import (
     BadRequest,
@@ -38,6 +39,7 @@ from .signals import gateway
 
 from aiohttp import FormData
 
+logger = logging.getLogger(__name__)
 
 class HTTPClient(object):
     """
@@ -124,16 +126,19 @@ class HTTPClient(object):
         self.token = token
 
         try:
+            logger.debug("Attempting to log in")
             data = await self.request(abc.Route("GET", path="/users/@me"))
+            logger.info("Sucessfully logged in")
         except HTTPException as exc:
             self.token = ot
-            acord.logger.error("Failed to login to discord, improper token passed")
+            logger.error("Failed to login to discord, improper token passed")
             raise GatewayConnectionRefused("Invalid or Improper token passed") from exc
 
         return data
 
     async def logout(self):
         """Logs client out from session"""
+        logger.info("Logging user out")
         await self.request(abc.Route("POST", path="/auth/logout"))
 
     async def _fetchGatewayURL(self, token):
@@ -168,7 +173,7 @@ class HTTPClient(object):
         self, token: str, *, encoding, compress=0, **identityPacketKwargs
     ) -> None:
         if not getattr(self, "_session", False):
-            acord.logger.warn(
+            logger.warn(
                 "Session not defined, user not logged in. Called login manually"
             )
             await self.login(token=(token or self.token))
@@ -185,7 +190,7 @@ class HTTPClient(object):
         if compress:
             GATEWAY_WEBHOOK_URL += "&compress=zlib-stream"
 
-        acord.logger.info("Generated websocket url: %s" % GATEWAY_WEBHOOK_URL)
+        logger.info("Generated websocket url: %s" % GATEWAY_WEBHOOK_URL)
 
         kwargs = {
             "proxy_auth": self.proxy_auth,
@@ -217,6 +222,9 @@ class HTTPClient(object):
         return ws
 
     async def disconnect(self) -> None:
+        logger.info("Disconnected from discord, closing WS & session")
+
+        await self.ws.close(code=4000)
         await self._session.close()
 
     async def request(
@@ -242,7 +250,9 @@ class HTTPClient(object):
 
         kwargs.update(addtional_kwargs)
 
+        logger.debug(f"Sending Request: bucket={route.bucket} path={route.path}")
         resp = await self._session.request(method=route.method, url=url, **kwargs)
+        logger.info(f"Request made at {route.path} returned {resp.status}")
 
         if 200 <= resp.status < 300:
             return resp
