@@ -14,6 +14,8 @@ from .webhooks.main import (
     PartialWebhook,
     WebhookType
 )
+from .voice.transports.base import BaseTransport
+from .voice.transports.reader import BaseReciever
 
 logger = logging.getLogger("ACord")
 __file__ = __import__("os").path.abspath(__file__)
