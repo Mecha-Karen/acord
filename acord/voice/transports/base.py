@@ -1,14 +1,27 @@
 from __future__ import annotations
+import abc
 from typing import Optional
 
 from ..core import VoiceWebsocket
 
 
-class BaseTransport(object):
+class BaseTransport(abc.ABC):
+    """Base transport for working with the UDP connection
+
+    Parameters
+    ----------
+    conn: :class:`VoiceWebsocket`
+        Original websocket class when starting voice connection
+    sock: :class:`UDPConnection`
+        UDP socket class
+    """
+    __slots__ = ("conn", "sock")
+
     def __init__(self, conn: VoiceWebsocket) -> None:
         self.conn = conn
         self.sock = conn._sock
 
+    @abc.abstractmethod
     async def recieve(self, *,
         limit: int = None,
         flags: int = -1,
@@ -33,6 +46,7 @@ class BaseTransport(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     async def send(self, data: bytes, *, flags: int = -1) -> None:
         """|coro|
 
@@ -55,6 +69,7 @@ class BaseTransport(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     async def close(self) -> None:
         """|coro|
 
@@ -66,6 +81,7 @@ class BaseTransport(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     async def cleanup(self) -> None:
         """|coro|
         
