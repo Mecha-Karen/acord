@@ -261,7 +261,9 @@ async def handle_websocket(self, ws):
             self.dispatch("thread_members_update", thread)
 
         elif EVENT == "VOICE_STATE_UPDATE":
-            self.awaiting_voice_connections.update({DATA["guild_id"]: DATA["session_id"]})
+            self.awaiting_voice_connections.update({
+                DATA["guild_id"]: (DATA["session_id"], DATA["channel_id"])
+                })
 
             m = Member(
                 conn=self.http, 
@@ -276,14 +278,14 @@ async def handle_websocket(self, ws):
 
         # NOTE: VOICE EVENTS
         elif EVENT == "VOICE_SERVER_UPDATE":
-            session_id = self.awaiting_voice_connections.pop(DATA["guild_id"], None)
+            session_id, channel_id = self.awaiting_voice_connections.pop(DATA["guild_id"], None)
 
             if not session_id:
                 continue
             data["d"]["session_id"] = session_id
             data["d"]["user_id"] = self.user.id
 
-            vc = VoiceWebsocket(data, self.loop, self)
+            vc = VoiceWebsocket(data, self.loop, self, channel_id)
             self.voice_connections.update({DATA["guild_id"]: vc})
 
             # Handled by default handler in Client.on_voice_server_update
