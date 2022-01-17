@@ -51,5 +51,11 @@ class NotFound(BaseResponseException):
     indicating that you dont have sufficient permissions"""
 
 
+class VoiceError(BaseResponseException):
+    """Raised when a voice operation fails or goes wrong,
+    mostly due to user side operations.
+    """
+
+
 class CannotOverideTokenWarning(Warning):
     """Warned when cannot use provided token due to binded token present"""
