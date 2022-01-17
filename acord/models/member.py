@@ -12,14 +12,17 @@ from .user import User
 
 
 class MemberVoiceState(pydantic.BaseModel):
+    guild_id: Optional[Snowflake]
+    channel_id: Optional[Snowflake]
+    session_id: str
+    deaf: bool
     mute: bool
     self_deaf: bool
     self_mute: bool
+    self_stream: Optional[bool]
     self_video: bool
     suppress: bool
     request_to_speak_timestamp: Optional[datetime.datetime]
-    guild_id: Snowflake
-    user_id: Snowflake
 
 
 class Member(pydantic.BaseModel, Hashable):
