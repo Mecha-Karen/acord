@@ -5,6 +5,7 @@ import pydantic
 from acord.bases import PermissionsOverwrite
 from acord.models import Snowflake
 from acord.voice.core import VoiceWebsocket
+from acord.errors import VoiceError
 from .base import Channel
 
 
@@ -66,5 +67,27 @@ class VoiceChannel(Channel):
 
         return await self.conn.client.wait_for(
             "voice_server_update", 
-            check=lambda vc: vc.identity()["d"]["server_id"] == self.id,
+            check=lambda vc: vc.identity()["d"]["server_id"] == str(self.id),
+        )
+
+    async def leave(self) -> None:
+        """|coro|
+
+        Leaves voice channel if client is connected,
+        shortcut for :class:`Client.update_voice_state`
+
+        Raises
+        ------
+        :class:`VoiceError`, when client is not connected to current channel
+        """
+        state = self.conn.client.voice_connections.get(self.guild_id)
+
+        if not state or int(state.channel_id) == self.id:
+            raise VoiceError("Client is not connected to any/this channel")
+
+        await self.conn.client.update_voice_state(
+            guild_id=self.guild_id, 
+            channel_id=None,
+            self_mute=False,
+            self_deaf=False
         )
