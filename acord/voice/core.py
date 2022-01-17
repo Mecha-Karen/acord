@@ -14,7 +14,7 @@ from struct import pack_into, pack
 import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
 from .udp import UDPConnection
-# from .opus import Encoder
+from .opus import Encoder
 
 from acord.bases import _C
 
