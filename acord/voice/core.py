@@ -14,6 +14,7 @@ from struct import pack_into, pack
 import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
 from .udp import UDPConnection
+# from .opus import Encoder
 
 from acord.bases import _C
 
@@ -31,13 +32,14 @@ class VoiceWebsocket(object):
         'xsalsa20_poly1305',
     )
 
-    def __init__(self, voice_packet: dict, loop: AbstractEventLoop, client, **kwargs) -> None:
+    def __init__(self, voice_packet: dict, loop: AbstractEventLoop, client, channel_id, **kwargs) -> None:
         # Defined in an async enviro so this is fine
         self._session = ClientSession(loop=loop, **kwargs)
         self._packet = voice_packet
         self._connect = False
         self._loop = loop
         self._client = client
+        self.channel_id = channel_id
 
         self._ws = None
         self._keep_alive = None
@@ -47,6 +49,7 @@ class VoiceWebsocket(object):
         self.sequence: int = 0
         self.timestamp: int = 0
         self.timeout: float = 0
+        self.ssrc: int = 0
 
         self.connect_event = Event()
         self.disconnected = True
@@ -113,6 +116,13 @@ class VoiceWebsocket(object):
             }
         }
 
+    def checked_add(self, attr, value, limit):
+        val = getattr(self, attr)
+        if (val + value) > limit:
+            setattr(self, attr, 0)
+        else:
+            setattr(self, attr, (val + value))
+
     async def upd_connect(self, addr: str, port: int, **kwargs) -> None:
         # Finishes handshake whilst connected to vc
         # self._sock will be a tuple with the transport and protocol
@@ -142,7 +152,13 @@ class VoiceWebsocket(object):
         encrypter = getattr(self, f"_encrypt_{self.chosen_mode}")
         return encrypter(header, data)
 
-    async def send_audio_packet(self, data: bytes, flags: int = 5, *, has_header: bool = False) -> None:
+    async def send_audio_packet(self, 
+        data: bytes, flags: int = 5, 
+        *, 
+        has_header: bool = False,
+        sock_flags: int = 0,
+        delay: int = 0
+    ) -> None:
         """|coro|
 
         Sends an audio packet to discord
@@ -158,7 +174,19 @@ class VoiceWebsocket(object):
         if not has_header:
             data = self._get_audio_packet(data)
 
-        self._sock.write(data)
+        self._sock.write(data, flags=sock_flags)
+
+        await self._ws.send_json({
+            "op": 5,
+            "d": {
+                "speaking": flags,
+                "delay": delay,
+                "ssrc": self.ssrc
+            }
+        })
+
+        # Sequence should be incremented after each packet is sent
+        self.sequence += 1
 
     async def _handle_voice(self, *, after: _C = None, **kwargs) -> None:
         """ Handles incoming data from websocket """
@@ -184,11 +212,10 @@ class VoiceWebsocket(object):
                 await self._ws.send_json(self.udp_payload(**kwargs))
                 self.connect_event.set()
 
+                self.ssrc = data["d"]["ssrc"]
+
                 if after:
-                    try:
-                        await after()
-                    except TypeError:
-                        after()
+                    await after()
 
             elif data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
@@ -204,20 +231,20 @@ class VoiceWebsocket(object):
     # NOTE: encryption methods
 
     def _encrypt_xsalsa20_poly1305(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
+        box = nacl.secret.SecretBox(bytes(self._decode_key))
         nonce = bytearray(24)
         nonce[:12] = header
 
         return header + box.encrypt(bytes(data), bytes(nonce)).ciphertext
 
     def _encrypt_xsalsa20_poly1305_suffix(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
+        box = nacl.secret.SecretBox(bytes(self._decode_key))
         nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
 
         return header + box.encrypt(bytes(data), nonce).ciphertext + nonce
 
     def _encrypt_xsalsa20_poly1305_lite(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
+        box = nacl.secret.SecretBox(bytes(self._decode_key))
         nonce = bytearray(24)
 
         nonce[:4] = pack('>I', self._lite_nonce)
