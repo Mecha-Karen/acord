@@ -15,7 +15,7 @@ Event reference, names and parameters passed when calling events
 When registering events in the client class, 
 they must be an async function and be called ``on_event-name``.
 
-If using the :meth:`Client.on` decorater,
+If using the :meth:`Client.on` decorator,
 its preferred to not start the event with ``on_``.
 However, it will still be accepted.
 
@@ -30,7 +30,7 @@ Indicating that the client has successfully connected to the gateway.
 
 on_heartbeat
 ~~~~~~~~~~~~
-Called when the client has sent a heartbeat and has recieved a successful response.
+Called when the client has sent a heartbeat and has received a successful response.
 
 on_resume
 ~~~~~~~~~
@@ -82,7 +82,7 @@ guild: :class:`Guild`
 on_guild_recv
 ~~~~~~~~~~~~~
 Called when the gateway dispatches ``GUILD_CREATE``.
-When the client recieves a guild clients joined in.
+When the client receives a guild clients joined in.
 
 Parameters
 ==========
@@ -171,7 +171,7 @@ emojis: List[:class:`Emoji`]
 on_sticker_update
 ~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
-Indicating an sticker has been updated.
+Indicating a sticker has been updated.
 This is different to ``on_stickers_update``,
 as this is a singular sticker not all of them.
 
@@ -183,7 +183,7 @@ sticker: :class:`Sticker`
 on_stickers_update
 ~~~~~~~~~~~~~~~~~~
 Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
-Indicating many sticker have been updated.
+Indicating many stickers have been updated.
 this is different to ``on_stickers_update``,
 as this contains all updated stickers instead of 1.
 
