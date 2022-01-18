@@ -181,11 +181,15 @@ class Client(object):
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
         to_rmv: List[Dict] = list()
+        tsk = None
 
         if func:
-            self.loop.create_task(
-                func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
-            )
+            try:
+                tsk = self.loop.create_task(
+                    func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+                )
+            except Exception as exc:
+                self.on_error(f"{func} ({func_name})", tsk)
 
         to_rmv: List[Dict] = list()
         for event in events:
@@ -196,7 +200,7 @@ class Client(object):
                 try:
                     fut, check = func
                 except ValueError:
-                    self.loop.create_task(
+                    tsk = self.loop.create_task(
                         func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
                     )
                 else:
@@ -207,7 +211,7 @@ class Client(object):
                         to_rmv.append(event)
 
             except Exception:
-                self.on_error(f'{func} ({func_name})')
+                self.on_error(f'{func} ({func_name})', tsk)
             else:
                 if event.get("once", False):
                     to_rmv.append(event)
@@ -516,11 +520,17 @@ class Client(object):
         await vc.connect()
         await vc._handle_voice()
 
-    def on_error(self, event_method):
+    def on_error(self, event_method, task: asyncio.Task = None):
         """|coro|
 
         Built in base error handler for events"""
-        logger.error('Failed to run event "{}".'.format(event_method), exc_info=sys.exc_info())
+        err = sys.exc_info()
+        if task is not None:
+            _err = task._exception
+            if _err is not None:
+                err = (type(_err), _err, _err.__traceback__)
+
+        logger.error('Failed to run event "{}".'.format(event_method), exc_info=err)
 
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
-        traceback.print_exc()
+        traceback.print_exception(*err)
