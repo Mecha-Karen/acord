@@ -24,7 +24,11 @@ class BaseReciever(BaseTransport):
         if self.is_closed:
             raise StopAsyncIteration
 
-        return await self.recieve(limit=self.limit, flags=self.flags)
+        try:
+            return await self.recieve(limit=self.limit, flags=self.flags)
+        except OSError:
+            self.is_closed = True
+            raise StopAsyncIteration
 
     async def recieve(self, 
         *, 
