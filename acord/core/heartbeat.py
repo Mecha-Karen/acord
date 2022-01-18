@@ -50,6 +50,9 @@ class VoiceKeepAlive(Thread):
 
         super().__init__(daemon=True)
 
+    def end(self):
+        self.ended = True
+
     def run(self):
         packet = self.packet
 
@@ -62,10 +65,11 @@ class VoiceKeepAlive(Thread):
                     continue
 
                 self.loop.create_task(self.cls._ws.send_json(self.get_payload()))
-                logger.debug("Sent heartbeat for voice channel")
+                logger.debug(f"Sent heartbeat for voice channel, ended: {self.ended}")
             except ConnectionResetError:
                 logger.warn("Connection reset for voice heartbeat, ending heartbeat")
                 self.ended = True
+                self.join()
 
     def get_payload(self):
         self.integer_nonce += 1
