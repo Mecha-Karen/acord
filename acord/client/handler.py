@@ -34,7 +34,7 @@ async def handle_websocket(self, ws):
             SEQUENCE = data["s"]
             gateway.SEQUENCE = SEQUENCE
 
-        UNAVAILABLE = list()
+        UNAVAILABLE = dict()
 
         if OPERATION == gateway.INVALIDSESSION:
             raise GatewayConnectionRefused(
@@ -56,7 +56,7 @@ async def handle_websocket(self, ws):
             self.gateway_version = DATA["v"]
             self.user = User(conn=self.http, **DATA["user"])
 
-            UNAVAILABLE = [i["id"] for i in DATA["guilds"]]
+            UNAVAILABLE = {i["id"]: i["unavailable"] for i in DATA["guilds"]}
 
             self.INTERNAL_STORAGE["users"].update({self.user.id: self.user})
 
@@ -109,13 +109,9 @@ async def handle_websocket(self, ws):
 
         elif EVENT == "GUILD_CREATE":
             guild = Guild(conn=self.http, **DATA)
-            print(guild.id in UNAVAILABLE)
-            print(str(guild.id) in UNAVAILABLE)
-            print(DATA["id"] in UNAVAILABLE)
-            print(UNAVAILABLE)
 
             if DATA["id"] in UNAVAILABLE:
-                UNAVAILABLE.remove(DATA["id"])
+                UNAVAILABLE.pop(DATA["id"])
                 self.dispatch("guild_recv", guild)
             else:
                 self.dispatch("guild_create", guild)
@@ -125,7 +121,7 @@ async def handle_websocket(self, ws):
         elif EVENT == "GUILD_DELETE":
             if DATA.get("unavailable", None) is not None:
                 guild = Guild(conn=self.http, **DATA)
-                UNAVAILABLE.remove(DATA["id"])
+                UNAVAILABLE.pop(DATA["id"])
                 self.dispatch("guild_outage", guild)
 
                 self.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
@@ -271,6 +267,13 @@ async def handle_websocket(self, ws):
                 voice_state=DATA,
                 **DATA["member"]
             )
+
+            if m.user.id == self.user.id:
+                # call manual disconnect if OP 13 has not already been recieved
+                conn = self.voice_connections.pop(DATA["guild_id"], None)
+                if conn is not None:
+                    await conn.disconnect()
+
             self.INTERNAL_STORAGE["guilds"][m.guild_id].members.update({m.user.id: m})
             channel_id = DATA["channel_id"]
 
