@@ -33,7 +33,7 @@ CTL_LAST_PACKET_DURATION = 4039
 c_int16_ptr = ctypes.c_int16()
 
 
-class BandCtl(str, Enum):
+class BandCtl(int, Enum):
     narrow = 1101
     medium = 1102
     wide = 1103
@@ -41,7 +41,7 @@ class BandCtl(str, Enum):
     full = 1105
 
 
-class SignalCtl(str, Enum):
+class SignalCtl(int, Enum):
     auto = -100
     voice = 3001
     music = 3002
