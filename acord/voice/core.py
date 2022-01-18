@@ -73,10 +73,18 @@ class VoiceWebsocket(object):
         self.disconnected = False
 
     async def disconnect(self, *, message: bytes = b"") -> None:
+        if self.disconnected:
+            logger.warn(f"Disconnected called on disconnected socket, conn_id={self._conn_id}")
+            return
+
+        logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
+        self._keep_alive.end()
         await self._ws.close(code=4000, message=message)
-        self._keep_alive.join(0.0)
+        await self._sock.close()
 
         logger.info(f"Disconnected from {self._sock._sock}")
+        logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
+        self.disconnected = True
 
     async def reconnect(self) -> None:
         logger.info(f"Disconnecting from {self._sock._sock}")
@@ -194,7 +202,11 @@ class VoiceWebsocket(object):
             raise ValueError("Not established websocket connecting")
         await self._ws.send_json(self.identity())
 
-        async for message in self._ws:
+        while True:
+            try:
+                message = await self._ws.receive()
+            except ConnectionResetError:
+                break
             data = message.json()
 
             if data["op"] == 8:
@@ -216,17 +228,11 @@ class VoiceWebsocket(object):
 
                 if after:
                     await after()
-
             elif data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
                 self.chosen_mode = data["d"]["mode"]
             elif data["op"] == 13:
-                logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
-                self._keep_alive.ended = True
-                await self._ws.close()
-                await self._sock.close()
-
-                logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
+                await self.disconnect()
 
     # NOTE: encryption methods
 
