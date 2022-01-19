@@ -422,8 +422,7 @@ class Client(object):
             self.loop.run_until_complete(handle_websocket(self, ws))
         except KeyboardInterrupt:
             # Kill connection
-            logger.debug("User ended session using CTRL + C")
-            self.loop.run_until_complete(self.http.disconnect())
+            self.loop.run_until_complete(self.disconnect())
             sys.exit(0)
         except OSError as e:
             if e.args[0] == 104:
@@ -433,6 +432,13 @@ class Client(object):
                 return self.run(token=token, reconnect=reconnect, resumed=True)
 
             raise
+
+    async def disconnect(self):
+        logger.info("Disconnected from API, closing any open connections")
+        await self.http.disconnect()
+
+        for _, vc in self.voice_connections.items():
+            await vc.disconnect()
 
     # Fetch from cache:
 
