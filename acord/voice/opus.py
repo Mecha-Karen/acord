@@ -2,7 +2,7 @@
 # Source: https://github.com/Rapptz/discord.py/
 
 from __future__ import annotations
-from typing import Optional
+from typing import Callable, Optional
 
 import ctypes
 import ctypes.util
@@ -86,13 +86,26 @@ class Encoder(object):
     """Default encoder for opus"""
     def __init__(self, *,
         opus: ctypes.CDLL = opus, 
-        opus_config: OpusConfig = None, 
+        opus_config: OpusConfig = None,
+        def_h: Callable[[Encoder], None] = None,
         **kwargs
     ) -> None:
         self.lib = opus
         self.config = opus_config or OpusConfig(**kwargs)
 
         self._state = self._create_state()
+
+        if def_h is not None:
+            def_h(self)
+        else:
+            self.set_defaults()
+
+    def set_defaults(self):
+        self.set_bitrate(128)
+        self.set_fec(True)
+        self.set_expected_packet_loss_percent(0.15)
+        self.set_bandwidth(BandCtl.full)
+        self.set_signal_type(SignalCtl.auto)
 
     def __del__(self) -> None:
         if hasattr(self, '_state'):
