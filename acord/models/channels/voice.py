@@ -67,8 +67,11 @@ class VoiceChannel(Channel):
 
         return await self.conn.client.wait_for(
             "voice_server_update", 
-            check=lambda vc: vc.identity()["d"]["server_id"] == str(self.id),
+            check=self._vc_check,
         )
+
+    def _vc_check(self, vc) -> bool:
+        return vc.guild_id == str(self.guild_id)
 
     async def leave(self) -> None:
         """|coro|
