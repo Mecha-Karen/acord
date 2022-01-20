@@ -4,7 +4,7 @@ from typing import Iterator, Optional
 from .base import BaseTransport
 
 
-class BaseReciever(BaseTransport):
+class BaseReceiver(BaseTransport):
     def __init__(self, conn, *, limit: int = None, flags: int = 0) -> None:
         super().__init__(conn)
 
