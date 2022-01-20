@@ -14,7 +14,6 @@ from struct import pack_into, pack
 import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
 from .udp import UDPConnection
-from .opus import Encoder
 
 from acord.bases import _C
 
@@ -45,17 +44,25 @@ class VoiceWebsocket(object):
         self._keep_alive = None
         self._ready_packet = None
         self._sock = None
+        self._listener = None
 
         self.sequence: int = 0
         self.timestamp: int = 0
         self.timeout: float = 0
         self.ssrc: int = 0
+        self._lite_nonce: int = 0
+        self.mode = None
 
         self.connect_event = Event()
+        self.send_event = Event()
         self.disconnected = True
 
     async def wait_until_connected(self):
         await self.connect_event.wait()
+
+    async def wait_until_ready(self):
+        await self.wait_until_connected()
+        await self.send_event.wait()
 
     async def connect(self, *, v: int = 4) -> None:
         global CONNECTIONS
@@ -74,13 +81,21 @@ class VoiceWebsocket(object):
 
     async def disconnect(self, *, message: bytes = b"") -> None:
         if self.disconnected:
-            logger.warn(f"Disconnected called on disconnected socket, conn_id={self._conn_id}")
+            logger.warn(f"Disconnect called on disconnected socket, conn_id={self._conn_id}")
             return
 
         logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
         self._keep_alive.end()
         await self._ws.close(code=4000, message=message)
         await self._sock.close()
+
+        self._ws = None
+        self._sock = None
+        self._keep_alive = None
+
+        self._listener.cancel("Disconnect called to end conn")
+        self._listener = None
+        logger.debug("Ended listener task")
 
         logger.info(f"Disconnected from {self._sock._sock}")
         logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
@@ -93,6 +108,16 @@ class VoiceWebsocket(object):
         self._ws = None
 
         await self.connect()
+
+    async def resume(self) -> None:
+        await self._ws.send_json({
+            "op": 7,
+            "d": {
+                "server_id": self._packet["d"]["guild_id"],
+                "session_id": self._packet["d"]["session_id"],
+                "token": self._packet["d"]["token"]
+            }
+        })
 
     def identity(self):
         return {
@@ -111,6 +136,7 @@ class VoiceWebsocket(object):
 
         if mode not in self.supported_modes:
             raise ValueError("Encountered unknown mode")
+        self.mode = mode
 
         return {
             "op": 1,
@@ -157,7 +183,7 @@ class VoiceWebsocket(object):
         pack_into('>I', header, 4, self.timestamp)
         pack_into('>I', header, 8, self.ssrc)
 
-        encrypter = getattr(self, f"_encrypt_{self.chosen_mode}")
+        encrypter = getattr(self, f"_encrypt_{self.mode}")
         return encrypter(header, data)
 
     async def send_audio_packet(self, 
@@ -182,8 +208,6 @@ class VoiceWebsocket(object):
         if not has_header:
             data = self._get_audio_packet(data)
 
-        self._sock.write(data, flags=sock_flags)
-
         await self._ws.send_json({
             "op": 5,
             "d": {
@@ -193,8 +217,17 @@ class VoiceWebsocket(object):
             }
         })
 
+        await self._sock.write(data, flags=sock_flags)
+
         # Sequence should be incremented after each packet is sent
         self.sequence += 1
+
+    async def listen(self, **kwargs) -> None:
+        """ Begins to listen for websocket events, 
+        to terminate this simply end generated task """
+        tsk = self._loop.create_task(self._handle_voice(**kwargs))
+
+        self._listener = tsk  
 
     async def _handle_voice(self, *, after: _C = None, **kwargs) -> None:
         """ Handles incoming data from websocket """
@@ -212,7 +245,8 @@ class VoiceWebsocket(object):
             if data["op"] == 8:
                 self._keep_alive = VoiceKeepAlive(self, data)
                 self._keep_alive.start()
-            elif data["op"] == 2:
+
+            if data["op"] == 2:
                 self._ready_packet = data
                 await self.upd_connect(
                     data["d"]["ip"],
@@ -228,10 +262,12 @@ class VoiceWebsocket(object):
 
                 if after:
                     await after()
-            elif data["op"] == 4:
+
+            if data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
-                self.chosen_mode = data["d"]["mode"]
-            elif data["op"] == 13:
+                self.send_event.set()
+
+            if data["op"] == 13:
                 await self.disconnect()
 
     # NOTE: encryption methods
