@@ -23,7 +23,7 @@ from .webhooks.main import (
 )
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReciever
-from .voice.transports.writer import BaseTransport
+from .voice.transports.writer import BasePlayer
 from .voice.core import VoiceWebsocket
 from .voice.udp import UDPConnection
 
