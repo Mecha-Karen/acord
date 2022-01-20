@@ -21,7 +21,7 @@ class KeepAlive(Thread):
         packet = self.packet
 
         self.loop.create_task(self._ws.send_json(self.identity))
-        logger.info(f"Identity packet sent, contents:\n{self.identity}")
+        logger.info(f"Identity packet sent to gateway, starting heartbeats")
 
         while True:
             if packet["op"] != gateway.HELLO:
