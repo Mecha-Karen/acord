@@ -524,7 +524,7 @@ class Client(object):
         # handles dispatch when client joins VC
         # no need to worry about tasks and threads since this is run as a task
         await vc.connect()
-        await vc._handle_voice()
+        await vc.listen()
 
     def on_error(self, event_method, task: asyncio.Task = None):
         """|coro|
