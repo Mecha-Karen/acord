@@ -49,8 +49,9 @@ packages = [
 
 extra_requires = {
     "speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"],
-    "voice": ["pynacl", "pyogg"]
+    "voice": ["pynacl", "git+https://github.com/TeamPyOgg/PyOgg"]
 }
+# Using git+ for pyogg PyPi doesn't seem to install correct version
 
 if not os.name == "nt":
     extra_requires["speedup"].append("uvloop")
