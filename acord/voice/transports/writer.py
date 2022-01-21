@@ -12,13 +12,17 @@ try:
     from acord.voice.core import VoiceWebsocket
 except ImportError:
     VoiceWebsocket = None
+try:
+    from acord.voice.opus import Encoder
+except ImportError:
+    Encoder = None
 
 
 class BasePlayer(BaseTransport):
     def __init__(self, 
         conn: VoiceWebsocket, 
         data: Union[BufferedIOBase, PathLike],
-        encoder: Any = None,
+        encoder: Encoder = None,
         **encoder_kwargs
     ) -> None:
         if isinstance(data, File):
@@ -35,13 +39,8 @@ class BasePlayer(BaseTransport):
         self.closed = False
         self.encoder = encoder
 
-        # if not encoder:
-        #     encoder = OpusEncoder(**encoder_kwargs)
-        # 
-        #     encoder.set_application("audio")
-        #     encoder.set_channels(2)
-        #     encoder.set_sampling_frequency()
-
+        if not self.encoder:
+            self.encoder = Encoder(**encoder_kwargs)
 
         self._last_pack_err = None
         self._last_send_err = None
@@ -68,8 +67,7 @@ class BasePlayer(BaseTransport):
 
     def get_next_packet(self):
         self.index += 1
-        data = self.fp.read(self.packet_limit)
-
+        data = self.fp.read(self.encoder.config.FRAME_SIZE)
         if data == b"":
             self.close()
             raise EOFError("Reached end of file")
@@ -77,7 +75,7 @@ class BasePlayer(BaseTransport):
 
         return data
 
-    async def close(self) -> None:
+    def close(self) -> None:
         if self.closed:
             raise VoiceError("Transport already closed")
 
@@ -93,14 +91,14 @@ class BasePlayer(BaseTransport):
     async def _send(self, data: bytes, *, flags: int = 0) -> None:
         if self.closed:
             raise VoiceError("Cannot send bytes through transport as transport is closed")
-        data = self.encoder.encode(data, len(data))
+        data = await self.encoder.encode(data)
 
         try:
             await self.conn.send_audio_packet(
                 data, has_header=False, sock_flags=flags
             )
         except OSError as exc:
-            await self.close()
+            self.close()
             self._last_send_err = exc
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
@@ -121,6 +119,6 @@ class BasePlayer(BaseTransport):
 
     async def __aexit__(self, *args, **kwargs):
         try:
-            await self.close()
+            self.close()
         except VoiceError:
             return
