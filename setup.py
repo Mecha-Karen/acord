@@ -49,11 +49,17 @@ packages = [
 
 extra_requires = {
     "speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"],
-    "voice": ["pynacl"]
+    "voice": ["pynacl", "pyogg"]
 }
 
 if not os.name == "nt":
     extra_requires["speedup"].append("uvloop")
+
+try:
+    import wheel
+except ImportError:
+    # Wheel lib needed for binaries
+    extra_requires["voice"].append("wheel")
 
 setup(
     name="ACord",
