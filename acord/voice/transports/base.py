@@ -2,7 +2,10 @@ from __future__ import annotations
 import abc
 from typing import Optional
 
-from ..core import VoiceWebsocket
+try:
+    from ..core import VoiceWebsocket
+except ImportError:
+    VoiceWebsocket = None
 
 
 class BaseTransport(abc.ABC):
