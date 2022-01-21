@@ -5,6 +5,7 @@ from asyncio import (
     AbstractEventLoop,
     Event
 )
+import asyncio
 from aiohttp import ClientSession, WSMsgType
 
 # For handling voice packets
@@ -43,6 +44,7 @@ class VoiceWebsocket(object):
         self._ready_packet = None
         self._sock = None
         self._listener = None
+        self._resume_kwargs = {}
 
         self.sequence: int = 0
         self.timestamp: int = 0
@@ -110,15 +112,17 @@ class VoiceWebsocket(object):
         logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
         self.disconnected = True
 
-    async def reconnect(self) -> None:
-        logger.info(f"Disconnecting from {self._sock._sock}")
+    async def resume(self) -> None:
+        # Magic of resuming websocket connections
+        # Reconnect
         await self.disconnect()
-
-        self._ws = None
-
         await self.connect()
 
-    async def resume(self) -> None:
+        # Set no identity to True so we can resume
+        self._resume_kwargs.update({"no_identity": True})
+        await self.listen(**self._resume_kwargs)
+
+        # Resume normally
         await self._ws.send_json({
             "op": 7,
             "d": {
@@ -127,6 +131,8 @@ class VoiceWebsocket(object):
                 "token": self._packet["d"]["token"]
             }
         })
+        # Log the result
+        logger.info(f"Resuming session for conn_id={self._conn_id}")
 
     def identity(self):
         return {
@@ -236,14 +242,18 @@ class VoiceWebsocket(object):
         to terminate this simply end generated task """
         tsk = self._loop.create_task(self._handle_voice(**kwargs))
 
-        self._listener = tsk  
+        self._listener = tsk
+        self._resume_kwargs = kwargs
 
-    async def _handle_voice(self, *, after: _C = None, **kwargs) -> None:
+    async def _handle_voice(self, *, after: _C = None, no_identity: bool = False, **kwargs) -> None:
         """ Handles incoming data from websocket """
         if not self._ws:
             raise ValueError("Not established websocket connecting")
-        await self._ws.send_json(self.identity())
-        logger.info(f"Sent identity packet for voice ws conn_id={self._conn_id}")
+        
+        if not no_identity:
+            # Resume is doing its thing
+            await self._ws.send_json(self.identity())
+            logger.info(f"Sent identity packet for voice ws conn_id={self._conn_id}")
 
         while True:
             try:
@@ -253,13 +263,26 @@ class VoiceWebsocket(object):
             try:
                 data = message.json()
             except TypeError:
-                if message.type == WSMsgType.ERROR:
+                # Handling any errors we don't like >:D
+                if self._ws._close_code == 4015:
+                    await self.resume()
+                elif self._ws._close_code == 4014:
+                    await self.disconnect()
+                elif message.type in (WSMsgType.CLOSED, WSMsgType.CLOSING):
+                    logger.warn(f"Voice WS closed for conn_id={self._conn_id}, disconecting shortly")
+                elif message.type == WSMsgType.ERROR:
                     logger.error(f"Voice WS for conn_id={self._conn_id} has closed", exc_info=(
                         type(message.extra), message.extra, message.extra.__traceback__
                     ))
                 else:
-                    logger.info(f"Received invalid json data for voice ws conn_id={self._conn_id}, closing ws")
+                    logger.info(
+                        f"Received invalid json data for voice ws conn_id={self._conn_id},\
+                        closing ws, code={self._ws._close_code}")
                 
+                await self.disconnect()
+                break
+            except (asyncio.CancelledError, asyncio.TimeoutError):
+                logger.warn(f"Voice WS adruptly closed for conn_id={self._conn_id}, ending connection")
                 await self.disconnect()
                 break
 
