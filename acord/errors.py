@@ -12,7 +12,7 @@ class BaseResponseException(Exception):
         try:
             attrs = object.__getattribute__(self, "_attrs")
             return attrs[__name]
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
   
         return object.__getattribute__(self, __name)
