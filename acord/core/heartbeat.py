@@ -62,7 +62,7 @@ class VoiceKeepAlive(Thread):
 
             try:
                 while not self.cls._ws:
-                    continue
+                    pass
 
                 self.loop.create_task(self.cls._ws.send_json(self.get_payload()))
                 logger.debug(f"Sent heartbeat for voice channel, ended: {self.ended}")
