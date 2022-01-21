@@ -4,18 +4,21 @@ from typing import Any, Callable, Union
 from io import BufferedIOBase
 from os import PathLike
 
-from acord.voice.core import VoiceWebsocket
 from acord.errors import VoiceError
 from acord.bases import File
-
 from .base import BaseTransport
-from ..opus import Encoder
+
+try:
+    from acord.voice.core import VoiceWebsocket
+except ImportError:
+    VoiceWebsocket = None
 
 
 class BasePlayer(BaseTransport):
     def __init__(self, 
         conn: VoiceWebsocket, 
         data: Union[BufferedIOBase, PathLike],
+        encoder: Any = None,
         **encoder_kwargs
     ) -> None:
         if isinstance(data, File):
@@ -30,7 +33,15 @@ class BasePlayer(BaseTransport):
 
         self.index = 0
         self.closed = False
-        self.encoder = Encoder(**encoder_kwargs)
+        self.encoder = encoder
+
+        # if not encoder:
+        #     encoder = OpusEncoder(**encoder_kwargs)
+        # 
+        #     encoder.set_application("audio")
+        #     encoder.set_channels(2)
+        #     encoder.set_sampling_frequency()
+
 
         self._last_pack_err = None
         self._last_send_err = None
