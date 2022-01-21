@@ -5,9 +5,7 @@ from asyncio import (
     AbstractEventLoop,
     Event
 )
-from types import coroutine
-from typing import Type
-from aiohttp import ClientSession
+from aiohttp import ClientSession, WSMsgType
 
 # For handling voice packets
 from struct import pack_into, pack
@@ -83,21 +81,32 @@ class VoiceWebsocket(object):
         if self.disconnected:
             logger.warn(f"Disconnect called on disconnected socket, conn_id={self._conn_id}")
             return
+        if not self._keep_alive:
+            raise ConnectionError("Keepalive doesn't exist, failed to disconnect ws")
 
         logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
         self._keep_alive.end()
-        await self._ws.close(code=4000, message=message)
-        await self._sock.close()
+
+        try:
+            await self._ws.close(code=4000, message=message)
+        except Exception:
+            pass
+        # WS already closed or anything along them lines
+
+        # Disconnect called before sock was intialised
+        if self._sock:
+            await self._sock.close()
+            logger.info(f"Disconnected from {self._sock._sock}")
 
         self._ws = None
         self._sock = None
         self._keep_alive = None
 
-        self._listener.cancel("Disconnect called to end conn")
-        self._listener = None
-        logger.debug("Ended listener task")
+        if self._listener:
+            self._listener.cancel("Disconnect called to end conn")
+            self._listener = None
+            logger.debug("Ended listener task")
 
-        logger.info(f"Disconnected from {self._sock._sock}")
         logger.info("Disconnected from voice, Closed ws & socket and ended heartbeats")
         self.disconnected = True
 
@@ -234,13 +243,25 @@ class VoiceWebsocket(object):
         if not self._ws:
             raise ValueError("Not established websocket connecting")
         await self._ws.send_json(self.identity())
+        logger.info(f"Sent identity packet for voice ws conn_id={self._conn_id}")
 
         while True:
             try:
                 message = await self._ws.receive()
             except ConnectionResetError:
                 break
-            data = message.json()
+            try:
+                data = message.json()
+            except TypeError:
+                if message.type == WSMsgType.ERROR:
+                    logger.error(f"Voice WS for conn_id={self._conn_id} has closed", exc_info=(
+                        type(message.extra), message.extra, message.extra.__traceback__
+                    ))
+                else:
+                    logger.info(f"Received invalid json data for voice ws conn_id={self._conn_id}, closing ws")
+                
+                await self.disconnect()
+                break
 
             if data["op"] == 8:
                 self._keep_alive = VoiceKeepAlive(self, data)
@@ -269,6 +290,7 @@ class VoiceWebsocket(object):
 
             if data["op"] == 13:
                 await self.disconnect()
+                break
 
     # NOTE: encryption methods
 
