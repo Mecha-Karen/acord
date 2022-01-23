@@ -109,8 +109,6 @@ class BasePlayer(BaseTransport):
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
     async def play(self, c_flags: int = 1, delay: int = 0, *, flags: int = 0) -> Union[None, int]:
-        await self.conn.wait_until_ready()
-
         await self.conn.change_speaking_state(c_flags, delay)
 
         async for packet in self:
