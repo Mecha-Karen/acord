@@ -55,7 +55,7 @@ class VoiceWebsocket(object):
 
         self.connect_event = Event()
         self.send_event = Event()
-        self.disconnected = True
+        self.disconnected = False
 
     async def wait_until_connected(self):
         await self.connect_event.wait()
