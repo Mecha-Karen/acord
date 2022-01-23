@@ -53,6 +53,8 @@ class Member(pydantic.BaseModel, Hashable):
         Total permissions of the member in the channel. Including overwrites.
     guild_id: :class:`Snowflake`
         ID of the guild member is in
+    voice_state: :class:`MemberVoiceState`
+        Voice state of a member
     """
 
     conn: Any  # connection object
