@@ -97,8 +97,9 @@ class VoiceWebsocket(object):
 
         # Disconnect called before sock was intialised
         if self._sock:
+            sock = getattr(self._sock, "_sock", f"UDP Socket conn_id={self._conn_id}")
             await self._sock.close()
-            logger.info(f"Disconnected from {self._sock._sock}")
+            logger.info(f"Disconnected from {sock}")
 
         self._ws = None
         self._sock = None
@@ -206,7 +207,9 @@ class VoiceWebsocket(object):
         *, 
         has_header: bool = False,
         sock_flags: int = 0,
-        delay: int = 0
+        delay: int = 0,
+        continued: bool = False,
+        c_flags: int = 5
     ) -> None:
         """|coro|
 
@@ -219,23 +222,48 @@ class VoiceWebsocket(object):
         has_header: :class:`bool`
             Whether the data has an RTC header attached to it.
             Defaults to False and should only be True if you know what your doing.
+        sock_flags: :class:`int`
+            Additional flags for the UDP socket
+        delay: :class:`int`
+            Whether there should be a delay in speaking
+        continued: :class:`bool`
+            Should be ``True`` only when the client has already sent its first audio packet,
+            and just wants to continue speaking
+        c_flags: :class:`int`
+            Client speaking flags,
+            defaults to ``5`` on requesting priority and microphone
         """
         if not has_header:
             data = self._get_audio_packet(data)
 
-        await self._ws.send_json({
-            "op": 5,
-            "d": {
-                "speaking": flags,
-                "delay": delay,
-                "ssrc": self.ssrc
-            }
-        })
+        if not continued:
+            logger.info("Sending op 5 speaking packet")
+            await self._ws.send_json({
+                "op": 5,
+                "d": {
+                    "speaking": c_flags,
+                    "delay": delay,
+                    "ssrc": self.ssrc
+                }
+            })
 
         await self._sock.write(data, flags=sock_flags)
 
         # Sequence should be incremented after each packet is sent
+        logger.debug(f"Sent audio packet to discord, incrementing sequence ({self.sequence + 1})")
         self.sequence += 1
+
+    async def stop_speaking(self) -> None:
+        # Stops speaking indicator, should be called after audio transmition
+        await self._ws.send_json({
+            "op": 5,
+            "d": {
+                "speaking": 0,
+                "delay": 0,
+                "ssrc": self.ssrc
+            }
+        })
+        logger.info(f"Client speaking indicator removed for conn_id={self._conn_id}")
 
     async def listen(self, **kwargs) -> None:
         """ Begins to listen for websocket events, 
@@ -267,7 +295,7 @@ class VoiceWebsocket(object):
                 if self._ws._close_code == 4015:
                     await self.resume()
                 elif self._ws._close_code == 4014:
-                    await self.disconnect()
+                    pass
                 elif message.type in (WSMsgType.CLOSED, WSMsgType.CLOSING):
                     logger.warn(f"Voice WS closed for conn_id={self._conn_id}, disconecting shortly")
                 elif message.type == WSMsgType.ERROR:
