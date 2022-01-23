@@ -3,6 +3,7 @@ from typing import Any, Callable, Union
 
 from io import BufferedIOBase
 from os import PathLike
+import asyncio
 
 from acord.errors import VoiceError
 from acord.bases import File
@@ -16,6 +17,10 @@ try:
     from acord.voice.opus import Encoder
 except ImportError:
     Encoder = None
+
+
+def getFrameDur(x, y):
+    return ((x * 10) // (y // 1000)) / 1000
 
 
 class BasePlayer(BaseTransport):
@@ -88,31 +93,36 @@ class BasePlayer(BaseTransport):
         self._last_send_err = None
         self.index = 0
 
-    async def _send(self, data: bytes, *, flags: int = 0) -> None:
+    async def send(self, data: bytes, *, flags: int = 0, c_flags: int = 5, continued: bool = False) -> None:
         if self.closed:
             raise VoiceError("Cannot send bytes through transport as transport is closed")
-        data = await self.encoder.encode(data)
+        encoded_bytes = await self.encoder.encode(data)
 
         try:
             await self.conn.send_audio_packet(
-                data, has_header=False, sock_flags=flags
+                encoded_bytes, has_header=False, flags=c_flags, sock_flags=flags,
+                continued=continued
             )
         except OSError as exc:
             self.close()
             self._last_send_err = exc
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
-    async def play(self, *, flags: int = 0) -> None:
+    async def play(self, c_flags: int = 5, *, flags: int = 0) -> None:
         await self.conn.wait_until_ready()
+        continued = False
 
         async for packet in self:
             try:
-                await self._send(data=packet, flags=flags)
+                await self.send(data=packet, flags=flags, c_flags=c_flags, continued=continued)
+                await asyncio.sleep(getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE))
+                continued = True
             except VoiceError as err:
                 if getattr(err, "closed", False):
                     return
                 else:
                     raise
+        await self.conn.stop_speaking()
 
     async def __aenter__(self):
         return self
