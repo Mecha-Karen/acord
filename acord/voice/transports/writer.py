@@ -93,30 +93,35 @@ class BasePlayer(BaseTransport):
         self._last_send_err = None
         self.index = 0
 
-    async def send(self, data: bytes, *, flags: int = 0, c_flags: int = 5, continued: bool = False) -> None:
+    async def send(self, data: bytes, *, flags: int = 0) -> None:
         if self.closed:
             raise VoiceError("Cannot send bytes through transport as transport is closed")
         encoded_bytes = await self.encoder.encode(data)
 
         try:
             await self.conn.send_audio_packet(
-                encoded_bytes, has_header=False, flags=c_flags, sock_flags=flags,
-                continued=continued
+                encoded_bytes, self.encoder.config.SAMPLES_PER_FRAME, 
+                has_header=False, sock_flags=flags,
             )
         except OSError as exc:
             self.close()
             self._last_send_err = exc
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
-    async def play(self, c_flags: int = 5, *, flags: int = 0) -> None:
+    async def play(self, c_flags: int = 1, delay: int = 0, *, flags: int = 0) -> Union[None, int]:
         await self.conn.wait_until_ready()
-        continued = False
+
+        await self.conn.change_speaking_state(c_flags, delay)
 
         async for packet in self:
             try:
-                await self.send(data=packet, flags=flags, c_flags=c_flags, continued=continued)
+                try:
+                    await self.send(data=packet, flags=flags)
+                except AttributeError:
+                    # Socket closed
+                    return 1
+
                 await asyncio.sleep(getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE))
-                continued = True
             except VoiceError as err:
                 if getattr(err, "closed", False):
                     return
