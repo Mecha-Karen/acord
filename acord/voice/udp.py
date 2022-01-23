@@ -51,7 +51,7 @@ class UDPConnection(object):
         self.conn_id = conn_id
 
         self.sock_kwds = kwds
-        self.limit = 1024
+        self.limit = 10240
 
         self._sock = None
         self._sock_event = asyncio.Event()
