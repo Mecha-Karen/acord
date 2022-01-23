@@ -203,13 +203,10 @@ class VoiceWebsocket(object):
         return encrypter(header, data)
 
     async def send_audio_packet(self, 
-        data: bytes, flags: int = 5, 
+        data: bytes, frames: int,
         *, 
         has_header: bool = False,
         sock_flags: int = 0,
-        delay: int = 0,
-        continued: bool = False,
-        c_flags: int = 5
     ) -> None:
         """|coro|
 
@@ -222,47 +219,43 @@ class VoiceWebsocket(object):
         has_header: :class:`bool`
             Whether the data has an RTC header attached to it.
             Defaults to False and should only be True if you know what your doing.
+        frames: :class:`int`
+            Your encoders SAMPLES_PER_FRAME value, 
+            used for generating timestamp
         sock_flags: :class:`int`
             Additional flags for the UDP socket
-        delay: :class:`int`
-            Whether there should be a delay in speaking
-        continued: :class:`bool`
-            Should be ``True`` only when the client has already sent its first audio packet,
-            and just wants to continue speaking
-        c_flags: :class:`int`
-            Client speaking flags,
-            defaults to ``5`` on requesting priority and microphone
         """
+        self.checked_add('sequence', 1, 65535)
+
         if not has_header:
             data = self._get_audio_packet(data)
 
-        if not continued:
-            logger.info("Sending op 5 speaking packet")
-            await self._ws.send_json({
-                "op": 5,
-                "d": {
-                    "speaking": c_flags,
-                    "delay": delay,
-                    "ssrc": self.ssrc
-                }
-            })
-
         await self._sock.write(data, flags=sock_flags)
+        self.checked_add('timestamp', frames, 4294967295)
 
-        # Sequence should be incremented after each packet is sent
-        logger.debug(f"Sent audio packet to discord, incrementing sequence ({self.sequence + 1})")
-        self.sequence += 1
+    async def client_connect(self) -> None:
+        await self._ws.send_json({
+            "op": 12,
+            "d": {
+                "audio_ssrc": self.ssrc
+            }
+        })
+
+    async def change_speaking_state(self, flags: int = 1, delay: int = 0) -> None:
+        # Should be logged by x method
+        payload = {
+            "op": 5,
+            "d": {
+                "speaking": flags,
+                "delay": delay,
+            }
+        }
+
+        await self._ws.send_json(payload)
 
     async def stop_speaking(self) -> None:
         # Stops speaking indicator, should be called after audio transmition
-        await self._ws.send_json({
-            "op": 5,
-            "d": {
-                "speaking": 0,
-                "delay": 0,
-                "ssrc": self.ssrc
-            }
-        })
+        await self.change_speaking_state(0, 0)
         logger.info(f"Client speaking indicator removed for conn_id={self._conn_id}")
 
     async def listen(self, **kwargs) -> None:
@@ -334,6 +327,9 @@ class VoiceWebsocket(object):
 
                 if after:
                     await after()
+                
+                # Called so client is ready to send audio without limitations
+                await self.client_connect()
 
             if data["op"] == 4:
                 self._decode_key = data["d"]["secret_key"]
