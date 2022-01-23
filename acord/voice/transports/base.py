@@ -50,7 +50,7 @@ class BaseTransport(abc.ABC):
         """
         raise NotImplementedError
 
-    async def send(self, data: bytes, *, flags: int = 0) -> None:
+    async def send(self, data: bytes, *, flags: int = 0, c_flags: int = 5, continued: bool = False) -> None:
         """|coro|
 
         Sends data through stream,
@@ -69,6 +69,9 @@ class BaseTransport(abc.ABC):
         flags: :class:`int`
             additional flags when sending data,
             for UDP socket NOT websocket!
+        c_flags: :class:`int`
+            Flags for client when speaking,
+            defaults to 5, requesting priority and microphone.
         """
         raise NotImplementedError
 
@@ -89,5 +92,6 @@ class BaseTransport(abc.ABC):
         """|coro|
         
         Cleans up any cache, if any.
-        Should be implemented by recievers which save last recieved packet
+        Should be implemented by recievers which save last recieved packet,
+        and for writers should reset state of the writer
         """
