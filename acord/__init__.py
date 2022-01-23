@@ -6,6 +6,13 @@ Created by Mecha Karen, and is licensed under the GNU GENERAL PUBLIC LICENSE.
 from typing import NamedTuple, Literal, List, Optional
 import logging
 
+logger = logging.getLogger(__name__)
+__file__ = __import__("os").path.abspath(__file__)
+__directory__ = __import__("os").path.dirname(__file__)
+__doc__ = "An API wrapper for the discord API"
+__version__ = "0.0.1a3"
+__author__ = "Mecha Karen"
+
 from .bases import *
 from .models import *
 from .client import Client
@@ -14,12 +21,11 @@ from .webhooks.main import (
     PartialWebhook,
     WebhookType
 )
-
-logger = logging.getLogger("ACord")
-__file__ = __import__("os").path.abspath(__file__)
-__doc__ = "An API wrapper for the discord API"
-__version__ = "0.0.1a3"
-__author__ = "Mecha Karen"
+from .voice.transports.base import BaseTransport
+from .voice.transports.reader import BaseReceiver
+from .voice.transports.writer import BasePlayer
+from .voice.core import VoiceWebsocket
+from .voice.udp import UDPConnection
 
 SelectOption.__annotations__['emoji'] = Optional[PartialEmoji]
 Button.__annotations__['emoji'] = Optional[PartialEmoji]

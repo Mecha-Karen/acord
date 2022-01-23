@@ -11,6 +11,20 @@ from acord.utils import _payload_dict_to_json
 from .user import User
 
 
+class MemberVoiceState(pydantic.BaseModel):
+    guild_id: Optional[Snowflake]
+    channel_id: Optional[Snowflake]
+    session_id: str
+    deaf: bool
+    mute: bool
+    self_deaf: bool
+    self_mute: bool
+    self_stream: Optional[bool]
+    self_video: bool
+    suppress: bool
+    request_to_speak_timestamp: Optional[datetime.datetime]
+
+
 class Member(pydantic.BaseModel, Hashable):
     """
     Represents a guild member.
@@ -39,6 +53,8 @@ class Member(pydantic.BaseModel, Hashable):
         Total permissions of the member in the channel. Including overwrites.
     guild_id: :class:`Snowflake`
         ID of the guild member is in
+    voice_state: :class:`MemberVoiceState`
+        Voice state of a member
     """
 
     conn: Any  # connection object
@@ -54,6 +70,7 @@ class Member(pydantic.BaseModel, Hashable):
     pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
     guild_id: Snowflake
+    voice_state: Optional[MemberVoiceState]
 
     @pydantic.validator("user")
     def _validate_user(cls, user, **kwargs):

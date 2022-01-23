@@ -1,7 +1,7 @@
 # A simple base client for handling responses from discord
 import asyncio
+import logging
 import warnings
-import acord
 import sys
 import traceback
 
@@ -9,17 +9,23 @@ from acord.core.abc import Route
 from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
-from acord.payloads import GenericWebsocketPayload, StageInstanceCreatePayload
+from acord.payloads import (
+    GenericWebsocketPayload, 
+    StageInstanceCreatePayload,
+    VoiceStateUpdatePresence,
+) 
 
-from typing import Any, Coroutine, Dict, List, Tuple, Union, Callable, Optional
+from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
 
 from acord.bases import (
-    Intents, Presence
+    Intents, Presence, _C
 )
-from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
+from acord.models import Message, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
+
+logger = logging.getLogger(__name__)
 
 
 class Client(object):
@@ -71,6 +77,7 @@ class Client(object):
         self,
         *,
         token: Optional[str] = None,
+        dispatch_on_recv: bool = False,
         # IDENTITY PACKET ARGS
         intents: Optional[Union[Intents, int]] = 0,
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
@@ -80,7 +87,7 @@ class Client(object):
 
         self.loop = loop
         self.token = token
-
+        self.dispatch_on_recv = dispatch_on_recv
         self.intents = intents
 
         self._events = dict()
@@ -94,6 +101,10 @@ class Client(object):
         self.gateway_version = None
         self.user = None
 
+        # When connecting to VC, temporarily stores session_id
+        self.awaiting_voice_connections = dict()
+        self.voice_connections = dict()
+
         self.INTERNAL_STORAGE = dict()
 
         self.INTERNAL_STORAGE["messages"] = dict()
@@ -104,9 +115,12 @@ class Client(object):
         
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
+        if getattr(self, "_lruPermanent", None):
+            raise ValueError("Token already binded")
+
         self._lruPermanent = token
 
-    def on(self, name: str, *, once: bool = False):
+    def on(self, name: str, *, once: bool = False) -> Optional[_C]:
         """Register an event to be dispatched on call.
 
         This is a decorator,
@@ -150,15 +164,6 @@ class Client(object):
 
         return inner
 
-    def on_error(self, event_method):
-        """|coro|
-
-        Built in base error handler for events"""
-        acord.logger.error('Failed to run event "{}".'.format(event_method))
-
-        print(f"Ignoring exception in {event_method}", file=sys.stderr)
-        traceback.print_exc()
-
     def dispatch(self, event_name: str, *args, **kwargs) -> None:
         """Dispatch a registered event
 
@@ -171,16 +176,20 @@ class Client(object):
         """
         if not event_name.startswith("on_"):
             func_name = "on_" + event_name
-        acord.logger.info("Dispatching event: {}".format(event_name))
+        logger.info("Dispatching event: {}".format(event_name))
 
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
         to_rmv: List[Dict] = list()
+        tsk = None
 
         if func:
-            self.loop.create_task(
-                func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
-            )
+            try:
+                tsk = self.loop.create_task(
+                    func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+                )
+            except Exception as exc:
+                self.on_error(f"{func} ({func_name})", tsk)
 
         to_rmv: List[Dict] = list()
         for event in events:
@@ -191,7 +200,7 @@ class Client(object):
                 try:
                     fut, check = func
                 except ValueError:
-                    self.loop.create_task(
+                    tsk = self.loop.create_task(
                         func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
                     )
                 else:
@@ -202,7 +211,7 @@ class Client(object):
                         to_rmv.append(event)
 
             except Exception:
-                self.on_error(f'{func} ({func_name})')
+                self.on_error(f'{func} ({func_name})', tsk)
             else:
                 if event.get("once", False):
                     to_rmv.append(event)
@@ -215,6 +224,8 @@ class Client(object):
         else:
             if event_name in self._events:
                 self._events.pop(event_name)
+
+        logger.info("Dispatched event: {}".format(event_name))
 
     async def resume(self) -> None:
         """|coro|
@@ -229,9 +240,11 @@ class Client(object):
             ),
         )
 
+        logger.debug("Resuming gateway connection")
+
         await self.http.ws.send_json(payload)
 
-    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> Tuple[Any]:
+    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> _C:
         """|coro|
 
         Wait for a specific gateway event to occur.
@@ -285,7 +298,65 @@ class Client(object):
             d=presence
         )
 
+        logger.debug("Updating presence")
+
         await self.http.ws.send_str(payload.json())
+
+        logger.info("Sent presence payload")
+
+    async def update_voice_state(self, **data) -> None:
+        """|coro|
+
+        Updates client voice state
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            id of the guild
+        channel_id: :class:`Snowflake`
+            id of the voice channel client wants to join (``None`` if disconnecting)
+        self_mute: :class:`bool`
+            is the client muted
+        self_deaf: :class:`bool`
+            is the client deafened
+        """
+        voice_payload = VoiceStateUpdatePresence(**data)
+        payload = GenericWebsocketPayload(
+            op=gateway.VOICE,
+            d=voice_payload
+        )
+
+        await self.http.ws.send_str(payload.json())
+
+    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
+        """|coro|
+
+        Creates a stage instance
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel to create stage instance,
+            channel type must be :attr:`ChannelTypes.GUILD_STAGE_VOICE`
+        topic: :class:`str`
+            The topic of the Stage instance (1-120 characters)
+        privacy_level: :class:`StagePrivacyLevel`
+            The privacy level of the Stage instance (default GUILD_ONLY)
+        """
+        payload = StageInstanceCreatePayload(**data)
+        bucket = dict(channel_id=payload.channel_id)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.http.request(
+            Route("POST", path=f"/stage-instances", bucket=bucket),
+            data=payload.json(),
+            headers=headers
+        )
+
+        return Stage(conn=self.http, **(await r.json()))
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs client, loop blocking.
@@ -340,16 +411,19 @@ class Client(object):
         ws = self.loop.run_until_complete(coro)
 
         self.dispatch("connect")
-        acord.logger.info("Connected to websocket")
+        logger.info("Connected to websocket")
 
         if resumed:
+            logger.debug("Attempting resume")
             self.loop.run_until_complete(self.resume())
 
         try:
+            logger.debug("Handling websocket")
             self.loop.run_until_complete(handle_websocket(self, ws))
         except KeyboardInterrupt:
             # Kill connection
-            self.loop.run_until_complete(self.http.disconnect())
+            self.loop.run_until_complete(self.disconnect())
+            sys.exit(0)
         except OSError as e:
             if e.args[0] == 104:
                 # kill connection and re-run
@@ -358,6 +432,13 @@ class Client(object):
                 return self.run(token=token, reconnect=reconnect, resumed=True)
 
             raise
+
+    async def disconnect(self):
+        logger.info("Disconnected from API, closing any open connections")
+        await self.http.disconnect()
+
+        for _, vc in self.voice_connections.items():
+            await vc.disconnect()
 
     # Fetch from cache:
 
@@ -421,36 +502,6 @@ class Client(object):
         guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
 
-    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
-        """|coro|
-
-        Creates a stage instance
-
-        Parameters
-        ----------
-        channel_id: :class:`Snowflake`
-            ID of channel to create stage instance,
-            channel type must be :attr:`ChannelTypes.GUILD_STAGE_VOICE`
-        topic: :class:`str`
-            The topic of the Stage instance (1-120 characters)
-        privacy_level: :class:`StagePrivacyLevel`
-            The privacy level of the Stage instance (default GUILD_ONLY)
-        """
-        payload = StageInstanceCreatePayload(**data)
-        bucket = dict(channel_id=payload.channel_id)
-        headers = {"Content-Type": "application/json"}
-
-        if reason is not None:
-            headers["X-Audit-Log-Reason"] = reason
-
-        r = await self.http.request(
-            Route("POST", path=f"/stage-instances", bucket=bucket),
-            data=payload.json(),
-            headers=headers
-        )
-
-        return Stage(conn=self.http, **(await r.json()))
-
     # Get from cache or Fetch from API:
 
     async def gof_channel(self, channel_id: int) -> Optional[Any]:
@@ -465,4 +516,27 @@ class Client(object):
     @property
     def guilds(self):
         return self.INTERNAL_STORAGE["guilds"]
-        
+
+    # NOTE: default event handlers
+
+    async def on_voice_server_update(self, vc) -> None:
+        """ :meta private: """
+        # handles dispatch when client joins VC
+        # no need to worry about tasks and threads since this is run as a task
+        await vc.connect()
+        await vc.listen()
+
+    def on_error(self, event_method, task: asyncio.Task = None):
+        """|coro|
+
+        Built in base error handler for events"""
+        err = sys.exc_info()
+        if task is not None:
+            _err = task._exception
+            if _err is not None:
+                err = (type(_err), _err, _err.__traceback__)
+
+        logger.error('Failed to run event "{}".'.format(event_method), exc_info=err)
+
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
+        traceback.print_exception(*err)

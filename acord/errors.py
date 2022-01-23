@@ -12,7 +12,7 @@ class BaseResponseException(Exception):
         try:
             attrs = object.__getattribute__(self, "_attrs")
             return attrs[__name]
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
   
         return object.__getattribute__(self, __name)
@@ -49,6 +49,12 @@ class DiscordError(BaseResponseException):
 class NotFound(BaseResponseException):
     """Raised when requested recourse returns 404,
     indicating that you dont have sufficient permissions"""
+
+
+class VoiceError(BaseResponseException):
+    """Raised when a voice operation fails or goes wrong,
+    mostly due to user side operations.
+    """
 
 
 class CannotOverideTokenWarning(Warning):
