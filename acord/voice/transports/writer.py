@@ -20,6 +20,8 @@ except ImportError:
 
 
 def getFrameDur(x, y):
+    # x -> pcm
+    # y -> sampling rate
     return ((x * 10) // (y // 1000)) / 1000
 
 
@@ -109,6 +111,7 @@ class BasePlayer(BaseTransport):
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
     async def play(self, c_flags: int = 1, delay: int = 0, *, flags: int = 0) -> Union[None, int]:
+
         await self.conn.change_speaking_state(c_flags, delay)
 
         async for packet in self:
