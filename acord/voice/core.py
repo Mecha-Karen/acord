@@ -30,7 +30,13 @@ class VoiceWebsocket(object):
         'xsalsa20_poly1305',
     )
 
-    def __init__(self, voice_packet: dict, loop: AbstractEventLoop, client, channel_id, **kwargs) -> None:
+    def __init__(self, 
+        voice_packet: dict, 
+        loop: AbstractEventLoop, 
+        client, 
+        channel_id, 
+        **kwargs
+    ) -> None:
         # Defined in an async enviro so this is fine
         self._session = ClientSession(loop=loop, **kwargs)
         self._packet = voice_packet
@@ -241,8 +247,9 @@ class VoiceWebsocket(object):
             }
         })
 
+        logger.info(f"Sent ssrc for audio conn_id={self._conn_id}")
+
     async def change_speaking_state(self, flags: int = 1, delay: int = 0) -> None:
-        # Should be logged by x method
         payload = {
             "op": 5,
             "d": {
@@ -252,6 +259,7 @@ class VoiceWebsocket(object):
         }
 
         await self._ws.send_json(payload)
+        logger.info(f"Updated speaking state for conn_id={self._conn_id}, payload:\n{payload}")
 
     async def stop_speaking(self) -> None:
         # Stops speaking indicator, should be called after audio transmition
@@ -338,6 +346,9 @@ class VoiceWebsocket(object):
             if data["op"] == 13:
                 await self.disconnect()
                 break
+
+            if data["op"] == 5:
+                await self._client.dispatch("voice_channel_speak", self.channel_id)
 
     # NOTE: encryption methods
 
