@@ -45,6 +45,8 @@ packages = [
     "acord.webhooks",
     "acord.voice",
     "acord.voice.transports",
+    "acord.ext",
+    "acord.ext.application_commands"
 ]
 
 extra_requires = {
