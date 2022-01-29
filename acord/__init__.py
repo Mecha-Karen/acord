@@ -26,6 +26,7 @@ from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer
 from .voice.core import VoiceWebsocket
 from .voice.udp import UDPConnection
+from .ext.application_commands import *
 
 SelectOption.__annotations__['emoji'] = Optional[PartialEmoji]
 Button.__annotations__['emoji'] = Optional[PartialEmoji]
