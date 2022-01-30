@@ -27,7 +27,7 @@ class ActivityType(IntEnum):
 
 class Activity(pydantic.BaseModel):
     name: str
-    """ Name of activity """
+    """ Name of activity, if custom should be set to ``Custom Status`` """
     type: int
     """ Type of activity, consider using :class:`ActivityType` """
     url: Optional[str]
