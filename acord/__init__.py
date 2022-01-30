@@ -24,7 +24,7 @@ from .webhooks.main import (
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer
-from .voice.core import VoiceWebsocket
+from .voice.core import VoiceConnection
 from .voice.udp import UDPConnection
 
 SelectOption.__annotations__['emoji'] = Optional[PartialEmoji]

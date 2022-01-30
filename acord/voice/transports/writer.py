@@ -10,9 +10,9 @@ from acord.bases import File
 from .base import BaseTransport
 
 try:
-    from acord.voice.core import VoiceWebsocket
+    from acord.voice.core import VoiceConnection
 except ImportError:
-    VoiceWebsocket = None
+    VoiceConnection = None
 try:
     from acord.voice.opus import Encoder
 except ImportError:
@@ -27,7 +27,7 @@ def getFrameDur(x, y):
 
 class BasePlayer(BaseTransport):
     def __init__(self, 
-        conn: VoiceWebsocket, 
+        conn: VoiceConnection, 
         data: Union[BufferedIOBase, PathLike],
         encoder: Encoder = None,
         **encoder_kwargs
@@ -99,6 +99,7 @@ class BasePlayer(BaseTransport):
         if self.closed:
             raise VoiceError("Cannot send bytes through transport as transport is closed")
         encoded_bytes = await self.encoder.encode(data)
+        print(encoded_bytes, len(encoded_bytes))
 
         try:
             await self.conn.send_audio_packet(
@@ -110,7 +111,7 @@ class BasePlayer(BaseTransport):
             self._last_send_err = exc
             raise VoiceError("Cannot send bytes through transport", closed=True) from exc
 
-    async def play(self, c_flags: int = 1, delay: int = 0, *, flags: int = 0) -> Union[None, int]:
+    async def play(self, c_flags: int = 1, delay: int = 5, *, flags: int = 0) -> Union[None, int]:
 
         await self.conn.change_speaking_state(c_flags, delay)
 
@@ -128,6 +129,8 @@ class BasePlayer(BaseTransport):
                     return
                 else:
                     raise
+
+            break
         await self.conn.stop_speaking()
 
     async def __aenter__(self):

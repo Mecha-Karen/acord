@@ -2,7 +2,7 @@ import datetime
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
-from acord.voice.core import VoiceWebsocket
+from acord.voice.core import VoiceConnection
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
@@ -288,7 +288,7 @@ async def handle_websocket(self, ws):
             data["d"]["session_id"] = session_id
             data["d"]["user_id"] = self.user.id
 
-            vc = VoiceWebsocket(data, self.loop, self, channel_id)
+            vc = VoiceConnection(data, self.loop, self, channel_id)
             self.voice_connections.update({DATA["guild_id"]: vc})
 
             # Handled by default handler in Client.on_voice_server_update

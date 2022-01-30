@@ -4,7 +4,7 @@ import pydantic
 
 from acord.bases import PermissionsOverwrite
 from acord.models import Snowflake
-from acord.voice.core import VoiceWebsocket
+from acord.voice.core import VoiceConnection
 from acord.errors import VoiceError
 from .base import Channel
 
@@ -39,7 +39,7 @@ class VoiceChannel(Channel):
     rtc_region: Optional[str]
     """ voice region id for the voice channel, automatic when set to null """
 
-    async def join(self, self_mute: bool = False, self_deaf: bool = False) -> VoiceWebsocket:
+    async def join(self, self_mute: bool = False, self_deaf: bool = False) -> VoiceConnection:
         """|coro|
 
         Joins this voice channel,
@@ -55,7 +55,7 @@ class VoiceChannel(Channel):
 
         Returns
         -------
-        Returns a :class:`VoiceWebsocket` object,
+        Returns a :class:`VoiceConnection` object,
         which can directly be passed into a reciever/player
         """
         await self.conn.client.update_voice_state(

@@ -1,4 +1,5 @@
 # Basic heartbeat controller
+from datetime import datetime
 from threading import Thread
 import asyncio
 import time
@@ -65,6 +66,7 @@ class VoiceKeepAlive(Thread):
                     pass
 
                 self.loop.create_task(self.cls._ws.send_json(self.get_payload()))
+                self.cls.acked_at = datetime.utcnow().timestamp()
                 logger.debug(f"Sent heartbeat for voice channel, ended: {self.ended}")
             except ConnectionResetError:
                 logger.warn("Connection reset for voice heartbeat, ending heartbeat")

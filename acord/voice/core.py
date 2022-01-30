@@ -6,13 +6,16 @@ from asyncio import (
     Event
 )
 import asyncio
+from datetime import datetime
 from aiohttp import ClientSession, WSMsgType
 
 # For handling voice packets
 from struct import pack_into, pack
 import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
+from acord.errors import VoiceError
 from .udp import UDPConnection
+from .codes import OpCodes
 
 from acord.bases import _C
 
@@ -23,7 +26,7 @@ CONNECTIONS = 0
 logger = logging.getLogger(__name__)
 
 
-class VoiceWebsocket(object):
+class VoiceConnection(object):
     supported_modes = (
         'xsalsa20_poly1305_lite',
         'xsalsa20_poly1305_suffix',
@@ -63,6 +66,9 @@ class VoiceWebsocket(object):
         self.send_event = Event()
         self.disconnected = False
 
+        self.acked_at = 0
+        self.ping = float("inf")
+
     async def wait_until_connected(self):
         await self.connect_event.wait()
 
@@ -70,7 +76,7 @@ class VoiceWebsocket(object):
         await self.wait_until_connected()
         await self.send_event.wait()
 
-    async def connect(self, *, v: int = 4) -> None:
+    async def connect(self, *, v: int = 6) -> None:
         global CONNECTIONS
 
         # connects to desired endpoint creating new websocket connection
@@ -141,27 +147,28 @@ class VoiceWebsocket(object):
         # Log the result
         logger.info(f"Resuming session for conn_id={self._conn_id}")
 
-    def identity(self):
+    def identity(self, *, video: bool = False):
         return {
-            "op": 0,
+            "op": OpCodes.IDENTITY.value,
             "d": {
                 "server_id": self._packet["d"]["guild_id"],
                 "user_id": self._packet["d"]["user_id"],
                 "session_id": self._packet["d"]["session_id"],
-                "token": self._packet["d"]["token"]
+                "token": self._packet["d"]["token"],
+                "video": video
             }
         }
 
     def udp_payload(self, *, mode: str = None):
         if not mode:
-            mode = self._ready_packet["d"]["modes"][0]
+            mode = self.supported_modes[0]
 
         if mode not in self.supported_modes:
             raise ValueError("Encountered unknown mode")
         self.mode = mode
 
         return {
-            "op": 1,
+            "op": OpCodes.SELECT_PROTOCOL,
             "d": {
                 "protocol": "udp",
                 "data": {
@@ -241,20 +248,29 @@ class VoiceWebsocket(object):
 
     async def client_connect(self) -> None:
         await self._ws.send_json({
-            "op": 12,
+            "op": OpCodes.VIDEO.value,
             "d": {
-                "audio_ssrc": self.ssrc
+                "audio_ssrc": 0,
+                "rtx_ssrc": 0,
+                "streams": [
+                    {"type": "video", "active": False}
+                ],
+                "video_ssrc": 0,
             }
         })
 
-        logger.info(f"Sent ssrc for audio conn_id={self._conn_id}")
+        logger.info(f"Sent ssrc for conn_id={self._conn_id}")
 
-    async def change_speaking_state(self, flags: int = 1, delay: int = 0) -> None:
+    async def change_speaking_state(self, flags: int = 1, delay: int = 5) -> None:
+        if not self.ssrc:
+            raise VoiceError("Cannot update speaking state, no ssrc set")
+
         payload = {
-            "op": 5,
+            "op": OpCodes.SPEAKING.value,
             "d": {
                 "speaking": flags,
                 "delay": delay,
+                "ssrc": self.ssrc
             }
         }
 
@@ -315,12 +331,13 @@ class VoiceWebsocket(object):
                 await self.disconnect()
                 break
 
-            if data["op"] == 8:
+            if data["op"] == OpCodes.HELLO.value:
                 self._keep_alive = VoiceKeepAlive(self, data)
                 self._keep_alive.start()
 
-            if data["op"] == 2:
+            elif data["op"] == OpCodes.READY.value:
                 self._ready_packet = data
+
                 await self.upd_connect(
                     data["d"]["ip"],
                     data["d"]["port"],
@@ -328,27 +345,36 @@ class VoiceWebsocket(object):
                     vc_Ws=self,
                     conn_id=self._conn_id
                 )
-                await self._ws.send_json(self.udp_payload(**kwargs))
+
+                udp_payload = self.udp_payload(**kwargs)
+                await self._ws.send_json(udp_payload)
+                logger.info(f"Sent select payload for conn_id={self._conn_id}")
+
                 self.connect_event.set()
 
                 self.ssrc = data["d"]["ssrc"]
 
                 if after:
                     await after()
-                
-                # Called so client is ready to send audio without limitations
-                await self.client_connect()
 
-            if data["op"] == 4:
+            elif data["op"] == OpCodes.SELECT_PROTOCOL_ACK.value:
                 self._decode_key = data["d"]["secret_key"]
                 self.send_event.set()
 
-            if data["op"] == 13:
+            elif data["op"] == OpCodes.CLIENT_DISCONNECT.value:
                 await self.disconnect()
                 break
 
-            if data["op"] == 5:
-                await self._client.dispatch("voice_channel_speak", self.channel_id)
+            elif data["op"] == OpCodes.SPEAKING.value:
+                print(data)
+                await self._client.dispatch("voice_channel_speak", self.channel_id, data["d"]["user_id"])
+
+            elif data["op"] == OpCodes.HEARTBEAT_ACK.value:
+                self.ping = datetime.utcnow().timestamp() - self.acked_at
+
+            # else:
+            #     print(data["op"])
+            #     print(data)
 
     # NOTE: encryption methods
 

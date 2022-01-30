@@ -3,9 +3,9 @@ import abc
 from typing import Optional
 
 try:
-    from ..core import VoiceWebsocket
+    from ..core import VoiceConnection
 except ImportError:
-    VoiceWebsocket = None
+    VoiceConnection = None
 
 
 class BaseTransport(abc.ABC):
@@ -13,7 +13,7 @@ class BaseTransport(abc.ABC):
 
     Parameters
     ----------
-    conn: :class:`VoiceWebsocket`
+    conn: :class:`VoiceConnection`
         Original websocket class when starting voice connection
     sock: :class:`UDPConnection`
         UDP socket class
@@ -22,7 +22,7 @@ class BaseTransport(abc.ABC):
 
     __slots__ = ("conn", "sock")
 
-    def __init__(self, conn: VoiceWebsocket) -> None:
+    def __init__(self, conn: VoiceConnection) -> None:
         self.conn = conn
         self.sock = conn._sock
 
@@ -55,12 +55,12 @@ class BaseTransport(abc.ABC):
 
         Sends data through stream,
         writers must include this method and should make sure each packet has an RTC header.
-        To simplify this mess you should call :class:`VoiceWebsocket._get_audio_packet`.
+        To simplify this mess you should call :class:`VoiceConnection._get_audio_packet`.
 
         .. note::
             When implementing writers, 
             big files should be handled by you and for sending "complete" payloads,
-            call :class:`VoiceWebsocket.send_audio_packet`.
+            call :class:`VoiceConnection.send_audio_packet`.
 
         Parameters
         ----------
