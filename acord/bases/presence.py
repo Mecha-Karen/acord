@@ -1,7 +1,9 @@
 from __future__ import annotations
+from ctypes import Union
 
 from enum import Enum, IntEnum
-from typing import List, Optional
+from lib2to3.pgen2.token import OP
+from typing import Any, List, Optional
 import pydantic
 import time
 
@@ -30,6 +32,10 @@ class Activity(pydantic.BaseModel):
     """ Type of activity, consider using :class:`ActivityType` """
     url: Optional[str]
     """ URL of activity, if STREAMING. must be one of ``youtube.com`` or ``twitch.tv`` """
+    emoji: Optional[Any]
+    """ A :class:`PartialEmoji` """
+    state: Optional[str]
+    """ Should be the value for :attr:`Activity.name` if type is :attr:`ActivityType.CUSTOM` """
 
 
 class Presence(pydantic.BaseModel):
