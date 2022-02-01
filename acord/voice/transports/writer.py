@@ -130,7 +130,6 @@ class BasePlayer(BaseTransport):
                 else:
                     raise
 
-            break
         await self.conn.stop_speaking()
 
     async def __aenter__(self):
