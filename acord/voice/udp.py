@@ -34,6 +34,11 @@ class SocketWrapper(socket.socket):
             None, super().send, data, flags 
         )
 
+    async def sendto(self, data, addr) -> None:
+        await self.loop.run_in_executor(
+            None, super().sendto, data, addr
+        )
+
 
 class UDPConnection(object):
     def __init__(self, 
@@ -102,3 +107,7 @@ class UDPConnection(object):
     async def write(self, data: bytes, *, flags: int = 0) -> None:
         logger.debug(f"Sending {len(data)} bytes to {self.host}:{self.port}")
         return await self._sock.write(data, flags)
+
+    async def sendto(self, data: bytes, addr: tuple) -> None:
+        logger.debug(f"Send to being called, addr={addr}")
+        return await self._sock.sendto(data, addr)
