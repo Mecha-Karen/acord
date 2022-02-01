@@ -14,7 +14,7 @@ except ImportError:
             If you are using windows simply ignore this warning.\
             \npip install uvloop",
         ImportWarning,
-        stacklevel=2,
+        2,
     )
 
 import asyncio
