@@ -46,6 +46,7 @@ Invite.update_forward_refs()
 Interaction.update_forward_refs()
 Message.update_forward_refs()
 GuildTemplate.update_forward_refs()
+GenericApplicationOption.update_forward_refs()
 
 
 class VersionInfo(NamedTuple):
