@@ -206,7 +206,7 @@ class VoiceConnection(object):
         header = bytearray(12)
         
         header[0] = 0x80
-        header[1] = 0x70
+        header[1] = 0x78
 
         pack_into('>H', header, 2, self.sequence)
         pack_into('>I', header, 4, self.timestamp)
