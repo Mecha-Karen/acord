@@ -3,8 +3,11 @@ from __future__ import annotations
 
 
 class PyOggNotInstalled(object):
-    pass
-
+    def __init__(self, *args, **kwargs) -> None:
+        raise ImportError(
+            "PyOGG must be installed before using encoders/decoders" +
+            "\npip install acord['voice']"
+        )
 
 try:
     from pyogg import OpusEncoder, OpusDecoder
