@@ -98,12 +98,12 @@ class BasePlayer(BaseTransport):
     async def send(self, data: bytes, *, flags: int = 0) -> None:
         if self.closed:
             raise VoiceError("Cannot send bytes through transport as transport is closed")
-        encoded_bytes = await self.encoder.encode(data)
-        print(encoded_bytes, len(encoded_bytes))
-
+        mem = await self.encoder.encode(data)
         try:
+            # mem is a memoryview object
+            # fine to pass through socket as its a WriteOnlyBuffer
             await self.conn.send_audio_packet(
-                encoded_bytes, self.encoder.config.SAMPLES_PER_FRAME, 
+                mem, self.encoder.config.SAMPLES_PER_FRAME, 
                 has_header=False, sock_flags=flags,
             )
         except OSError as exc:
@@ -130,7 +130,6 @@ class BasePlayer(BaseTransport):
                 else:
                     raise
 
-            break
         await self.conn.stop_speaking()
 
     async def __aenter__(self):
