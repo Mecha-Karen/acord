@@ -27,6 +27,10 @@ class SlashOptionError(BaseExc):
     """ Raised when validating slash option fails """
 
 
+class SlashCommandError(BaseExc):
+    """ Raised when validated slash command fails """
+
+
 class GatewayConnectionRefused(BaseExc):
     """Raised when connecting to gateway fails"""
 
