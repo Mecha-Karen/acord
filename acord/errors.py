@@ -18,6 +18,11 @@ class BaseExc(Exception):
         return object.__getattribute__(self, __name)
 
 
+class HTTPException(BaseExc):
+    def __init__(self, code, message):
+        super().__init__(f"Status {code}: {message}")
+
+
 class SlashOptionError(BaseExc):
     """ Raised when validating slash option fails """
 
