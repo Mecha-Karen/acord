@@ -3,6 +3,7 @@ from .types import (
     ApplicationCommandOptionType
 )
 from .base import (
+    UDAppCommand,
     ApplicationCommand
 )
 from .option import (
