@@ -143,6 +143,21 @@ class SlashBase(UDAppCommand):
         return total
 
     async def dispatcher(self, interaction, **kwds) -> int:
+        """|coro|
+
+        Default dispatch handler for when the slash command is used,
+        handles callback and on_error calls.
+
+        .. rubric:: Return Codes
+
+        0:
+            Dispatched without error
+        1:
+            Dispatched but an error occured,
+            on_error was called if accessible
+        Exception of any type:
+            Dispatched but an error occured with both callback and error handler
+        """
         # 0 => Dispatched without error
         # 1 => Dispatched but an error occured
         # Exception => Dispatched but an error occured with both callback and error handler
@@ -163,11 +178,29 @@ class SlashBase(UDAppCommand):
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
+        """Generates slash command from a function, 
+        taking same kwargs and options as intiating the command normally.
+
+        Parameters
+        ----------
+        function: Callable[..., Coroutine]
+            An async function which acts like the callback
+        **kwds:
+            Additional kwargs such as "name", "description".
+        """
         kwds.update(callback=function)
 
         return cls(**kwds)
 
     def add_option(self, option: SlashOption) -> None:
+        """Adds a specified option to the command,
+        this method is preferred to be called as it handles slash command limits!
+
+        Parameters
+        ----------
+        option: :class:`SlashOption`
+            new option to be added to slash command
+        """
         if (self._total_chars() + option._total_chars()) > 4000:
             raise SlashCommandError("Slash command exceeded 4k characters")
         if (len(self.options) + 1) > 25:
