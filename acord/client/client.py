@@ -13,14 +13,17 @@ from acord.payloads import (
     GenericWebsocketPayload, 
     StageInstanceCreatePayload,
     VoiceStateUpdatePresence,
-) 
+)
+from acord.ext.application_commands import (
+    ApplicationCommand
+)
 
-from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
+from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
 
 from acord.bases import (
     Intents, Presence, _C
 )
-from acord.models import Message, User, Channel, Guild, TextChannel, Stage
+from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -100,6 +103,7 @@ class Client(object):
         self.session_id = None
         self.gateway_version = None
         self.user = None
+        self.application_commands = dict()
 
         # When connecting to VC, temporarily stores session_id
         self.awaiting_voice_connections = dict()
@@ -512,6 +516,34 @@ class Client(object):
         if channel is None:
             return await self.fetch_channel(channel_id)
         return channel
+
+    async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
+        """|coro|
+
+        Fetches all global application commands registered by the client
+        """
+        r = await self.http.request(
+            Route("GET", path=f"/applications/{self.id}/commands"),
+        )
+
+        for d in (await r.json()):
+            yield ApplicationCommand(conn=self.http, **d)
+    
+    async def fetch_glob_app_command(self, command_id: Snowflake) -> ApplicationCommand:
+        """|coro|
+
+        Fetches a global application command registered by the client
+
+        Parameters
+        ----------
+        command_id: :class:`Snowflake`
+            ID of command to fetch
+        """
+        r = await self.http.request(
+            Route("GET", path=f"/applications/{self.id}/commands/{command_id}")
+        )
+
+        return ApplicationCommand(conn=self.http, **(await r.json()))
     
     @property
     def guilds(self):
@@ -533,7 +565,7 @@ class Client(object):
         err = sys.exc_info()
         if task is not None:
             _err = task._exception
-            if _err is not None:
+            if _err is not None and isinstance(_err, Exception):
                 err = (type(_err), _err, _err.__traceback__)
 
         logger.error('Failed to run event "{}".'.format(event_method), exc_info=err)
