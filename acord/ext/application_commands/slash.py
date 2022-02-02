@@ -1,10 +1,10 @@
 from __future__ import annotations
-from re import A
-from typing import Any, List, Optional
+from typing import List, Optional
 import pydantic
 
 from .option import SlashOption
 from .types import ApplicationCommandType
+from .base import UDAppCommand
 from acord.errors import SlashCommandError
 from acord.bases import _C
 
@@ -16,12 +16,12 @@ VALID_ATTR_NAMES = (
 )
 
 
-class SlashBase(pydantic.BaseModel):
+class SlashBase(UDAppCommand):
     name: str
     """ name of command """
     description: str
     """ description of the command """
-    callback: Optional[_C] = None
+    callback: _C = None
     """ Callback for when the command is used """
     on_error: Optional[_C] = None
     """ Callback for when an error occurs during handling of command """
