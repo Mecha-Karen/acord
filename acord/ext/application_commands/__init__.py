@@ -3,7 +3,6 @@ from .types import (
     ApplicationCommandOptionType
 )
 from .base import (
-    SlashExtended,
     ApplicationCommand
 )
 from .option import (
