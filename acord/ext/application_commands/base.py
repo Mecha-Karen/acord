@@ -7,8 +7,16 @@ from acord.models import (
 )
 from acord.core.abc import Route
 from acord.utils import _payload_dict_to_json
+from acord.bases import Hashable
 from .types import ApplicationCommandType
 from .option import SlashOption
+
+
+class UDAppCommand(pydantic.BaseModel, Hashable):
+    """Identifier for all user defined slash commands,
+    e.g. classes such as SlashBase.
+    """
+    __slots__ = ()
 
 
 class ApplicationCommand(pydantic.BaseModel):
