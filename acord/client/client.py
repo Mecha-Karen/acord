@@ -523,7 +523,7 @@ class Client(object):
         Fetches all global application commands registered by the client
         """
         r = await self.http.request(
-            Route("GET", path=f"/applications/{self.id}/commands"),
+            Route("GET", path=f"/applications/{self.user.id}/commands"),
         )
 
         for d in (await r.json()):
@@ -540,7 +540,7 @@ class Client(object):
             ID of command to fetch
         """
         r = await self.http.request(
-            Route("GET", path=f"/applications/{self.id}/commands/{command_id}")
+            Route("GET", path=f"/applications/{self.user.id}/commands/{command_id}")
         )
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
