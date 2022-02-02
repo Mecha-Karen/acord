@@ -23,6 +23,8 @@ class SlashBase(pydantic.BaseModel):
     """ description of the command """
     callback: Optional[_C] = None
     """ Callback for when the command is used """
+    on_error: Optional[_C] = None
+    """ Callback for when an error occurs during handling of command """
     options: Optional[List[SlashOption]] = []
     """ array of options (your parameters) """
     default_permission: Optional[bool] = True
@@ -35,6 +37,8 @@ class SlashBase(pydantic.BaseModel):
         d = super(SlashBase, self).dict(**kwds)
 
         d.pop("callback")
+        d.pop("guild_ids")
+        d.pop("on_error")
         d["type"] = ApplicationCommandType.CHAT_INPUT
 
         return d
@@ -43,10 +47,14 @@ class SlashBase(pydantic.BaseModel):
         # Generates new slash command on call
         # Adds pre-existing args from cls to kwds and calls init
         # returning generated slash command
+        extend = kwds.get("extend", False) or hasattr(cls, "__extend_if_provided")
+
         for attr in VALID_ATTR_NAMES:
-            if attr in kwds:
-                continue
             a_ = getattr(cls, attr, None)
+
+            if attr in kwds and extend:
+                if hasattr(a_, "extend"):
+                    a_.extend(kwds[attr])
 
             if not a_:
                 continue
@@ -63,6 +71,9 @@ class SlashBase(pydantic.BaseModel):
 
     def __init_subclass__(cls, **kwds) -> None:
         # kwds is validated in the second for loop
+        extend = kwds.pop("extend", False)
+        cls._extend_if_provided = extend
+
         for attr in kwds:
             if attr in VALID_ATTR_NAMES:
                 setattr(cls, attr, kwds[attr])
@@ -88,6 +99,22 @@ class SlashBase(pydantic.BaseModel):
                 total += len(attr_value)
         
         return total
+
+    async def dispatcher(self, interaction, **kwds) -> int:
+        # 0 => Dispatched without error
+        # 1 => Dispatched but an error occured
+        # Exception => Dispatched but an error occured with both callback and error handler
+        try:
+            await self.callback(interaction, **kwds)
+        except Exception as exc:
+            if self.callback and self.on_error:
+                try:
+                    await self.on_error(exc)
+                except Exception as e_exc:
+                    return e_exc
+        else:
+            return 0
+        return 1
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
