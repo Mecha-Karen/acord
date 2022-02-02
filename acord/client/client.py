@@ -369,7 +369,7 @@ class Client(object):
     ) -> ApplicationCommand:
         """Registers application command internally before client is ran,
         after client is ran this method is redundant.
-        Consider using :meth:`Client.add_application_command`.
+        Consider using :meth:`Client.create_application_command`.
 
         Parameters
         ----------
@@ -382,7 +382,7 @@ class Client(object):
             Additional guild IDs to restrict command to,
             if value is set to:
                 * ``None``: Reads from class (Default option)
-                * ``[]`` (Empty List): Makes it global (Extend must ``False``)
+                * ``[]`` (Empty List): Makes it global
 
             .. note::
                 If final value is false,
@@ -394,6 +394,8 @@ class Client(object):
             command.guild_ids = command.guild_ids + guild_ids
         elif guild_ids:
             command.guild_ids = guild_ids
+        elif extend == []:
+            command.guild_ids = []
 
         exists = self.application_commands.get(command.name)
         if exists:
@@ -412,6 +414,43 @@ class Client(object):
             c = command
 
         self.application_commands.update({command.name: command})
+
+    async def create_application_command(self,
+        command: UDAppCommand, *, 
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True
+    ) -> Union[ApplicationCommand, Iterator[ApplicationCommand]]:
+        """|coro|
+
+        Creates an application command from a :class:`UDAppCommand` class.
+
+        .. note::
+            It can take up to an hour for discord to process the command!
+
+        Parameters
+        ----------
+        same as :meth:`Client.register_application_command`
+        """
+        # Add to cache
+        self.register_application_command(command, guild_ids=guild_ids, extend=extend)
+        d = command.json()
+
+        if not command.guild_ids:
+            r = await self.http.request(
+                Route("POST", path=f"/applications/{self.user.id}/commands"),
+                data=d,
+                headers={"Content-Type": "application/json"}
+            )
+            return ApplicationCommand(conn=self.http, **(await r.json()))
+
+        for guild_id in set(command.guild_ids):
+            r = await self.http.request(
+                Route("POST", path=f"/applications/{self.user.id}/guilds/{guild_id}/commands"),
+                data=d,
+                headers={"Content-Type": "application/json"},
+            )
+
+            yield ApplicationCommand(conn=self.http, **(await r.json()))
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs client, loop blocking.
