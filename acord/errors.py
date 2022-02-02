@@ -31,6 +31,10 @@ class SlashCommandError(BaseExc):
     """ Raised when validated slash command fails """
 
 
+class ApplicationCommandError(BaseExc):
+    """ Raised when an error occurs with application commands """
+
+
 class GatewayConnectionRefused(BaseExc):
     """Raised when connecting to gateway fails"""
 
