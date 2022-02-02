@@ -6,6 +6,7 @@ from acord.models import (
     Snowflake,
 )
 from acord.core.abc import Route
+from acord.utils import _payload_dict_to_json
 from .types import ApplicationCommandType
 from .option import SlashOption
 
@@ -48,3 +49,28 @@ class ApplicationCommand(pydantic.BaseModel):
         await self.conn.request(
             Route("DELETE", path=path, bucket=dict(guild_id=self.guild_id))
         )
+
+    async def edit(self, **data) -> ApplicationCommand:
+        """|coro|
+
+        Edits this command globally,
+        if ``guild_id`` is not ``None``,
+        the command is edited just for that guild
+
+        Parameters
+        ----------
+        """
+        from acord.payloads import ApplicationCommandEditPayload
+
+        if self.guild_id is not None:
+            path = f"/applications/{self.application_id}/guilds/{self.guild_id}/commands/{self.id}"
+        else:
+            path = f"/applications/{self.application_id}/commands/{self.id}"
+
+        m = _payload_dict_to_json(ApplicationCommandEditPayload, **data)
+
+        r = await self.conn.request(
+            Route("PATCH", path=path, data=m)
+        )
+
+        return ApplicationCommand(conn=self.conn, **(await r.json()))
