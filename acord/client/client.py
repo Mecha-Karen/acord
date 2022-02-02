@@ -15,7 +15,7 @@ from acord.payloads import (
     VoiceStateUpdatePresence,
 )
 from acord.ext.application_commands import (
-    ApplicationCommand
+    ApplicationCommand, UDAppCommand
 )
 
 from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
@@ -362,6 +362,57 @@ class Client(object):
 
         return Stage(conn=self.http, **(await r.json()))
 
+    def register_application_command(self, 
+        command: UDAppCommand, *, 
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True
+    ) -> ApplicationCommand:
+        """Registers application command internally before client is ran,
+        after client is ran this method is redundant.
+        Consider using :meth:`Client.add_application_command`.
+
+        Parameters
+        ----------
+        command: :class:`UDAppCommand`
+            .. note::
+                :class:`UDAppCommand` represents any class which inherits it,
+                this includes SlashBase.
+            Command to register internally, to be dispatched.
+        guild_ids: Union[List[:class:`int`], None]
+            Additional guild IDs to restrict command to,
+            if value is set to:
+                * ``None``: Reads from class (Default option)
+                * ``[]`` (Empty List): Makes it global (Extend must ``False``)
+
+            .. note::
+                If final value is false,
+                command will be registered globally
+        extend: :class:`bool`
+            Whether to extend current guild ids from the command class
+        """
+        if guild_ids and extend:
+            command.guild_ids = command.guild_ids + guild_ids
+        elif guild_ids:
+            command.guild_ids = guild_ids
+
+        exists = self.application_commands.get(command.name)
+        if exists:
+            c = []
+            if isinstance(exists, list):
+                check = any(i for i in exists if i.type == command.type)
+                c.extend(exists)
+            else:
+                check = exists.type == command.type
+                c.append(exists)
+
+            if check is True:
+                raise ApplicationCommandError("Duplicate application command provided")
+
+        else:
+            c = command
+
+        self.application_commands.update({command.name: command})
+
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs client, loop blocking.
 
@@ -444,7 +495,7 @@ class Client(object):
         for _, vc in self.voice_connections.items():
             await vc.disconnect()
 
-    # Fetch from cache:
+    # NOTE: Fetch from cache:
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
@@ -462,7 +513,7 @@ class Client(object):
         """Returns the channel stored in the internal cache, may be outdated"""
         return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
 
-    # Fetch from API:
+    # NOTE: Fetch from API:
 
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
@@ -506,17 +557,6 @@ class Client(object):
         guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
 
-    # Get from cache or Fetch from API:
-
-    async def gof_channel(self, channel_id: int) -> Optional[Any]:
-        """Attempts to get a channel, if not found fetches and adds to cache.
-        Raises :class:`NotFound` if cannot be fetched"""
-        channel = self.get_channel(channel_id)
-
-        if channel is None:
-            return await self.fetch_channel(channel_id)
-        return channel
-
     async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
         """|coro|
 
@@ -544,6 +584,17 @@ class Client(object):
         )
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
+
+    # NOTE: Get from cache or Fetch from API:
+
+    async def gof_channel(self, channel_id: int) -> Optional[Any]:
+        """Attempts to get a channel, if not found fetches and adds to cache.
+        Raises :class:`NotFound` if cannot be fetched"""
+        channel = self.get_channel(channel_id)
+
+        if channel is None:
+            return await self.fetch_channel(channel_id)
+        return channel
     
     @property
     def guilds(self):
