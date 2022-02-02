@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List, Optional
-import pydantic
 
 from .option import SlashOption
 from .types import ApplicationCommandType
@@ -17,6 +16,42 @@ VALID_ATTR_NAMES = (
 
 
 class SlashBase(UDAppCommand):
+    """Base class for creating slash commands.
+
+    .. rubric:: Guidance
+
+    When creating slash commands you have 2 options,
+    intialise this class normally (ex1).
+    Or subclass it and add your attrs through:
+    * class variables
+    * direct call to super().__init__
+
+    .. note::
+        * Max 25 options
+        * Entire slash commands values must be less then 4k characters,
+          (Dont panic this is handled for you!)
+        * Name must be under 32 characters
+        * Description must be under 100 characters
+
+    For a more clearer example make sure to check out the examples in the github repo.
+
+    Parameters
+    ----------
+    All values from attributes are considered arguments,
+    and will be used to create the model.
+
+    extend: :class:`bool`
+        Whether to extend attributes if they were provided twice,
+        doesn't check if they are the same! Defaults to ``True``.
+    overwrite: :class:`bool`
+        Whether to overwrite this command if it already exists,
+        defaults to ``False``.
+
+    When using args whilst subclassing,
+    ``extend`` becomes ``extendable``
+    and ``overwrite`` becomes ``overwritable``.
+    """
+
     name: str
     """ name of command """
     description: str
@@ -64,6 +99,11 @@ class SlashBase(UDAppCommand):
         return super(SlashBase, cls).__new__(cls, **kwds)
 
     def __init__(self, **kwds) -> None:
+        if not getattr(self, "_extend_if_provided"):
+            self._extend_if_provided = kwds.pop("extend", True)
+        if not getattr(self, "_overwrite_if_exists"):
+            self._overwrite_if_exists = kwds.pop("overwrite", False)
+
         super().__init__(**kwds)
 
         if not all(i for i in self.options if type(i) == SlashOption):
@@ -71,8 +111,10 @@ class SlashBase(UDAppCommand):
 
     def __init_subclass__(cls, **kwds) -> None:
         # kwds is validated in the second for loop
-        extend = kwds.pop("extend", False)
+        extend = kwds.pop("extendable", True)
+        overwrite = kwds.pop("overwritable", False)
         cls._extend_if_provided = extend
+        cls._overwrite_if_exists = overwrite
 
         for attr in kwds:
             if attr in VALID_ATTR_NAMES:
@@ -109,7 +151,10 @@ class SlashBase(UDAppCommand):
         except Exception as exc:
             if self.callback and self.on_error:
                 try:
-                    await self.on_error(exc)
+                    await self.on_error(
+                        interaction,
+                        (type(exc), exc, exc.__traceback__)
+                    )
                 except Exception as e_exc:
                     return e_exc
         else:
@@ -125,5 +170,7 @@ class SlashBase(UDAppCommand):
     def add_option(self, option: SlashOption) -> None:
         if (self._total_chars() + option._total_chars()) > 4000:
             raise SlashCommandError("Slash command exceeded 4k characters")
+        if (len(self.options) + 1) > 25:
+            raise SlashCommandError("Slash command must have less then 25 options")
 
         self.options.append(option)
