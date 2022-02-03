@@ -14,6 +14,15 @@ from acord.bases import (
 from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
 from acord.bases.flags.base import BaseFlagMeta
+from acord.ext.application_commands import ApplicationCommandType
+
+
+class InteractionSlashOption(pydantic.BaseModel):
+    name: str
+    type: ApplicationCommandType
+    value: Any
+    options: Optional[InteractionSlashOption] = []
+    focused: Optional[bool] = False
 
 
 class IMessageFlags(BaseFlagMeta):
@@ -25,12 +34,12 @@ class IMessageCreatePayload(MessageCreatePayload):
     flags: Optional[int]
 
 
-class InteractionData(pydantic.BaseModel, Hashable):
+class InteractionData(pydantic.BaseModel):
     id: Optional[Snowflake]
     name: Optional[str]
-    type: Any
+    type: ApplicationCommandType
     resolved: Optional[Any]
-    options: Optional[List[Any]]
+    options: Optional[List[InteractionSlashOption]] = []
     custom_id: Optional[str]
     component_type: Optional[ComponentTypes]
     values: Optional[List[SelectOption]]
