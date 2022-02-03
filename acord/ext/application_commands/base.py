@@ -16,6 +16,9 @@ class UDAppCommand(pydantic.BaseModel, Hashable):
     """Identifier for all user defined slash commands,
     e.g. classes such as SlashBase.
     """
+    class Config:
+        arbitrary_types_allowed = True
+
     __slots__ = ()
 
 
