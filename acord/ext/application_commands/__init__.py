@@ -13,3 +13,8 @@ from .option import (
 from .slash import (
     SlashBase
 )
+from .model_based import (
+    GenericModelCommand,
+    UserCommand,
+    MessageCommand
+)
