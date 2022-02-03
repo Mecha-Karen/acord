@@ -419,7 +419,7 @@ class Client(object):
         command: UDAppCommand, *, 
         guild_ids: Union[List[int], None] = None,
         extend: bool = True
-    ) -> Union[ApplicationCommand, Iterator[ApplicationCommand]]:
+    ) -> Union[ApplicationCommand, List[ApplicationCommand]]:
         """|coro|
 
         Creates an application command from a :class:`UDAppCommand` class.
@@ -434,14 +434,17 @@ class Client(object):
         # Add to cache
         self.register_application_command(command, guild_ids=guild_ids, extend=extend)
         d = command.json()
+        print(d)
 
         if not command.guild_ids:
             r = await self.http.request(
                 Route("POST", path=f"/applications/{self.user.id}/commands"),
-                data=d,
+                data=d,    # This is a string
                 headers={"Content-Type": "application/json"}
             )
             return ApplicationCommand(conn=self.http, **(await r.json()))
+
+        recvd = []
 
         for guild_id in set(command.guild_ids):
             r = await self.http.request(
@@ -450,7 +453,10 @@ class Client(object):
                 headers={"Content-Type": "application/json"},
             )
 
-            yield ApplicationCommand(conn=self.http, **(await r.json()))
+            app_cmd = ApplicationCommand(conn=self.http, **(await r.json()))
+            recvd.append(app_cmd)
+        
+        return recvd
 
     def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
         """Runs client, loop blocking.
