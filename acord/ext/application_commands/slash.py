@@ -199,6 +199,22 @@ class SlashBase(UDAppCommand):
             raise TypeError("Function must be a coroutine function")
         self.__pre_calls__.update({name: function})
 
+    def add_option(self, option: SlashOption) -> None:
+        """Adds a specified option to the command,
+        this method is preferred to be called as it handles slash command limits!
+
+        Parameters
+        ----------
+        option: :class:`SlashOption`
+            new option to be added to slash command
+        """
+        if (self._total_chars() + option._total_chars()) > 4000:
+            raise SlashCommandError("Slash command exceeded 4k characters")
+        if (len(self.options) + 1) > 25:
+            raise SlashCommandError("Slash command must have less then 25 options")
+
+        self.options.append(option)
+
     async def dispatcher(self, interaction, future, **kwds) -> int:
         """|coro|
 
@@ -221,12 +237,14 @@ class SlashBase(UDAppCommand):
         callback = self.__pre_calls__.get("callback")
         on_error = self.__pre_calls__.get("on_error")
 
+        # Weird behaviour during testing, but oh well
         try:
-            await callback(interaction, **kwds)
+            await callback(self, interaction, **kwds)
         except Exception as exc:
             if on_error:
                 try:
                     await on_error(
+                        self,
                         interaction,
                         (type(exc), exc, exc.__traceback__)
                     )
@@ -254,18 +272,7 @@ class SlashBase(UDAppCommand):
         sc_ff.set_callback(function)
         return sc_ff
 
-    def add_option(self, option: SlashOption) -> None:
-        """Adds a specified option to the command,
-        this method is preferred to be called as it handles slash command limits!
-
-        Parameters
-        ----------
-        option: :class:`SlashOption`
-            new option to be added to slash command
-        """
-        if (self._total_chars() + option._total_chars()) > 4000:
-            raise SlashCommandError("Slash command exceeded 4k characters")
-        if (len(self.options) + 1) > 25:
-            raise SlashCommandError("Slash command must have less then 25 options")
-
-        self.options.append(option)
+    @property
+    def type(self):
+        """ Returns the type of command, always ``1`` """
+        return ApplicationCommandType.CHAT_INPUT
