@@ -21,6 +21,7 @@ from .guild_sched_event import (
 )
 from .message import Message, MessageReference, WebhookMessage
 from .interaction import  (
+    InteractionSlashOption,
     InteractionData,
     Interaction,
     IMessageFlags

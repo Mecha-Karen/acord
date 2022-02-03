@@ -26,6 +26,7 @@ from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer
 from .voice.core import VoiceConnection
 from .voice.udp import UDPConnection
+from .ext.application_commands import *
 
 SelectOption.__annotations__['emoji'] = Optional[PartialEmoji]
 Button.__annotations__['emoji'] = Optional[PartialEmoji]
@@ -45,6 +46,8 @@ Invite.update_forward_refs()
 Interaction.update_forward_refs()
 Message.update_forward_refs()
 GuildTemplate.update_forward_refs()
+GenericApplicationOption.update_forward_refs()
+InteractionSlashOption.update_forward_refs()
 
 
 class VersionInfo(NamedTuple):

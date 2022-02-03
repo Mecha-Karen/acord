@@ -826,6 +826,44 @@ class Guild(pydantic.BaseModel, Hashable):
         )
 
         return AuditLog(conn=self.conn, guild_id=self.id, **(await r.json()))
+        
+    async def fetch_application_command(self, command_id: Snowflake) -> Any:
+        """|coro|
+
+        Fetches an application command that the client has created
+
+        Parameters
+        ----------
+        command_id: :class:`Snowflake`
+            ID of command
+        """
+        from acord import ApplicationCommand
+
+        r = await self.conn.request(
+            Route("GET", 
+            path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands/{command_id}",
+            bucket=dict(guild_id=self.id)
+            ),
+        )
+
+        return ApplicationCommand(conn=self.conn, **(await r.json()))
+
+    async def fetch_application_commands(self) -> Iterator[Any]:
+        """|coro|
+
+        Fetches all application commands that the client has created
+        """
+        from acord import ApplicationCommand
+
+        r = await self.conn.request(
+            Route("GET", 
+            path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands",
+            bucket=dict(guild_id=self.id)
+            ),
+        )
+
+        for d in (await r.json()):
+            yield ApplicationCommand(conn=self.conn, **d)
 
     async def unban(
         self, user_id: Union[User, Snowflake], *, reason: str = None

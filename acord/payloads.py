@@ -23,6 +23,7 @@ from acord.bases import (
     StagePrivacyLevel
     )
 from acord.bases.embeds import _rgb_to_hex
+from acord.ext.application_commands.option import SlashOption
 from .models import (
     Message, 
     MessageReference, 
@@ -535,3 +536,10 @@ class VoiceStateUpdatePresence(pydantic.BaseModel):
     channel_id: Optional[Snowflake]
     self_mute: bool
     self_deaf: bool
+
+
+class ApplicationCommandEditPayload(pydantic.BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    options: Optional[SlashOption]
+    default_permission: Optional[str]

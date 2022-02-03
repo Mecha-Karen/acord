@@ -4,6 +4,9 @@ import logging
 import warnings
 import sys
 import traceback
+from numpy import partition
+
+from sympy import N
 
 from acord.core.abc import Route
 from acord.core.signals import gateway
@@ -13,14 +16,17 @@ from acord.payloads import (
     GenericWebsocketPayload, 
     StageInstanceCreatePayload,
     VoiceStateUpdatePresence,
-) 
+)
+from acord.ext.application_commands import (
+    ApplicationCommand, UDAppCommand
+)
 
-from typing import Any, Coroutine, Dict, List, Union, Callable, Optional
+from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
 
 from acord.bases import (
     Intents, Presence, _C
 )
-from acord.models import Message, User, Channel, Guild, TextChannel, Stage
+from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
 from .handler import handle_websocket
@@ -100,6 +106,7 @@ class Client(object):
         self.session_id = None
         self.gateway_version = None
         self.user = None
+        self.application_commands = dict()
 
         # When connecting to VC, temporarily stores session_id
         self.awaiting_voice_connections = dict()
@@ -358,7 +365,182 @@ class Client(object):
 
         return Stage(conn=self.http, **(await r.json()))
 
-    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
+    def register_application_command(self, 
+        command: UDAppCommand, *, 
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True
+    ) -> ApplicationCommand:
+        """Registers application command internally before client is ran,
+        after client is ran this method is redundant.
+        Consider using :meth:`Client.create_application_command`.
+
+        Parameters
+        ----------
+        command: :class:`UDAppCommand`
+            .. note::
+                :class:`UDAppCommand` represents any class which inherits it,
+                this includes SlashBase.
+            Command to register internally, to be dispatched.
+        guild_ids: Union[List[:class:`int`], None]
+            Additional guild IDs to restrict command to,
+            if value is set to:
+                * ``None``: Reads from class (Default option)
+                * ``[]`` (Empty List): Makes it global
+
+            .. note::
+                If final value is false,
+                command will be registered globally
+        extend: :class:`bool`
+            Whether to extend current guild ids from the command class
+        """
+        if guild_ids and extend:
+            command.guild_ids = command.guild_ids + guild_ids
+        elif guild_ids:
+            command.guild_ids = guild_ids
+        elif extend == []:
+            command.guild_ids = []
+
+        exists = self.application_commands.get(command.name)
+        if exists:
+            c = []
+            if isinstance(exists, list):
+                check = any(i for i in exists if i.type == command.type)
+                c.extend(exists)
+            else:
+                check = exists.type == command.type
+                c.append(exists)
+
+            if check is True:
+                raise ApplicationCommandError("Duplicate application command provided")
+
+        else:
+            c = command
+
+        self.application_commands.update({command.name: command})
+
+    async def create_application_command(self,
+        command: UDAppCommand, *, 
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True
+    ) -> Union[ApplicationCommand, List[ApplicationCommand]]:
+        """|coro|
+
+        Creates an application command from a :class:`UDAppCommand` class.
+
+        .. note::
+            It can take up to an hour for discord to process the command!
+
+        Parameters
+        ----------
+        same as :meth:`Client.register_application_command`
+        """
+        # Add to cache
+        self.register_application_command(command, guild_ids=guild_ids, extend=extend)
+        d = command.json()
+
+        if not command.guild_ids:
+            r = await self.http.request(
+                Route("POST", path=f"/applications/{self.user.id}/commands"),
+                data=d,    # This is a string
+                headers={"Content-Type": "application/json"}
+            )
+            return ApplicationCommand(conn=self.http, **(await r.json()))
+
+        recvd = []
+
+        for guild_id in set(command.guild_ids):
+            r = await self.http.request(
+                Route("POST", path=f"/applications/{self.user.id}/guilds/{guild_id}/commands"),
+                data=d,
+                headers={"Content-Type": "application/json"},
+            )
+
+            app_cmd = ApplicationCommand(conn=self.http, **(await r.json()))
+            recvd.append(app_cmd)
+        
+        return recvd
+
+    async def bulk_update_global_app_commands(self, commands: List[UDAppCommand]) -> None:
+        """|coro|
+
+        Updates global application commands in bulk
+
+        Parameters
+        ----------
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = f'[{", ".join([i.json() for i in commands])}]'
+        # [{..., }, {..., }]
+
+        await self.http.request(
+            Route("PUT", path=f"/applications/{self.user.id}/commands"),
+            data=json,
+            headers={"Content-Type": "application/json"}
+        )
+
+    async def bulk_update_guild_app_commands(
+        self, 
+        guild_id: Snowflake, 
+        commands: List[UDAppCommand],
+    ) -> None:
+        """|coro|
+
+        Updates application commands for a guild in bulk
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            ID of target guild
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = f'[{", ".join([i.json() for i in commands])}]'
+
+        await self.http.request(
+            Route(
+                "PUT", 
+                path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
+                bucket=dict(guild_id=guild_id)
+            ),
+            data=json,
+            headers={"Content-Type": "application/json"}
+        )
+
+    async def _bulk_write_app_commands(self, exclude: set) -> None:
+        cmds = []
+        for name, commands in self.application_commands.items():
+            if name in exclude:
+                continue
+
+            if isinstance(commands, list):
+                cmds.extend(*set(commands))
+            else:
+                cmds.append(commands)
+
+        partitioned = {"global": []}
+
+        for command in cmds:
+            if not command.guild_ids:
+                partitioned["global"].append(command)
+            else:
+                for guild_id in command.guild_ids:
+                    if guild_id not in partitioned:
+                        partitioned[guild_id] = []
+
+                    partitioned[guild_id].append(command)
+
+        global_ = partitioned.pop("global")
+        if global_:
+            await self.bulk_update_global_app_commands(global_)
+
+        for guild_id, commands in partitioned.items():
+            await self.bulk_update_guild_app_commands(guild_id, commands)
+
+
+    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False,
+            update_app_commands: bool = True, exclude_app_cmds: set = set()
+    ):
         """Runs client, loop blocking.
 
         Parameters
@@ -369,6 +551,12 @@ class Client(object):
             if fails falls back onto :attr:`Client.token`.
         reconnect: :class:`bool`
             Whether to reconnect it first connection fails, defaults to ``True``.
+        resumed: :class:`bool`
+            Whether this connection is being resumed
+        update_add_commands: :class:`bool`
+            Whether to update app commands, *in bulk*.
+        exclude_app_cmds: :class:`set`
+            A set of app names to stop being updated/created
         """
         if (token or self.token) and getattr(self, "_lruPermanent", False):
             warnings.warn(
@@ -384,7 +572,6 @@ class Client(object):
             self.http = HTTPClient(loop=self.loop, token=self.token)
 
         self.http.client = self
-
         self.token = token
 
         # Login to create session
@@ -396,8 +583,11 @@ class Client(object):
                 # If cannot login, tries to revert token
                 # Logins in again
                 # If fails again raises error
+                logger.info("Failed to login, reconnecting")
                 return self.run(token=token, reconnect=False)
             raise
+
+        logger.debug("Client logged in")
 
         coro = self.http._connect(
             token,
@@ -419,7 +609,9 @@ class Client(object):
 
         try:
             logger.debug("Handling websocket")
-            self.loop.run_until_complete(handle_websocket(self, ws))
+            self.loop.run_until_complete(handle_websocket(self, ws, on_ready_scripts=[
+                self._bulk_write_app_commands(exclude_app_cmds) if update_app_commands else None
+            ]))
         except KeyboardInterrupt:
             # Kill connection
             self.loop.run_until_complete(self.disconnect())
@@ -440,7 +632,7 @@ class Client(object):
         for _, vc in self.voice_connections.items():
             await vc.disconnect()
 
-    # Fetch from cache:
+    # NOTE: Fetch from cache:
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
@@ -458,7 +650,7 @@ class Client(object):
         """Returns the channel stored in the internal cache, may be outdated"""
         return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
 
-    # Fetch from API:
+    # NOTE: Fetch from API:
 
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
@@ -502,7 +694,35 @@ class Client(object):
         guild = Guild(conn=self.http, **(await resp.json()))
         self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
 
-    # Get from cache or Fetch from API:
+    async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
+        """|coro|
+
+        Fetches all global application commands registered by the client
+        """
+        r = await self.http.request(
+            Route("GET", path=f"/applications/{self.user.id}/commands"),
+        )
+
+        for d in (await r.json()):
+            yield ApplicationCommand(conn=self.http, **d)
+    
+    async def fetch_glob_app_command(self, command_id: Snowflake) -> ApplicationCommand:
+        """|coro|
+
+        Fetches a global application command registered by the client
+
+        Parameters
+        ----------
+        command_id: :class:`Snowflake`
+            ID of command to fetch
+        """
+        r = await self.http.request(
+            Route("GET", path=f"/applications/{self.user.id}/commands/{command_id}")
+        )
+
+        return ApplicationCommand(conn=self.http, **(await r.json()))
+
+    # NOTE: Get from cache or Fetch from API:
 
     async def gof_channel(self, channel_id: int) -> Optional[Any]:
         """Attempts to get a channel, if not found fetches and adds to cache.
@@ -533,7 +753,7 @@ class Client(object):
         err = sys.exc_info()
         if task is not None:
             _err = task._exception
-            if _err is not None:
+            if _err is not None and isinstance(_err, Exception):
                 err = (type(_err), _err, _err.__traceback__)
 
         logger.error('Failed to run event "{}".'.format(event_method), exc_info=err)

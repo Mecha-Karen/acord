@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from acord.core.decoders import ETF, JSON, decompressResponse
@@ -6,9 +7,19 @@ from acord.voice.core import VoiceConnection
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
+from acord.bases import *
 
 
-async def handle_websocket(self, ws):
+def get_slash_options(interaction: Interaction) -> dict:
+    data = dict()
+
+    for option in interaction.data.options:
+        data.update({option.name: option})
+    return data
+
+
+async def handle_websocket(self, ws, on_ready_scripts=[]):
+    ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
 
     async for message in ws:
         if self.dispatch_on_recv:
@@ -55,9 +66,11 @@ async def handle_websocket(self, ws):
             self.session_id = DATA["session_id"]
             self.gateway_version = DATA["v"]
             self.user = User(conn=self.http, **DATA["user"])
+            
+            for script in ready_scripts:
+                self.loop.create_task(script)
 
             UNAVAILABLE = {i["id"]: i["unavailable"] for i in DATA["guilds"]}
-
             self.INTERNAL_STORAGE["users"].update({self.user.id: self.user})
 
             continue
@@ -66,6 +79,41 @@ async def handle_websocket(self, ws):
 
         elif EVENT == "INTERACTION_CREATE":
             data = Interaction(conn=self.http, **DATA)
+
+            if data.type == InteractionType.APPLICATION_COMMAND:
+                udac = self.application_commands.get(data.data.name)
+
+                if udac is not None:
+                    if isinstance(udac, list):
+                        # Use this to find command
+                        for i in udac:
+                            if i.type == data.data.type:
+                                udac = i
+                                break
+
+                    args, kwds = (), {}
+                    if data.data.type == ApplicationCommandType.CHAT_INPUT:
+                        kwds = get_slash_options(data)
+                    elif data.data.type == ApplicationCommandType.MESSAGE:
+                        message = self.get_message(data.channel_id, data.data.target_id)
+                        if not message:
+                            message = data.data.target_id
+                        args = (message,)
+                    else:
+                        user = self.get_user(data.data.target_id)
+                        if not user:
+                            user = data.data.target_id
+                        args = (user,)
+
+                    fut = self.loop.create_future()
+                    self.loop.create_task(
+                        udac.dispatcher(data, fut, *args, **kwds), 
+                        name=f"app_cmd dispatcher : {udac.name}"
+                    )
+                    
+                    possible_exc = await asyncio.wait_for(fut, None)
+                    if isinstance(possible_exc, Exception):
+                        self.on_error(f"app_cmd dispatcher : {udac.name}")
 
             self.dispatch("interaction_create", data)
 
