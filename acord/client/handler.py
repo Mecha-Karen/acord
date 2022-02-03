@@ -94,7 +94,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                     if data.data.type == ApplicationCommandType.CHAT_INPUT:
                         kwds = get_slash_options(data)
                     elif data.data.type == ApplicationCommandType.MESSAGE:
-                        message = self.get_message(data.data.target_id)
+                        message = self.get_message(data.channel_id, data.data.target_id)
                         if not message:
                             message = data.data.target_id
                         kwds = {"message": message}
