@@ -13,7 +13,7 @@ from acord.bases import _C
 
 
 VALID_ATTR_NAMES = (
-    "name", "description",
+    "name",
     "default_permission",
     "guild_ids", "overwrite",
     "extend"
@@ -28,8 +28,6 @@ EXTENDED_CALLS = (
 class GenericModelCommand(UDAppCommand):
     name: str
     """ name of command """
-    description: str
-    """ description of the command """
     type: ApplicationCommandType
     """ Type of command """
     default_permission: Optional[bool] = True
