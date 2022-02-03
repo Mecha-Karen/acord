@@ -470,8 +470,9 @@ class Client(object):
         commands: List[:class:`UDAppCommand`]
             List of application commands to update
         """
-        json = str([i.json() for i in commands])
+        json = f'[{", ".join([i.json() for i in commands])}]'
         # [{..., }, {..., }]
+
         await self.http.request(
             Route("PUT", path=f"/applications/{self.user.id}/commands"),
             data=json,
@@ -495,7 +496,6 @@ class Client(object):
             List of application commands to update
         """
         json = f'[{", ".join([i.json() for i in commands])}]'
-        print(json)
 
         await self.http.request(
             Route(
@@ -531,7 +531,8 @@ class Client(object):
                     partitioned[guild_id].append(command)
 
         global_ = partitioned.pop("global")
-        await self.bulk_update_global_app_commands(global_)
+        if global_:
+            await self.bulk_update_global_app_commands(global_)
 
         for guild_id, commands in partitioned.items():
             await self.bulk_update_guild_app_commands(guild_id, commands)
