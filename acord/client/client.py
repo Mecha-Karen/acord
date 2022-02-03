@@ -434,7 +434,6 @@ class Client(object):
         # Add to cache
         self.register_application_command(command, guild_ids=guild_ids, extend=extend)
         d = command.json()
-        print(d)
 
         if not command.guild_ids:
             r = await self.http.request(
