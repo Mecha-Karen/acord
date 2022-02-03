@@ -39,7 +39,7 @@ class GenericModelCommand(UDAppCommand):
     extend: bool = True
     __pre_calls__: dict = {}
 
-    def __new__(cls, **kwds):
+    def __new__(cls, *args, **kwds):
         # Generates new command on call
         # Adds pre-existing args from cls to kwds and calls init
         # returning generated slash command
@@ -98,10 +98,11 @@ class GenericModelCommand(UDAppCommand):
         """ :meta private: """
         d = super(GenericModelCommand, self).dict(**kwds)
 
-        d.pop("guild_ids")
-        d.pop("overwrite")
-        d.pop("extend")
-        d.pop("__pre_calls__", None)
+        to_pop = ["guild_ids", "overwrite", "extend", "__pre_calls__"]
+        to_pop.extend(getattr(self, "__ignore__", []))
+
+        for key in to_pop:
+            d.pop(key, None)
 
         return d
 
