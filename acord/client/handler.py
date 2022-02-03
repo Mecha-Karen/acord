@@ -18,7 +18,8 @@ def get_slash_options(interaction: Interaction) -> dict:
     return data
 
 
-async def handle_websocket(self, ws):
+async def handle_websocket(self, ws, on_ready_scripts=[]):
+    ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
 
     async for message in ws:
         if self.dispatch_on_recv:
@@ -65,9 +66,11 @@ async def handle_websocket(self, ws):
             self.session_id = DATA["session_id"]
             self.gateway_version = DATA["v"]
             self.user = User(conn=self.http, **DATA["user"])
+            
+            for script in ready_scripts:
+                self.loop.create_task(script)
 
             UNAVAILABLE = {i["id"]: i["unavailable"] for i in DATA["guilds"]}
-
             self.INTERNAL_STORAGE["users"].update({self.user.id: self.user})
 
             continue

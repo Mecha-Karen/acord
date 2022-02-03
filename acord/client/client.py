@@ -4,6 +4,9 @@ import logging
 import warnings
 import sys
 import traceback
+from numpy import partition
+
+from sympy import N
 
 from acord.core.abc import Route
 from acord.core.signals import gateway
@@ -457,7 +460,86 @@ class Client(object):
         
         return recvd
 
-    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False):
+    async def bulk_update_global_app_commands(self, commands: List[UDAppCommand]) -> None:
+        """|coro|
+
+        Updates global application commands in bulk
+
+        Parameters
+        ----------
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = str([i.json() for i in commands])
+        # [{..., }, {..., }]
+        await self.http.request(
+            Route("PUT", path=f"/applications/{self.user.id}/commands"),
+            data=json,
+            headers={"Content-Type": "application/json"}
+        )
+
+    async def bulk_update_guild_app_commands(
+        self, 
+        guild_id: Snowflake, 
+        commands: List[UDAppCommand],
+    ) -> None:
+        """|coro|
+
+        Updates application commands for a guild in bulk
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            ID of target guild
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = f'[{", ".join([i.json() for i in commands])}]'
+        print(json)
+
+        await self.http.request(
+            Route(
+                "PUT", 
+                path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
+                bucket=dict(guild_id=guild_id)
+            ),
+            data=json,
+            headers={"Content-Type": "application/json"}
+        )
+
+    async def _bulk_write_app_commands(self, exclude: set) -> None:
+        cmds = []
+        for name, commands in self.application_commands.items():
+            if name in exclude:
+                continue
+
+            if isinstance(commands, list):
+                cmds.extend(*set(commands))
+            else:
+                cmds.append(commands)
+
+        partitioned = {"global": []}
+
+        for command in cmds:
+            if not command.guild_ids:
+                partitioned["global"].append(command)
+            else:
+                for guild_id in command.guild_ids:
+                    if guild_id not in partitioned:
+                        partitioned[guild_id] = []
+
+                    partitioned[guild_id].append(command)
+
+        global_ = partitioned.pop("global")
+        await self.bulk_update_global_app_commands(global_)
+
+        for guild_id, commands in partitioned.items():
+            await self.bulk_update_guild_app_commands(guild_id, commands)
+
+
+    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False,
+            update_app_commands: bool = True, exclude_app_cmds: set = set()
+    ):
         """Runs client, loop blocking.
 
         Parameters
@@ -468,6 +550,12 @@ class Client(object):
             if fails falls back onto :attr:`Client.token`.
         reconnect: :class:`bool`
             Whether to reconnect it first connection fails, defaults to ``True``.
+        resumed: :class:`bool`
+            Whether this connection is being resumed
+        update_add_commands: :class:`bool`
+            Whether to update app commands, *in bulk*.
+        exclude_app_cmds: :class:`set`
+            A set of app names to stop being updated/created
         """
         if (token or self.token) and getattr(self, "_lruPermanent", False):
             warnings.warn(
@@ -483,7 +571,6 @@ class Client(object):
             self.http = HTTPClient(loop=self.loop, token=self.token)
 
         self.http.client = self
-
         self.token = token
 
         # Login to create session
@@ -495,8 +582,11 @@ class Client(object):
                 # If cannot login, tries to revert token
                 # Logins in again
                 # If fails again raises error
+                logger.info("Failed to login, reconnecting")
                 return self.run(token=token, reconnect=False)
             raise
+
+        logger.debug("Client logged in")
 
         coro = self.http._connect(
             token,
@@ -518,7 +608,9 @@ class Client(object):
 
         try:
             logger.debug("Handling websocket")
-            self.loop.run_until_complete(handle_websocket(self, ws))
+            self.loop.run_until_complete(handle_websocket(self, ws, on_ready_scripts=[
+                self._bulk_write_app_commands(exclude_app_cmds) if update_app_commands else None
+            ]))
         except KeyboardInterrupt:
             # Kill connection
             self.loop.run_until_complete(self.disconnect())
