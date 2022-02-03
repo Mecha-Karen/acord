@@ -6,7 +6,7 @@ from acord import (
     Interaction, Message, Snowflake
 )
 
-TESTING_GUILD_ID = 740523643980873789  # Put your actual ID here
+TESTING_GUILD_ID = ...  # Put your actual ID here
 bookmarks: dict = {}
 
 
@@ -43,4 +43,4 @@ client = Client(intents=Intents.ALL)
 client.register_application_command(Bookmark(client=client))
 
 if __name__ == "__main__":
-    client.run("NzQxNzE0NTcxNjYzNzY5NjUw.Xy7lhg.r-QKEtP6pA_JQ0xzhtTSk3006dU")
+    client.run("TOKEN")
