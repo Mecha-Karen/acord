@@ -1,4 +1,7 @@
 from __future__ import annotations
+import inspect
+from subprocess import call
+import pydantic
 from typing import List, Optional
 
 from .option import SlashOption
@@ -10,8 +13,15 @@ from acord.bases import _C
 
 VALID_ATTR_NAMES = (
     "name", "description",
-    "callback", "options",
+    "options",
     "default_permission",
+    "guild_ids",
+    "extend", "overwrite"
+)
+
+EXTENDED_CALLS = (
+    "callback",
+    "on_error"
 )
 
 
@@ -27,6 +37,11 @@ class SlashBase(UDAppCommand):
     * direct call to super().__init__
 
     .. note::
+        All args can be passed through the init subclass apart from,
+        ``overwrite`` and ``extend``,
+        read below for further guidance.
+
+    .. note::
         * Max 25 options
         * Entire slash commands values must be less then 4k characters,
           (Dont panic this is handled for you!)
@@ -34,6 +49,19 @@ class SlashBase(UDAppCommand):
         * Description must be under 100 characters
 
     For a more clearer example make sure to check out the examples in the github repo.
+
+    .. rubric:: Valid on_call names
+    
+    on_call's can be registered directly from creating the class or :meth:`SlashBase.set_call`.
+    
+    Below they are represented as a list,
+    were each element is the function signiture
+
+    callback: [:class:`Interaction`, **options]
+        Called when command is used,
+        must be provided
+    on_error: [:class:`Interaction`, exc_info]
+        Called when an error occurs during handling of command.
 
     Parameters
     ----------
@@ -56,24 +84,26 @@ class SlashBase(UDAppCommand):
     """ name of command """
     description: str
     """ description of the command """
-    callback: _C = None
-    """ Callback for when the command is used """
-    on_error: Optional[_C] = None
-    """ Callback for when an error occurs during handling of command """
     options: Optional[List[SlashOption]] = []
     """ array of options (your parameters) """
     default_permission: Optional[bool] = True
     """ whether the command is enabled by default when the app is added to a guild """
     guild_ids: Optional[List[int]] = None
-    """ list of guilds to  """
+    """ list of guilds to """
+
+    overwrite: bool = False
+    extend: bool = True
+    __pre_calls__: dict = {}
 
     def dict(self, **kwds) -> dict:
         """ :meta private: """
         d = super(SlashBase, self).dict(**kwds)
 
-        d.pop("callback")
         d.pop("guild_ids")
-        d.pop("on_error")
+        d.pop("overwrite")
+        d.pop("extend")
+        d.pop("__pre_calls__", None)
+
         d["type"] = ApplicationCommandType.CHAT_INPUT
 
         return d
@@ -82,7 +112,7 @@ class SlashBase(UDAppCommand):
         # Generates new slash command on call
         # Adds pre-existing args from cls to kwds and calls init
         # returning generated slash command
-        extend = kwds.get("extend", False) or hasattr(cls, "__extend_if_provided")
+        extend = kwds.get("extend", False) or getattr(cls, "extend", False)
 
         for attr in VALID_ATTR_NAMES:
             a_ = getattr(cls, attr, None)
@@ -96,13 +126,16 @@ class SlashBase(UDAppCommand):
 
             kwds.update({attr: a_})
 
-        return super(SlashBase, cls).__new__(cls, **kwds)
+        return super(SlashBase, cls).__new__(cls)
 
     def __init__(self, **kwds) -> None:
-        if not getattr(self, "_extend_if_provided"):
-            self._extend_if_provided = kwds.pop("extend", True)
-        if not getattr(self, "_overwrite_if_exists"):
-            self._overwrite_if_exists = kwds.pop("overwrite", False)
+        __pre_calls__ = {**self.__pre_calls__, **kwds.pop("calls", {})}
+        for call_identifier in EXTENDED_CALLS:
+            if call_identifier in kwds:
+                __pre_calls__[call_identifier] = kwds[call_identifier]
+
+        if "callback" not in __pre_calls__:
+            raise SlashCommandError("Slash command missing callback")
 
         super().__init__(**kwds)
 
@@ -113,8 +146,8 @@ class SlashBase(UDAppCommand):
         # kwds is validated in the second for loop
         extend = kwds.pop("extendable", True)
         overwrite = kwds.pop("overwritable", False)
-        cls._extend_if_provided = extend
-        cls._overwrite_if_exists = overwrite
+        cls.extend = extend
+        cls.overwrite = overwrite
 
         for attr in kwds:
             if attr in VALID_ATTR_NAMES:
@@ -125,6 +158,11 @@ class SlashBase(UDAppCommand):
 
             field = SlashBase.__fields__[attr]
             field.validate(n_attr, {}, loc=field.alias)
+
+        setattr(cls, "__pre_calls__", {})
+        for attr in EXTENDED_CALLS:
+            if hasattr(cls, attr):
+                cls.__pre_calls__[attr] = getattr(cls, attr)
 
         return cls
 
@@ -142,7 +180,26 @@ class SlashBase(UDAppCommand):
         
         return total
 
-    async def dispatcher(self, interaction, **kwds) -> int:
+    def set_call(self, name: str, function: _C) -> None:
+        f"""|coro|
+
+        Registers a function to be called on a certain condition,
+        class must have "callback" registered and is done when intiating the class.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            Name of call, any from:
+
+            {", ".join(EXTENDED_CALLS)}
+        function: Callable[..., Coroutine]
+            A coroutine function to be called on dispatch
+        """
+        if not inspect.iscoroutinefunction(function):
+            raise TypeError("Function must be a coroutine function")
+        self.__pre_calls__.update({name: function})
+
+    async def dispatcher(self, interaction, future, **kwds) -> int:
         """|coro|
 
         Default dispatch handler for when the slash command is used,
@@ -161,20 +218,25 @@ class SlashBase(UDAppCommand):
         # 0 => Dispatched without error
         # 1 => Dispatched but an error occured
         # Exception => Dispatched but an error occured with both callback and error handler
+        callback = self.__pre_calls__.get("callback")
+        on_error = self.__pre_calls__.get("on_error")
+
         try:
-            await self.callback(interaction, **kwds)
+            await callback(interaction, **kwds)
         except Exception as exc:
-            if self.callback and self.on_error:
+            if on_error:
                 try:
-                    await self.on_error(
+                    await on_error(
                         interaction,
                         (type(exc), exc, exc.__traceback__)
                     )
                 except Exception as e_exc:
-                    return e_exc
+                    return future.set_result(e_exc)
+            else:
+                future.set_result(exc)
         else:
-            return 0
-        return 1
+            return future.set_result(0)
+        return future.set_result(1)
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
@@ -188,9 +250,9 @@ class SlashBase(UDAppCommand):
         **kwds:
             Additional kwargs such as "name", "description".
         """
-        kwds.update(callback=function)
-
-        return cls(**kwds)
+        sc_ff = cls(**kwds)
+        sc_ff.set_callback(function)
+        return sc_ff
 
     def add_option(self, option: SlashOption) -> None:
         """Adds a specified option to the command,
