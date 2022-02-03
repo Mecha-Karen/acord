@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from acord.core.decoders import ETF, JSON, decompressResponse
@@ -6,6 +7,15 @@ from acord.voice.core import VoiceWebsocket
 from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
+from acord.bases import *
+
+
+def get_slash_options(interaction: Interaction) -> dict:
+    data = dict()
+
+    for option in interaction.data.options:
+        data.update({option.name: option})
+    return data
 
 
 async def handle_websocket(self, ws):
@@ -66,6 +76,32 @@ async def handle_websocket(self, ws):
 
         elif EVENT == "INTERACTION_CREATE":
             data = Interaction(conn=self.http, **DATA)
+
+            if data.type == InteractionType.APPLICATION_COMMAND:
+                udac = self.application_commands.get(data.data.name)
+
+                if udac is not None:
+                    if isinstance(udac, list):
+                        # Use this to find command
+                        for i in udac:
+                            if i.type == data.data.type:
+                                udac = i
+                                break
+
+                    if data.data.type == ApplicationCommandType.CHAT_INPUT:
+                        options = get_slash_options(data)
+                    else:
+                        options = {}
+
+                    fut = self.loop.create_future()
+                    self.loop.create_task(
+                        udac.dispatcher(data, fut, **options), 
+                        name=f"app_cmd dispatcher : {udac.name}"
+                    )
+                    
+                    possible_exc = await asyncio.wait_for(fut, None)
+                    if isinstance(possible_exc, Exception):
+                        self.on_error(f"app_cmd dispatcher : {udac.name}")
 
             self.dispatch("interaction_create", data)
 
