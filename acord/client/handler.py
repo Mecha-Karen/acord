@@ -91,22 +91,23 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                                 udac = i
                                 break
 
+                    args, kwds = (), {}
                     if data.data.type == ApplicationCommandType.CHAT_INPUT:
                         kwds = get_slash_options(data)
                     elif data.data.type == ApplicationCommandType.MESSAGE:
                         message = self.get_message(data.channel_id, data.data.target_id)
                         if not message:
                             message = data.data.target_id
-                        kwds = {"message": message}
+                        args = (message,)
                     else:
                         user = self.get_user(data.data.target_id)
                         if not user:
                             user = data.data.target_id
-                        kwds = {"user": user}
+                        args = (user,)
 
                     fut = self.loop.create_future()
                     self.loop.create_task(
-                        udac.dispatcher(data, fut, **kwds), 
+                        udac.dispatcher(data, fut, *args, **kwds), 
                         name=f"app_cmd dispatcher : {udac.name}"
                     )
                     
