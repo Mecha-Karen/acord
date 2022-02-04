@@ -6,7 +6,7 @@ from pydantic.color import Color
 import datetime
 
 
-def _rgb_to_hex(rgb) -> int:
+def _rgb_to_hex(rgb) -> str:
     string = ""
     for i in rgb:
         val = hex(i)[2:]
@@ -17,7 +17,7 @@ def _rgb_to_hex(rgb) -> int:
     return string
 
 
-class Color(Color):
+class EmbedColor(Color):
     def __init__(self, color) -> None:
         if isinstance(color, int):
             # Converts int into a 6 char hex code
@@ -72,6 +72,12 @@ class EmbedProvidor(pydantic.BaseModel):
 
 
 class Embed(pydantic.BaseModel):
+    class Config(pydantic.BaseConfig):
+        allow_population_by_field_name = True
+        fields = {
+            "color": {"alias": "colour"}
+        }
+
     """An object representing a discord embed"""
 
     title: Optional[str]
@@ -86,7 +92,7 @@ class Embed(pydantic.BaseModel):
     """ Embed title hyperlink """
     timestamp: Optional[datetime.datetime]
     """ Embed timestamp """
-    color: Optional[Color]
+    color: Optional[EmbedColor]
     """Embed colour,
     can be any value as per `CSS3 specifications <http://www.w3.org/TR/css3-color/#svg-color>`_
 
@@ -240,9 +246,8 @@ class Embed(pydantic.BaseModel):
 
     def dict(self, *args, **kwargs) -> dict:
         # :meta private:
-        # Override pydantic to return `Color` as a hex
+        # Override pydantic to return `EmbedColor` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
-        self.color = self.color or self.colour
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color

@@ -1011,7 +1011,7 @@ class Guild(pydantic.BaseModel, Hashable):
             if not provided sets to ``new role``
         permissions: :class:`Permissions`
             Role permissions
-        color: :class:`Color`
+        color: :class:`EmbedColor`
             Colour of role,
             for reference checkout :attr:`Embed.color`
         hoist: :class:`bool`

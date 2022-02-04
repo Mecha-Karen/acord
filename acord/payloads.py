@@ -7,7 +7,7 @@ import base64
 from acord.bases import (
     File,
     Embed,
-    Color,
+    EmbedColor,
     Permissions,
     AllowedMentions,
     PermissionsOverwrite,
@@ -268,7 +268,7 @@ class MemberEditPayload(pydantic.BaseModel):
 class RoleCreatePayload(pydantic.BaseModel):
     name: Optional[str]
     permissions: Optional[Permissions]
-    color: Optional[Color]
+    color: Optional[EmbedColor]
     hoist: Optional[bool]
     icon: Optional[File]
     unicode_emoji: Optional[str]
@@ -276,7 +276,7 @@ class RoleCreatePayload(pydantic.BaseModel):
 
     def dict(self, *args, **kwargs) -> dict:
         # :meta private:
-        # Override pydantic to return `Color` as a hex
+        # Override pydantic to return `EmbedColor` as a hex
         data = super(RoleCreatePayload, self).dict(*args, **kwargs)
 
         if self.color:
@@ -305,7 +305,7 @@ class RoleMovePayload(pydantic.BaseModel):
 class RoleEditPayload(pydantic.BaseModel):
     name: Optional[str]
     permissions: Optional[Permissions]
-    color: Optional[Color]
+    color: Optional[EmbedColor]
     hoist: Optional[bool]
     icon: Optional[File]
     unicode_emoji: Optional[str]
@@ -313,7 +313,7 @@ class RoleEditPayload(pydantic.BaseModel):
 
     def dict(self, **kwargs) -> dict:
         # :meta private:
-        # Override pydantic to return `Color` as a hex
+        # Override pydantic to return `EmbedColor` as a hex
         kwargs.update({"exclude": {"file"}})
         data = super(RoleEditPayload, self).dict(**kwargs)
 
