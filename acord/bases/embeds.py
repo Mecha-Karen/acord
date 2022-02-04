@@ -106,7 +106,7 @@ class Embed(pydantic.BaseModel):
         Embed(color="#LongHex")
         Embed(color="#ShortHex")
         Embed(color="Hex or ShortHex")
-        Embed(color=Hex)
+        Embed(color=HexInt)
         Embed(color="blue")
     """
     footer: Optional[EmbedFooter]
@@ -121,7 +121,7 @@ class Embed(pydantic.BaseModel):
     """ Embed Providor """
     author: Optional[EmbedAuthor]
     """ Embed author """
-    fields: Optional[List[EmbedField]]
+    fields: List[EmbedField] = []
     """ Embed fields """
 
     @pydantic.validator("title")
@@ -204,13 +204,13 @@ class Embed(pydantic.BaseModel):
         """
         field = EmbedField(**data)
 
-        fields = self.fields
+        fields = self.fields    # type: List[EmbedField]
 
         if (len(fields) + 1) > 21:
             raise ValueError("Embed cannot contain more then 21 fields")
 
         fields.append(field)
-        self.fields = field
+        self.fields = field     # type: ignore
 
     def remove_field(self, index: int) -> Optional[EmbedField]:
         """
@@ -248,8 +248,8 @@ class Embed(pydantic.BaseModel):
         # :meta private:
         # Override pydantic to return `EmbedColor` as a hex
         data = super(Embed, self).dict(*args, **kwargs)
-        if self.color:
-            color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
+        if data["color"] is not None:
+            color = int(_rgb_to_hex(data["color"].as_rgb_tuple(alpha=False)), 16)
             data["color"] = color
 
         return data
