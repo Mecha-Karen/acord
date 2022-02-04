@@ -12,17 +12,9 @@ from acord.errors import ApplicationCommandError
 from acord.bases import _C
 
 
-VALID_ATTR_NAMES = (
-    "name",
-    "default_permission",
-    "guild_ids", "overwrite",
-    "extend"
-)
+VALID_ATTR_NAMES = ("name", "default_permission", "guild_ids", "overwrite", "extend")
 
-EXTENDED_CALLS = (
-    "callback",
-    "on_error"
-)
+EXTENDED_CALLS = ("callback", "on_error")
 
 
 class GenericModelCommand(UDAppCommand):
@@ -95,7 +87,7 @@ class GenericModelCommand(UDAppCommand):
         return cls
 
     def dict(self, **kwds) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         d = super(GenericModelCommand, self).dict(**kwds)
 
         to_pop = ["guild_ids", "overwrite", "extend", "__pre_calls__"]
@@ -154,9 +146,7 @@ class GenericModelCommand(UDAppCommand):
             if on_error:
                 try:
                     await on_error(
-                        self,
-                        interaction,
-                        (type(exc), exc, exc.__traceback__)
+                        self, interaction, (type(exc), exc, exc.__traceback__)
                     )
                 except Exception as e_exc:
                     return future.set_result(e_exc)
@@ -168,7 +158,7 @@ class GenericModelCommand(UDAppCommand):
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
-        """Generates slash command from a function, 
+        """Generates slash command from a function,
         taking same kwargs and options as intiating the command normally.
 
         Parameters
@@ -185,6 +175,7 @@ class GenericModelCommand(UDAppCommand):
 
 # NOTE: The actual commands
 
+
 class UserCommand(GenericModelCommand):
     """User commands are commands that can be ran by right clicking a user
 
@@ -200,6 +191,7 @@ class UserCommand(GenericModelCommand):
     .. note::
         User may be the ID if cannot be fetched from cache
     """
+
     def __init__(self, **kwds) -> None:
         kwds.update({"type": ApplicationCommandType.USER})
 
@@ -221,6 +213,7 @@ class MessageCommand(GenericModelCommand):
     .. note::
         Message may be the ID if cannot be fetched from cache
     """
+
     def __init__(self, **kwds) -> None:
         kwds.update({"type": ApplicationCommandType.MESSAGE})
 

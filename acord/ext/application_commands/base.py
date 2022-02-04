@@ -16,6 +16,7 @@ class UDAppCommand(pydantic.BaseModel, Hashable):
     """Identifier for all user defined slash commands,
     e.g. classes such as SlashBase.
     """
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -80,8 +81,6 @@ class ApplicationCommand(pydantic.BaseModel):
 
         m = _payload_dict_to_json(ApplicationCommandEditPayload, **data)
 
-        r = await self.conn.request(
-            Route("PATCH", path=path, data=m)
-        )
+        r = await self.conn.request(Route("PATCH", path=path, data=m))
 
         return ApplicationCommand(conn=self.conn, **(await r.json()))

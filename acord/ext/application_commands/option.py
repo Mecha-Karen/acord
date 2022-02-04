@@ -50,7 +50,7 @@ class GenericApplicationOption(pydantic.BaseModel):
 
         for attr in self.__annotations__:
             attr_value = getattr(self, attr)
-            
+
             if hasattr(attr_value, "_total_chars"):
                 total += attr_value._total_chars()
             else:
@@ -63,17 +63,24 @@ class SlashOption(GenericApplicationOption):
     """Used for validating options in slash commands.
     This class should be used instead of GenericApplicationOption.
 
-    **Rules:** 
+    **Rules:**
     * A SlashOption which is acting as a group may not have another group within it
     * autocomplete must be ``False`` when choices is provided
     * Must be less then 25 choices
     """
+
     def __init__(self, **kwds) -> None:
         super().__init__(**kwds)
 
         if self.type == ApplicationCommandOptionType.SUB_COMMAND_GROUP:
-            if any(i for i in self.options if i.type == ApplicationCommandOptionType.SUB_COMMAND_GROUP):
-                raise SlashOptionError("Slash option group may not contain another group")
+            if any(
+                i
+                for i in self.options
+                if i.type == ApplicationCommandOptionType.SUB_COMMAND_GROUP
+            ):
+                raise SlashOptionError(
+                    "Slash option group may not contain another group"
+                )
         else:
             if self.options:
                 raise SlashOptionError("Only sub command groups may have options")

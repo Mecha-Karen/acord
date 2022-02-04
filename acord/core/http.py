@@ -41,6 +41,7 @@ from aiohttp import FormData
 
 logger = logging.getLogger(__name__)
 
+
 class HTTPClient(object):
     """
     Base client used to connection and interact with the websocket.
@@ -113,7 +114,7 @@ class HTTPClient(object):
                     "$browser": self._browser,
                     "$device": self._device,
                     "$referrer": self._referrer,
-                    "$referring_domain": self._referring_domain
+                    "$referring_domain": self._referring_domain,
                 },
             },
         }
@@ -215,8 +216,10 @@ class HTTPClient(object):
 
         # Keep links for API_OBJECTS
         self.ws.client = self
-        
-        self._keep_alive = KeepAlive(self.getIdentityPacket(**identityPacketKwargs), ws, data)
+
+        self._keep_alive = KeepAlive(
+            self.getIdentityPacket(**identityPacketKwargs), ws, data
+        )
         self._keep_alive.start()
 
         return ws

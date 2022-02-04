@@ -66,7 +66,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.session_id = DATA["session_id"]
             self.gateway_version = DATA["v"]
             self.user = User(conn=self.http, **DATA["user"])
-            
+
             for script in ready_scripts:
                 self.loop.create_task(script)
 
@@ -107,10 +107,10 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
                     fut = self.loop.create_future()
                     self.loop.create_task(
-                        udac.dispatcher(data, fut, *args, **kwds), 
-                        name=f"app_cmd dispatcher : {udac.name}"
+                        udac.dispatcher(data, fut, *args, **kwds),
+                        name=f"app_cmd dispatcher : {udac.name}",
                     )
-                    
+
                     possible_exc = await asyncio.wait_for(fut, None)
                     if isinstance(possible_exc, Exception):
                         self.on_error(f"app_cmd dispatcher : {udac.name}")
@@ -305,15 +305,15 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.dispatch("thread_members_update", thread)
 
         elif EVENT == "VOICE_STATE_UPDATE":
-            self.awaiting_voice_connections.update({
-                DATA["guild_id"]: (DATA["session_id"], DATA["channel_id"])
-                })
+            self.awaiting_voice_connections.update(
+                {DATA["guild_id"]: (DATA["session_id"], DATA["channel_id"])}
+            )
 
             m = Member(
-                conn=self.http, 
+                conn=self.http,
                 guild_id=DATA["guild_id"],
                 voice_state=DATA,
-                **DATA["member"]
+                **DATA["member"],
             )
 
             if m.user.id == self.user.id:
@@ -329,7 +329,9 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
         # NOTE: VOICE EVENTS
         elif EVENT == "VOICE_SERVER_UPDATE":
-            session_id, channel_id = self.awaiting_voice_connections.pop(DATA["guild_id"], None)
+            session_id, channel_id = self.awaiting_voice_connections.pop(
+                DATA["guild_id"], None
+            )
 
             if not session_id:
                 continue

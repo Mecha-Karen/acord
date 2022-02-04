@@ -57,40 +57,61 @@ class Presence(pydantic.BaseModel):
 
         if _:
             return _
-        return (time.time() * 1000)
+        return time.time() * 1000
 
 
 def game(name: str, *, status: StatusType = StatusType.online) -> Presence:
-    return Presence(activities=[Activity(
-        name=name,
-        type=ActivityType.GAME,
-    )], status=status)
+    return Presence(
+        activities=[
+            Activity(
+                name=name,
+                type=ActivityType.GAME,
+            )
+        ],
+        status=status,
+    )
 
 
 def listening(name: str, *, status: StatusType = StatusType.online) -> Presence:
-    return Presence(activities=[Activity(
-        name=name,
-        type=ActivityType.LISTENING,
-    )], status=status)
+    return Presence(
+        activities=[
+            Activity(
+                name=name,
+                type=ActivityType.LISTENING,
+            )
+        ],
+        status=status,
+    )
 
 
 def watching(name: str, *, status: StatusType = StatusType.online) -> Presence:
-    return Presence(activities=[Activity(
-        name=name,
-        type=ActivityType.WATCHING,
-    )], status=status)
+    return Presence(
+        activities=[
+            Activity(
+                name=name,
+                type=ActivityType.WATCHING,
+            )
+        ],
+        status=status,
+    )
 
 
 def competing(name: str, *, status: StatusType = StatusType.online) -> Presence:
-    return Presence(activities=[Activity(
-        name=name,
-        type=ActivityType.COMPETING,
-    )], status=status)
+    return Presence(
+        activities=[
+            Activity(
+                name=name,
+                type=ActivityType.COMPETING,
+            )
+        ],
+        status=status,
+    )
 
 
-def streaming(name: str, url: str, *, status: StatusType = StatusType.online) -> Presence:
-    return Presence(activities=[Activity(
-        name=name,
-        type=ActivityType.STREAMING,
-        url=url
-    )], status=status)
+def streaming(
+    name: str, url: str, *, status: StatusType = StatusType.online
+) -> Presence:
+    return Presence(
+        activities=[Activity(name=name, type=ActivityType.STREAMING, url=url)],
+        status=status,
+    )

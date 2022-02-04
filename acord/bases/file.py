@@ -69,7 +69,7 @@ class File(pydantic.BaseModel):
         data = self.fp.read()
         if decode:
             data = data.decode()
-            
+
         self.close()
         return data
 

@@ -32,7 +32,9 @@ class KeepAlive(Thread):
             time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
             self.loop.create_task(self._ws.send_json(self.get_payload()))
-            logger.debug(f"Sent heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds")
+            logger.debug(
+                f"Sent heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds"
+            )
 
         self.join()
 

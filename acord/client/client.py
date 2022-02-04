@@ -13,19 +13,15 @@ from acord.core.signals import gateway
 from acord.core.http import HTTPClient
 from acord.errors import *
 from acord.payloads import (
-    GenericWebsocketPayload, 
+    GenericWebsocketPayload,
     StageInstanceCreatePayload,
     VoiceStateUpdatePresence,
 )
-from acord.ext.application_commands import (
-    ApplicationCommand, UDAppCommand
-)
+from acord.ext.application_commands import ApplicationCommand, UDAppCommand
 
 from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
 
-from acord.bases import (
-    Intents, Presence, _C
-)
+from acord.bases import Intents, Presence, _C
 from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
 
 # Cleans up client class
@@ -119,7 +115,7 @@ class Client(object):
         self.INTERNAL_STORAGE["guilds"] = dict()
         self.INTERNAL_STORAGE["channels"] = dict()
         self.INTERNAL_STORAGE["stage_instances"] = dict()
-        
+
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
         if getattr(self, "_lruPermanent", None):
@@ -208,7 +204,8 @@ class Client(object):
                     fut, check = func
                 except (ValueError, TypeError):
                     tsk = self.loop.create_task(
-                        func(*args, **kwargs), name=f"Acord event dispatch: {event_name}"
+                        func(*args, **kwargs),
+                        name=f"Acord event dispatch: {event_name}",
                     )
                 else:
                     if check(*args, **kwargs) is True:
@@ -218,7 +215,7 @@ class Client(object):
                         to_rmv.append(event)
 
             except Exception:
-                self.on_error(f'{func} ({func_name})', tsk)
+                self.on_error(f"{func} ({func_name})", tsk)
             else:
                 if event.get("once", False):
                     to_rmv.append(event)
@@ -251,7 +248,9 @@ class Client(object):
 
         await self.http.ws.send_json(payload)
 
-    def wait_for(self, event: str, *, check: Callable[..., bool] = None, timeout: int = None) -> _C:
+    def wait_for(
+        self, event: str, *, check: Callable[..., bool] = None, timeout: int = None
+    ) -> _C:
         """|coro|
 
         Wait for a specific gateway event to occur.
@@ -262,7 +261,7 @@ class Client(object):
 
             # Simple Greeting
             data = Client.wait_for(
-                "message", 
+                "message",
                 check=lambda message: message.content == "Hello",
                 timeout=30.0
             )
@@ -300,10 +299,7 @@ class Client(object):
             You may want to checkout the guide for presences.
             Which can be found `here <../guides/presence.html>`_.
         """
-        payload = GenericWebsocketPayload(
-            op=gateway.PRESENCE,
-            d=presence
-        )
+        payload = GenericWebsocketPayload(op=gateway.PRESENCE, d=presence)
 
         logger.debug("Updating presence")
 
@@ -328,10 +324,7 @@ class Client(object):
             is the client deafened
         """
         voice_payload = VoiceStateUpdatePresence(**data)
-        payload = GenericWebsocketPayload(
-            op=gateway.VOICE,
-            d=voice_payload
-        )
+        payload = GenericWebsocketPayload(op=gateway.VOICE, d=voice_payload)
 
         await self.http.ws.send_str(payload.json())
 
@@ -360,15 +353,17 @@ class Client(object):
         r = await self.http.request(
             Route("POST", path=f"/stage-instances", bucket=bucket),
             data=payload.json(),
-            headers=headers
+            headers=headers,
         )
 
         return Stage(conn=self.http, **(await r.json()))
 
-    def register_application_command(self, 
-        command: UDAppCommand, *, 
+    def register_application_command(
+        self,
+        command: UDAppCommand,
+        *,
         guild_ids: Union[List[int], None] = None,
-        extend: bool = True
+        extend: bool = True,
     ) -> ApplicationCommand:
         """Registers application command internally before client is ran,
         after client is ran this method is redundant.
@@ -418,10 +413,12 @@ class Client(object):
 
         self.application_commands.update({command.name: command})
 
-    async def create_application_command(self,
-        command: UDAppCommand, *, 
+    async def create_application_command(
+        self,
+        command: UDAppCommand,
+        *,
         guild_ids: Union[List[int], None] = None,
-        extend: bool = True
+        extend: bool = True,
     ) -> Union[ApplicationCommand, List[ApplicationCommand]]:
         """|coro|
 
@@ -441,8 +438,8 @@ class Client(object):
         if not command.guild_ids:
             r = await self.http.request(
                 Route("POST", path=f"/applications/{self.user.id}/commands"),
-                data=d,    # This is a string
-                headers={"Content-Type": "application/json"}
+                data=d,  # This is a string
+                headers={"Content-Type": "application/json"},
             )
             return ApplicationCommand(conn=self.http, **(await r.json()))
 
@@ -450,17 +447,22 @@ class Client(object):
 
         for guild_id in set(command.guild_ids):
             r = await self.http.request(
-                Route("POST", path=f"/applications/{self.user.id}/guilds/{guild_id}/commands"),
+                Route(
+                    "POST",
+                    path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
+                ),
                 data=d,
                 headers={"Content-Type": "application/json"},
             )
 
             app_cmd = ApplicationCommand(conn=self.http, **(await r.json()))
             recvd.append(app_cmd)
-        
+
         return recvd
 
-    async def bulk_update_global_app_commands(self, commands: List[UDAppCommand]) -> None:
+    async def bulk_update_global_app_commands(
+        self, commands: List[UDAppCommand]
+    ) -> None:
         """|coro|
 
         Updates global application commands in bulk
@@ -476,12 +478,12 @@ class Client(object):
         await self.http.request(
             Route("PUT", path=f"/applications/{self.user.id}/commands"),
             data=json,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
     async def bulk_update_guild_app_commands(
-        self, 
-        guild_id: Snowflake, 
+        self,
+        guild_id: Snowflake,
         commands: List[UDAppCommand],
     ) -> None:
         """|coro|
@@ -499,12 +501,12 @@ class Client(object):
 
         await self.http.request(
             Route(
-                "PUT", 
+                "PUT",
                 path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
-                bucket=dict(guild_id=guild_id)
+                bucket=dict(guild_id=guild_id),
             ),
             data=json,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
     async def _bulk_write_app_commands(self, exclude: set) -> None:
@@ -537,9 +539,14 @@ class Client(object):
         for guild_id, commands in partitioned.items():
             await self.bulk_update_guild_app_commands(guild_id, commands)
 
-
-    def run(self, token: str = None, *, reconnect: bool = True, resumed: bool = False,
-            update_app_commands: bool = True, exclude_app_cmds: set = set()
+    def run(
+        self,
+        token: str = None,
+        *,
+        reconnect: bool = True,
+        resumed: bool = False,
+        update_app_commands: bool = True,
+        exclude_app_cmds: set = set(),
     ):
         """Runs client, loop blocking.
 
@@ -609,9 +616,17 @@ class Client(object):
 
         try:
             logger.debug("Handling websocket")
-            self.loop.run_until_complete(handle_websocket(self, ws, on_ready_scripts=[
-                self._bulk_write_app_commands(exclude_app_cmds) if update_app_commands else None
-            ]))
+            self.loop.run_until_complete(
+                handle_websocket(
+                    self,
+                    ws,
+                    on_ready_scripts=[
+                        self._bulk_write_app_commands(exclude_app_cmds)
+                        if update_app_commands
+                        else None
+                    ],
+                )
+            )
         except KeyboardInterrupt:
             # Kill connection
             self.loop.run_until_complete(self.disconnect())
@@ -636,7 +651,9 @@ class Client(object):
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("messages", dict()).get(f"{channel_id}:{message_id}")
+        return self.INTERNAL_STORAGE.get("messages", dict()).get(
+            f"{channel_id}:{message_id}"
+        )
 
     def get_user(self, user_id: int) -> Optional[User]:
         """Returns the user stored in the internal cache, may be outdated"""
@@ -703,9 +720,9 @@ class Client(object):
             Route("GET", path=f"/applications/{self.user.id}/commands"),
         )
 
-        for d in (await r.json()):
+        for d in await r.json():
             yield ApplicationCommand(conn=self.http, **d)
-    
+
     async def fetch_glob_app_command(self, command_id: Snowflake) -> ApplicationCommand:
         """|coro|
 
@@ -732,7 +749,7 @@ class Client(object):
         if channel is None:
             return await self.fetch_channel(channel_id)
         return channel
-    
+
     @property
     def guilds(self):
         return self.INTERNAL_STORAGE["guilds"]
@@ -740,7 +757,7 @@ class Client(object):
     # NOTE: default event handlers
 
     async def on_voice_server_update(self, vc) -> None:
-        """ :meta private: """
+        """:meta private:"""
         # handles dispatch when client joins VC
         # no need to worry about tasks and threads since this is run as a task
         await vc.connect()

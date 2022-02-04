@@ -14,7 +14,7 @@ class BaseExc(Exception):
             return attrs[__name]
         except (KeyError, AttributeError):
             pass
-  
+
         return object.__getattribute__(self, __name)
 
 
@@ -24,15 +24,15 @@ class HTTPException(BaseExc):
 
 
 class SlashOptionError(BaseExc):
-    """ Raised when validating slash option fails """
+    """Raised when validating slash option fails"""
 
 
 class SlashCommandError(BaseExc):
-    """ Raised when validated slash command fails """
+    """Raised when validated slash command fails"""
 
 
 class ApplicationCommandError(BaseExc):
-    """ Raised when an error occurs with application commands """
+    """Raised when an error occurs with application commands"""
 
 
 class GatewayConnectionRefused(BaseExc):

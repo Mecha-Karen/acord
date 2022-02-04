@@ -3,10 +3,7 @@ from typing import TypeVar
 Snowflake = TypeVar("Snowflake", bound=int)
 # Simple snowflake object
 
-from .partials import (
-    PartialChannel,
-    PartialEmoji
-)
+from .partials import PartialChannel, PartialEmoji
 from .user import User
 from .application import Application
 from .roles import Role, RoleTags
@@ -17,14 +14,14 @@ from .member import Member
 from .guild_sched_event import (
     GuildScheduledEvent,
     ScheduledEventUser,
-    ScheduledEventMetaData
+    ScheduledEventMetaData,
 )
 from .message import Message, MessageReference, WebhookMessage
-from .interaction import  (
+from .interaction import (
     InteractionSlashOption,
     InteractionData,
     Interaction,
-    IMessageFlags
+    IMessageFlags,
 )
 from .invite import Invite
 from .channels import (
@@ -47,11 +44,6 @@ from .integrations import (
     PartialIntegration,
     Integration,
 )
-from .audit_logs import (
-    AuditLogChange,
-    AuditLogEntryInfo,
-    AuditLogEntry,
-    AuditLog
-)
+from .audit_logs import AuditLogChange, AuditLogEntryInfo, AuditLogEntry, AuditLog
 from .guild_template import GuildTemplate
 from .guild import Guild, Ban

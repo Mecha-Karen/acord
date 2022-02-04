@@ -17,7 +17,6 @@ class InteractionCallback(IntEnum):
     APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8
 
 
-
 class ApplicationCommandType(IntEnum):
     CHAT_INPUT = 1
     USER = 2

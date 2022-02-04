@@ -16,11 +16,7 @@ __author__ = "Mecha Karen"
 from .bases import *
 from .models import *
 from .client import Client
-from .webhooks.main import (
-    Webhook,
-    PartialWebhook,
-    WebhookType
-)
+from .webhooks.main import Webhook, PartialWebhook, WebhookType
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer
@@ -28,8 +24,8 @@ from .voice.core import VoiceConnection
 from .voice.udp import UDPConnection
 from .ext.application_commands import *
 
-SelectOption.__annotations__['emoji'] = Optional[PartialEmoji]
-Button.__annotations__['emoji'] = Optional[PartialEmoji]
+SelectOption.__annotations__["emoji"] = Optional[PartialEmoji]
+Button.__annotations__["emoji"] = Optional[PartialEmoji]
 TextChannel.fetch_invites.__annotations__["return"] = List[Invite]
 TextChannel.create_invite.__annotations__["return"] = List[Invite]
 Invite.__annotations__["guild"] = Optional[Guild]
