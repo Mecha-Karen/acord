@@ -5,10 +5,10 @@ import pydantic
 
 from acord.models import Snowflake, Member, Message, User
 from acord.bases import (
-    Hashable, 
+    Hashable,
     InteractionType,
     InteractionCallback,
-    ComponentTypes, 
+    ComponentTypes,
     SelectOption,
 )
 from acord.payloads import MessageCreatePayload
@@ -59,7 +59,7 @@ class Interaction(pydantic.BaseModel, Hashable):
     application_id: Snowflake
     """ id of the application this interaction is for """
     type: InteractionType
-    """ the type of interaction """ 
+    """ the type of interaction """
     token: str
     """ a continuation token for responding to the interaction """
     version: int
@@ -114,7 +114,10 @@ class Interaction(pydantic.BaseModel, Hashable):
         Deletes message that was created by this interaction
         """
         await self.conn.request(
-            Route("GET", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}")
+            Route(
+                "GET",
+                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
+            )
         )
 
     async def fetch_message(self, message_id: Snowflake):
@@ -125,16 +128,21 @@ class Interaction(pydantic.BaseModel, Hashable):
         from acord import Message
 
         r = await self.conn.request(
-            Route("GET", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}")
+            Route(
+                "GET",
+                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
+            )
         )
 
         return Message(**(await r.json()))
 
-    async def respond(self, *, ack: bool = False, followup: bool = False, **data) -> None:
+    async def respond(
+        self, *, ack: bool = False, followup: bool = False, **data
+    ) -> None:
         """|coro|
 
         Responds to an interaction.
-        
+
         Parameters
         ----------
         flags: :class:`IMessageFlags`
@@ -157,7 +165,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         payload = IMessageCreatePayload(**data)
 
         if not any(
-            i for i in payload.dict() if i in ["content", "files", "embeds", "sticker_ids"]
+            i
+            for i in payload.dict()
+            if i in ["content", "files", "embeds", "sticker_ids"]
         ):
             raise ValueError(
                 "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
@@ -179,10 +189,7 @@ class Interaction(pydantic.BaseModel, Hashable):
                 )
 
         if not followup:
-            payload = _FormPartHelper(
-                type=rmsType,
-                data=payload
-            )
+            payload = _FormPartHelper(type=rmsType, data=payload)
 
         form_data.add_field(
             name="payload_json",
@@ -216,7 +223,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         """
         return await self.edit_response("@original", ack=ack, **data)
 
-    async def edit_response(self, message_id: Snowflake, *, ack: bool = False, **data) -> None:
+    async def edit_response(
+        self, message_id: Snowflake, *, ack: bool = False, **data
+    ) -> None:
         """|coro|
 
         Edits a follow up message sent by interaction
@@ -240,7 +249,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         payload = IMessageCreatePayload(**data)
 
         if not any(
-            i for i in payload.dict() if i in ["content", "files", "embeds", "sticker_ids"]
+            i
+            for i in payload.dict()
+            if i in ["content", "files", "embeds", "sticker_ids"]
         ):
             raise ValueError(
                 "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
@@ -268,6 +279,9 @@ class Interaction(pydantic.BaseModel, Hashable):
         )
 
         await self.conn.request(
-            Route("PATCH", path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}"),
+            Route(
+                "PATCH",
+                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
+            ),
             data=form_data,
         )

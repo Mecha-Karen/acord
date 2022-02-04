@@ -13,7 +13,7 @@ from acord.core.abc import Route
 
 class ExtendedTextMethods:
     def _get_bucket(self):
-        guild_id = getattr(self, 'guild_id', None)
+        guild_id = getattr(self, "guild_id", None)
         return {"channel_id": self.id, "guild_id": guild_id}
 
     @validate_arguments
@@ -78,7 +78,7 @@ class ExtendedTextMethods:
         embeds: *Union[List[:class:`Embed`], :class:`File`]*
             An embed or a list of embeds to send
         components: List[:class:`ActionRow`]
-            A list of action rows to send, 
+            A list of action rows to send,
             refer to `me <../guides/components.html>`_ for a more detailed guide.
         """
         ob = MessageCreatePayload(**data)
@@ -129,7 +129,9 @@ class ExtendedTextMethods:
         Creates a typing indicator in this channel/thread.
         """
         bucket = self._get_bucket()
-        await self.conn.request(Route("POST", path=f"/channels/{self.id}/typing", bucket=bucket))
+        await self.conn.request(
+            Route("POST", path=f"/channels/{self.id}/typing", bucket=bucket)
+        )
 
     async def pins(self) -> Iterator[Message]:
         """|coro|
@@ -137,7 +139,9 @@ class ExtendedTextMethods:
         Fetches channel/thread pins
         """
         bucket = self._get_bucket()
-        r = await self.conn.request(Route("GET", path=f"/channels/{self.id}/pins", bucket=bucket))
+        r = await self.conn.request(
+            Route("GET", path=f"/channels/{self.id}/pins", bucket=bucket)
+        )
         messages = await r.json()
 
         for message in messages:

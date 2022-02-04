@@ -104,6 +104,5 @@ class Invite(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("DELETE", path=f"/invites/{self.code}"),
-            headers=headers
+            Route("DELETE", path=f"/invites/{self.code}"), headers=headers
         )

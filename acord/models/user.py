@@ -95,12 +95,13 @@ class User(pydantic.BaseModel, Hashable):
         creates a DM with this user
         """
         from acord.models import DMChannel
+
         data = json.dumps({"recipient_id": self.id})
 
         r = await self.conn.request(
             Route("POST", path=f"/users/@me/channels"),
             data=data,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         channel = DMChannel(conn=self.conn, **(await r.json()))

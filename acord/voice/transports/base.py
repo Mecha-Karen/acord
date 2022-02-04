@@ -18,6 +18,7 @@ class BaseTransport(abc.ABC):
     sock: :class:`UDPConnection`
         UDP socket class
     """
+
     # recieve and send are not abstract methods as 1 needs to be overwritten for a given transport
 
     __slots__ = ("conn", "sock")
@@ -26,7 +27,9 @@ class BaseTransport(abc.ABC):
         self.conn = conn
         self.sock = conn._sock
 
-    async def recieve(self, *,
+    async def recieve(
+        self,
+        *,
         limit: int = None,
         flags: int = -1,
         decode: bool = False,
@@ -50,7 +53,9 @@ class BaseTransport(abc.ABC):
         """
         raise NotImplementedError
 
-    async def send(self, data: bytes, *, flags: int = 0, c_flags: int = 5, continued: bool = False) -> None:
+    async def send(
+        self, data: bytes, *, flags: int = 0, c_flags: int = 5, continued: bool = False
+    ) -> None:
         """|coro|
 
         Sends data through stream,
@@ -58,7 +63,7 @@ class BaseTransport(abc.ABC):
         To simplify this mess you should call :class:`VoiceConnection._get_audio_packet`.
 
         .. note::
-            When implementing writers, 
+            When implementing writers,
             big files should be handled by you and for sending "complete" payloads,
             call :class:`VoiceConnection.send_audio_packet`.
 
@@ -90,7 +95,7 @@ class BaseTransport(abc.ABC):
     @abc.abstractmethod
     async def cleanup(self) -> None:
         """|coro|
-        
+
         Cleans up any cache, if any.
         Should be implemented by recievers which save last recieved packet,
         and for writers should reset state of the writer

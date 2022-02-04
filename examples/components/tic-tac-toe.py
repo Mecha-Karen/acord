@@ -19,6 +19,7 @@ for i in range(1, 10):
     else:
         row3.add_component(button)
 
+
 def check_board_winner(board):
     for across in board:
         value = sum(across)
@@ -54,6 +55,7 @@ def check_board_winner(board):
 
     return None
 
+
 def to_board(rows):
     board = list()
     for row in rows:
@@ -68,6 +70,7 @@ def to_board(rows):
         board.append(l_row)
     return board
 
+
 class MyClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +81,7 @@ class MyClient(Client):
         print(f"{self.user} is ready!")
 
     async def on_message(self, message: Message) -> Any:
-        """ This is were we handle our tic tac toe game creation """
+        """This is were we handle our tic tac toe game creation"""
         content = message.content.lower()
         name, *args = content.split(" ")
 
@@ -87,18 +90,25 @@ class MyClient(Client):
             try:
                 opponent = message.guild.get_member(int(args[0]))
             except (IndexError, ValueError):
-                return await message.channel.send(content="Invalid or no opponent given! Make sure your using there ID.")
+                return await message.channel.send(
+                    content="Invalid or no opponent given! Make sure your using there ID."
+                )
             else:
                 if not opponent:
                     return await message.channel.send(content="Cannot find this member")
                 if opponent.user.bot:
                     return await message.channel.send(content="Can't play against bots")
 
-            game_message = await message.channel.send(content=f"{message.author}, its your turn!", components=[row1, row2, row3])
-            self.games.update({game_message.id: [message.author, opponent.user, message.author, 0]})
+            game_message = await message.channel.send(
+                content=f"{message.author}, its your turn!",
+                components=[row1, row2, row3],
+            )
+            self.games.update(
+                {game_message.id: [message.author, opponent.user, message.author, 0]}
+            )
 
     async def on_interaction_create(self, interaction: Interaction) -> Any:
-        """ Now we handle our button clicks, lord have mercy """
+        """Now we handle our button clicks, lord have mercy"""
         message = await interaction.message.refetch()
         # Fetch new components
         try:
@@ -107,7 +117,11 @@ class MyClient(Client):
         except KeyError:
             return
 
-        if (not message) or (message.id not in self.games) or (interaction.member.user.id != cur.id):
+        if (
+            (not message)
+            or (message.id not in self.games)
+            or (interaction.member.user.id != cur.id)
+        ):
             return
 
         rows = message.components
@@ -137,10 +151,14 @@ class MyClient(Client):
             if result == "Tie":
                 await message.edit(content="This game ended in a tie!", components=rows)
             elif result == "O":
-                await message.edit(content=f"Congratulations to {auth} for winning!", components=rows)
+                await message.edit(
+                    content=f"Congratulations to {auth} for winning!", components=rows
+                )
             else:
-                await message.edit(content=f"Congratulations to {opp} for winning!", components=rows)
-        
+                await message.edit(
+                    content=f"Congratulations to {opp} for winning!", components=rows
+                )
+
             await interaction.respond(content="Game ended", flags=64)
             self.games.pop(message.id)
         else:

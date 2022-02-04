@@ -15,37 +15,23 @@ class SocketWrapper(socket.socket):
         super().__init__(**kwds)
 
     async def connect(self, addr: tuple) -> None:
-        await self.loop.run_in_executor(
-            None, super().connect, addr
-        )
+        await self.loop.run_in_executor(None, super().connect, addr)
 
     async def close(self) -> None:
-        await self.loop.run_in_executor(
-            None, super().close
-        )
+        await self.loop.run_in_executor(None, super().close)
 
     async def read(self, limit: int, flags: int = 0) -> bytes:
-        return await self.loop.run_in_executor(
-            None, super().recv, limit, flags
-        )
+        return await self.loop.run_in_executor(None, super().recv, limit, flags)
 
     async def write(self, data: bytes, flags: int = 0) -> None:
-        await self.loop.run_in_executor(
-            None, super().send, data, flags 
-        )
+        await self.loop.run_in_executor(None, super().send, data, flags)
 
     async def sendto(self, data, addr) -> None:
-        await self.loop.run_in_executor(
-            None, super().sendto, data, addr
-        )
+        await self.loop.run_in_executor(None, super().sendto, data, addr)
 
 
 class UDPConnection(object):
-    def __init__(self, 
-        host, port, loop,
-        client, vc_Ws, conn_id,
-        **kwds
-    ) -> None:
+    def __init__(self, host, port, loop, client, vc_Ws, conn_id, **kwds) -> None:
         kwds.update({"type": socket.AF_INET, "family": socket.SOCK_DGRAM})
 
         self.host = host
@@ -69,21 +55,29 @@ class UDPConnection(object):
 
         for i in range(5):
             try:
-                logger.debug(f"Attempting to connect to {self.host}:{self.port}, attempt {i}")
+                logger.debug(
+                    f"Attempting to connect to {self.host}:{self.port}, attempt {i}"
+                )
                 await sock.connect((self.host, self.port))
 
                 connected = True
                 break
             except Exception as exc:
                 if exc.args and exc.args[0] in (121, 10060):
-                    logger.warn(f"Failed to connect to {self.host}:{self.port}, retrying ...")
+                    logger.warn(
+                        f"Failed to connect to {self.host}:{self.port}, retrying ..."
+                    )
                     continue
                 raise
 
         if not connected:
-            logger.error(f"Failed to connect to {self.host}:{self.port} after 5 attempts")
-            raise ConnectionRefusedError(f"Unable to connect to endpoint after {i} attempts,\
-                 conn_id={self.conn_id}")
+            logger.error(
+                f"Failed to connect to {self.host}:{self.port} after 5 attempts"
+            )
+            raise ConnectionRefusedError(
+                f"Unable to connect to endpoint after {i} attempts,\
+                 conn_id={self.conn_id}"
+            )
 
         self._sock = sock
         self._sock_event.set()
@@ -100,7 +94,7 @@ class UDPConnection(object):
 
     async def read(self, *, limit: int = None, flags: int = 0) -> bytes:
         limit = limit or self.limit
-        
+
         logger.debug(f"Reading {limit} bytes from {self._sock}")
         return await self._sock.read(limit, flags)
 

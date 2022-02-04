@@ -142,7 +142,10 @@ class Emoji(pydantic.BaseModel, Hashable):
         """
         Checks whether the client is able to use this emoji
         """
-        client_roles = self.conn.client.get_guild(
-            self.guild_id).get_member(self.conn.client.user.id).roles
+        client_roles = (
+            self.conn.client.get_guild(self.guild_id)
+            .get_member(self.conn.client.user.id)
+            .roles
+        )
 
         return any(i for i in client_roles if i in self.roles)

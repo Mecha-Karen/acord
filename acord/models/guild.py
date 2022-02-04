@@ -31,7 +31,7 @@ from acord.models import (
 from acord.utils import _d_to_channel, _payload_dict_to_json
 from acord.payloads import (
     ChannelCreatePayload,
-    GuildCreatePayload, 
+    GuildCreatePayload,
     RoleCreatePayload,
     RoleMovePayload,
     GuildTemplateCreatePayload,
@@ -39,7 +39,7 @@ from acord.payloads import (
     ScheduledEventCreatePayload,
     StickerCreatePayload,
     EmojiCreatePayload,
-    _get_image_mimetype
+    _get_image_mimetype,
 )
 from acord.bases import (
     GuildMessageNotification,
@@ -93,6 +93,7 @@ class Guild(pydantic.BaseModel, Hashable):
         :attr:`Guild.large` may be useful to prevent grabbing members which exist but are not cached.
         This is only applicable when this value is ``True``.
     """
+
     conn: Any  # Connection object - For internal use
 
     id: Snowflake
@@ -517,13 +518,15 @@ class Guild(pydantic.BaseModel, Hashable):
         """
         r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/roles"))
 
-        for role in (await r.json()):
+        for role in await r.json():
             r = Role(guild_id=self.id, **role)
             self.roles.update({r.id: r})
             yield r
 
     @pydantic.validate_arguments
-    async def fetch_prune_count(self, *, days: int = 7, include_roles: List[Role] = list()) -> int:
+    async def fetch_prune_count(
+        self, *, days: int = 7, include_roles: List[Role] = list()
+    ) -> int:
         """|coro|
 
         Fetches guild prune count and returns the count,
@@ -541,21 +544,21 @@ class Guild(pydantic.BaseModel, Hashable):
         roles = ",".join([i.id for i in include_roles])
 
         r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/prune", days=days, include_roles=roles)
+            Route(
+                "GET", path=f"/guilds/{self.id}/prune", days=days, include_roles=roles
+            )
         )
 
-        return (await r.json())['pruned']
+        return (await r.json())["pruned"]
 
     async def fetch_regions(self) -> Iterator[VoiceRegion]:
         """|coro|
 
         Returns an iterator of voice region objects for the guild.
         """
-        r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/regions")
-        )
+        r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/regions"))
 
-        for region in (await r.json()):
+        for region in await r.json():
             yield VoiceRegion(**region)
 
     async def fetch_integrations(self) -> Iterator[Integration]:
@@ -567,7 +570,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/integrations")
         )
 
-        for integration in (await r.json()):
+        for integration in await r.json():
             yield Integration(guild_id=self.id, **integration)
 
     async def fetch_widget_settings(self) -> GuildWidget:
@@ -575,9 +578,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
         Returns the guild widget settings
         """
-        r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/widget")
-        )
+        r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/widget"))
 
         return GuildWidget(**(await r.json()))
 
@@ -588,38 +589,28 @@ class Guild(pydantic.BaseModel, Hashable):
         returns the raw data as of now
         """
         # TODO: Wait for docs of `/widget.json` to be updated
-        r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/widget.json")
-        )
+        r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/widget.json"))
 
-        return (await r.json())
+        return await r.json()
 
     async def fetch_vanity_invite(self) -> Invite:
         """|coro|
 
         Fetches guild vanity invite
         """
-        r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/vanity-url")
-        )
+        r = await self.conn.request(Route("GET", path=f"/guilds/{self.id}/vanity-url"))
         data = await r.json()
 
         self.vanity_url_code = data["code"]
 
-        return Invite(
-            code=data["code"],
-            channel=None,
-            guild=self
-        )
+        return Invite(code=data["code"], channel=None, guild=self)
 
     async def fetch_guild_widget_image(
-        self, 
-        *, 
-        style: GuildWidgetImageStyle = GuildWidgetImageStyle.shield
+        self, *, style: GuildWidgetImageStyle = GuildWidgetImageStyle.shield
     ) -> BytesIO:
         """|coro|
 
-        Fetches guild widget image, 
+        Fetches guild widget image,
         using one of :class:`GuildWidgetImageStyle`.
         Returns :obj:`py:io.BytesIO` with the image in it.
 
@@ -659,7 +650,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/webhooks", bucket=bucket)
         )
 
-        for hook in (await r.json()):
+        for hook in await r.json():
             yield Webhook(adapter=self.conn._session, **hook)
 
     async def fetch_template(self, code: str, /) -> GuildTemplate:
@@ -691,7 +682,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/templates", bucket=bucket)
         )
 
-        for template in (await r.json()):
+        for template in await r.json():
             yield GuildTemplate(conn=self.conn, **template)
 
     async def fetch_event(self, event_id: Snowflake) -> GuildScheduledEvent:
@@ -707,7 +698,11 @@ class Guild(pydantic.BaseModel, Hashable):
         bucket = dict(guild_id=self.id)
 
         r = await self.conn.request(
-            Route("GET", path=f"/guilds/{self.id}/scheduled-events/{event_id}", bucket=bucket)
+            Route(
+                "GET",
+                path=f"/guilds/{self.id}/scheduled-events/{event_id}",
+                bucket=bucket,
+            )
         )
 
         return GuildScheduledEvent(**(await r.json()))
@@ -723,7 +718,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/scheduled-events", bucket=bucket)
         )
 
-        for event in (await r.json()):
+        for event in await r.json():
             yield GuildScheduledEvent(conn=self.conn, **event)
 
     async def fetch_sticker(self, sticker_id: Snowflake) -> Sticker:
@@ -756,7 +751,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/stickers/", bucket=bucket)
         )
 
-        for sticker in (await r.json()):
+        for sticker in await r.json():
             yield Sticker(conn=self.conn, **sticker)
 
     async def fetch_emoji(self, emoji_id: Snowflake) -> Emoji:
@@ -789,14 +784,16 @@ class Guild(pydantic.BaseModel, Hashable):
             Route("GET", path=f"/guilds/{self.id}/emojis/", bucket=bucket)
         )
 
-        for emoji in (await r.json()):
+        for emoji in await r.json():
             yield Emoji(conn=self.conn, **emoji)
 
-    async def fetch_audit_logs(self, *,
+    async def fetch_audit_logs(
+        self,
+        *,
         user_id: Snowflake = None,
         action_type: AuditLogEvent = None,
         before: Snowflake = None,
-        limit: int = 50
+        limit: int = 50,
     ) -> AuditLog:
         """|coro|
 
@@ -816,17 +813,18 @@ class Guild(pydantic.BaseModel, Hashable):
         bucket = dict(guild_id=self.id)
         r = await self.conn.request(
             Route(
-                "GET", bucket=bucket,
+                "GET",
+                bucket=bucket,
                 path=f"/guilds/{self.id}/audit-logs",
                 user_id=user_id,
                 action_type=getattr(action_type, "value", action_type),
                 before=before,
-                limit=limit
+                limit=limit,
             )
         )
 
         return AuditLog(conn=self.conn, guild_id=self.id, **(await r.json()))
-        
+
     async def fetch_application_command(self, command_id: Snowflake) -> Any:
         """|coro|
 
@@ -840,9 +838,10 @@ class Guild(pydantic.BaseModel, Hashable):
         from acord import ApplicationCommand
 
         r = await self.conn.request(
-            Route("GET", 
-            path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands/{command_id}",
-            bucket=dict(guild_id=self.id)
+            Route(
+                "GET",
+                path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands/{command_id}",
+                bucket=dict(guild_id=self.id),
             ),
         )
 
@@ -856,13 +855,14 @@ class Guild(pydantic.BaseModel, Hashable):
         from acord import ApplicationCommand
 
         r = await self.conn.request(
-            Route("GET", 
-            path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands",
-            bucket=dict(guild_id=self.id)
+            Route(
+                "GET",
+                path=f"/applications/{self.conn.client.user_id}/guilds/{self.id}/commands",
+                bucket=dict(guild_id=self.id),
             ),
         )
 
-        for d in (await r.json()):
+        for d in await r.json():
             yield ApplicationCommand(conn=self.conn, **d)
 
     async def unban(
@@ -1012,7 +1012,7 @@ class Guild(pydantic.BaseModel, Hashable):
         permissions: :class:`Permissions`
             Role permissions
         color: :class:`Color`
-            Colour of role, 
+            Colour of role,
             for reference checkout :attr:`Embed.color`
         hoist: :class:`bool`
             Whether to dispay role seperatley
@@ -1026,15 +1026,13 @@ class Guild(pydantic.BaseModel, Hashable):
             reason for creating role
         """
         data = _payload_dict_to_json(RoleCreatePayload, **data)
-        headers = dict({'Content-Type': 'application/json'})
+        headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
-            Route("POST", path=f"/guilds/{self.id}/roles"),
-            data=data,
-            headers=headers
+            Route("POST", path=f"/guilds/{self.id}/roles"), data=data, headers=headers
         )
 
         role = Role(conn=self.conn, **(await r.json()))
@@ -1043,7 +1041,9 @@ class Guild(pydantic.BaseModel, Hashable):
         return role
 
     @pydantic.validate_arguments
-    async def move_roles(self, *positons: RoleMovePayload, reason: str = None) -> Iterator[Role]:
+    async def move_roles(
+        self, *positons: RoleMovePayload, reason: str = None
+    ) -> Iterator[Role]:
         """|coro|
 
         Modify positon of roles in guild
@@ -1057,7 +1057,7 @@ class Guild(pydantic.BaseModel, Hashable):
             * id: :class:`Snowflake`
             * position: :class:`int`
 
-            Were id is the role ID and position is its new position 
+            Were id is the role ID and position is its new position
         """
         payload = json.dumps([i.dict() for i in positons])
         headers = dict({"Content-Type": "application/json"})
@@ -1068,10 +1068,10 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.id}/roles"),
             data=payload,
-            headers=headers
+            headers=headers,
         )
 
-        for role in (await r.json()):
+        for role in await r.json():
             role_ = Role(guild_id=self.id, **role)
             self.roles.update({role_.id: role_})
 
@@ -1084,7 +1084,7 @@ class Guild(pydantic.BaseModel, Hashable):
         days: int = 7,
         compute_prune_count: bool = True,
         include_roles: List[Role] = list(),
-        reason: str = None
+        reason: str = None,
     ) -> Optional[int]:
         """|coro|
 
@@ -1113,15 +1113,17 @@ class Guild(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
-            Route("POST", 
-                path=f"/guilds/{self.id}/prune", 
-                days=days, include_roles=roles,
-                compute_prune_count=str(compute_prune_count).lower()
-                ),
-            headers=headers
+            Route(
+                "POST",
+                path=f"/guilds/{self.id}/prune",
+                days=days,
+                include_roles=roles,
+                compute_prune_count=str(compute_prune_count).lower(),
+            ),
+            headers=headers,
         )
 
-        return (await r.json())['pruned']
+        return (await r.json())["pruned"]
 
     async def edit_widget(self, *, reason: str = None, **data) -> GuildWidget:
         """|coro|
@@ -1140,22 +1142,22 @@ class Guild(pydantic.BaseModel, Hashable):
         headers = dict({"Content-Type": "application/json"})
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
-            Route("PATH", path=f"/guilds/{self.id}/widget"),
-            headers=headers
+            Route("PATH", path=f"/guilds/{self.id}/widget"), headers=headers
         )
 
         return GuildWidget(**(await r.json()))
 
     @pydantic.validate_arguments
     async def edit_welcome_screen(
-        self, *,
+        self,
+        *,
         enabled: bool,
         welcome_channels: List[WelcomeChannel],
         description: str,
-        reason: str
+        reason: str,
     ) -> WelcomeScreen:
         """|coro|
 
@@ -1180,13 +1182,13 @@ class Guild(pydantic.BaseModel, Hashable):
         data = {
             "enabled": enabled,
             "welcome_channels": [i.dict() for i in welcome_channels],
-            "description": description
+            "description": description,
         }
 
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.id}/welcome-screen"),
             headers=headers,
-            data=json.dumps(data)
+            data=json.dumps(data),
         )
 
         return WelcomeScreen(**(await r.json()))
@@ -1208,7 +1210,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("POST", path=f"/guilds/{self.id}/templates"),
             data=payload.json(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         return GuildTemplate(conn=self.conn, **(await r.json()))
@@ -1248,7 +1250,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("POST", path=f"/guilds/{self.id}/scheduled-events"),
             headers=headers,
-            data=payload.json()
+            data=payload.json(),
         )
 
         return GuildScheduledEvent(conn=self.conn, **(await r.json()))
@@ -1298,7 +1300,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("POST", path=f"/guilds/{self.id}/stickers"),
             headers=headers,
-            data=data
+            data=data,
         )
         payload.file.close()
 
@@ -1328,7 +1330,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("POST", path=f"/guilds/{self.id}/emojis"),
             headers=headers,
-            data=payload.json()
+            data=payload.json(),
         )
 
         emoji = Emoji(conn=self.conn, **(await r.json()))
@@ -1377,7 +1379,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await client.http.request(
             Route("POST", path="/guilds"),
             headers={"Content-Type": "application/json"},
-            data=payload.json()
+            data=payload.json(),
         )
 
         return cls(**(await r.json()))
@@ -1407,7 +1409,7 @@ class Guild(pydantic.BaseModel, Hashable):
         r = await client.http.request(
             Route("POST", path=f"/guilds/templates/{code}"),
             data=payload.json(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         return Guild(conn=client.http, **(await r.json()))
@@ -1416,6 +1418,6 @@ class Guild(pydantic.BaseModel, Hashable):
         """|coro|
 
         Deletes this guild permanently,
-        client must be owner 
+        client must be owner
         """
         await self.conn.request(Route("DELETE", path=f"/guilds/{self.id}"))

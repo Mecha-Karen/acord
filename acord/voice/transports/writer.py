@@ -26,8 +26,9 @@ def getFrameDur(x, y):
 
 
 class BasePlayer(BaseTransport):
-    def __init__(self, 
-        conn: VoiceConnection, 
+    def __init__(
+        self,
+        conn: VoiceConnection,
         data: Union[BufferedIOBase, PathLike],
         encoder: Encoder = None,
         **encoder_kwargs
@@ -60,7 +61,9 @@ class BasePlayer(BaseTransport):
 
     def __aiter__(self):
         if self.closed:
-            raise VoiceError("Cannot iterate through transport contents as transport is closed")
+            raise VoiceError(
+                "Cannot iterate through transport contents as transport is closed"
+            )
 
         return self
 
@@ -97,21 +100,29 @@ class BasePlayer(BaseTransport):
 
     async def send(self, data: bytes, *, flags: int = 0) -> None:
         if self.closed:
-            raise VoiceError("Cannot send bytes through transport as transport is closed")
+            raise VoiceError(
+                "Cannot send bytes through transport as transport is closed"
+            )
         mem = await self.encoder.encode(data)
         try:
             # mem is a memoryview object
             # fine to pass through socket as its a WriteOnlyBuffer
             await self.conn.send_audio_packet(
-                mem, self.encoder.config.SAMPLES_PER_FRAME, 
-                has_header=False, sock_flags=flags,
+                mem,
+                self.encoder.config.SAMPLES_PER_FRAME,
+                has_header=False,
+                sock_flags=flags,
             )
         except OSError as exc:
             self.close()
             self._last_send_err = exc
-            raise VoiceError("Cannot send bytes through transport", closed=True) from exc
+            raise VoiceError(
+                "Cannot send bytes through transport", closed=True
+            ) from exc
 
-    async def play(self, c_flags: int = 1, delay: int = 5, *, flags: int = 0) -> Union[None, int]:
+    async def play(
+        self, c_flags: int = 1, delay: int = 5, *, flags: int = 0
+    ) -> Union[None, int]:
 
         await self.conn.change_speaking_state(c_flags, delay)
 
@@ -123,7 +134,9 @@ class BasePlayer(BaseTransport):
                     # Socket closed
                     return 1
 
-                await asyncio.sleep(getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE))
+                await asyncio.sleep(
+                    getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE)
+                )
             except VoiceError as err:
                 if getattr(err, "closed", False):
                     return

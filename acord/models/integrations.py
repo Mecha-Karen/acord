@@ -54,7 +54,7 @@ class PartialIntegration(pydantic.BaseModel, Hashable):
 
         await self.conn.request(
             Route("DELETE", path=f"/guilds/{self.guild_id}/integrations/{self.id}"),
-            headers=headers
+            headers=headers,
         )
 
 

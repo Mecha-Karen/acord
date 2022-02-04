@@ -5,12 +5,12 @@ import imghdr
 import base64
 
 from acord.bases import (
-    File, 
+    File,
     Embed,
     Color,
     Permissions,
-    AllowedMentions, 
-    PermissionsOverwrite, 
+    AllowedMentions,
+    PermissionsOverwrite,
     MessageFlags,
     ActionRow,
     VerificationLevel,
@@ -20,17 +20,17 @@ from acord.bases import (
     ScheduledEventPrivacyLevel,
     ScheduledEventEntityType,
     ScheduledEventStatus,
-    StagePrivacyLevel
-    )
+    StagePrivacyLevel,
+)
 from acord.bases.embeds import _rgb_to_hex
 from acord.ext.application_commands.option import SlashOption
 from .models import (
-    Message, 
-    MessageReference, 
-    Role, 
-    Snowflake, 
+    Message,
+    MessageReference,
+    Role,
+    Snowflake,
     PartialChannel,
-    ScheduledEventMetaData
+    ScheduledEventMetaData,
 )
 
 
@@ -129,8 +129,9 @@ class MessageCreatePayload(pydantic.BaseModel):
     @pydantic.validator("components")
     def _validate_components(cls, rows):
         if len(rows) > 5:
-            raise ValueError('Message cannot contain more then 5 action rows')
+            raise ValueError("Message cannot contain more then 5 action rows")
         return rows
+
 
 class MessageEditPayload(pydantic.BaseModel):
     content: Optional[str]
@@ -161,7 +162,7 @@ class MessageEditPayload(pydantic.BaseModel):
     @pydantic.validator("components")
     def _validate_components(cls, rows):
         if len(rows) > 5:
-            raise ValueError('Message cannot contain more then 5 action rows')
+            raise ValueError("Message cannot contain more then 5 action rows")
         return rows
 
 
@@ -281,7 +282,7 @@ class RoleCreatePayload(pydantic.BaseModel):
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color
-        
+
         if self.icon:
             data["icon"] = _file_to_image_data(self.icon.fp)
             self.icon.close()
@@ -319,7 +320,7 @@ class RoleEditPayload(pydantic.BaseModel):
         if self.color:
             color = int(_rgb_to_hex(self.color.as_rgb_tuple(alpha=False)), 16)
             data["color"] = color
-        
+
         if self.icon:
             data["icon"] = _file_to_image_data(self.icon)
             self.icon.close()
@@ -346,7 +347,7 @@ class WebhookCreatePayload(pydantic.BaseModel):
         return avatar
 
     def dict(self, **kwargs) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         kwargs.update({"exclude": {"avatar"}})
 
         data = super(WebhookCreatePayload, self).dict(**kwargs)
@@ -376,7 +377,7 @@ class WebhookEditPayload(pydantic.BaseModel):
         return avatar
 
     def dict(self, **kwargs) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         kwargs.update({"exclude": {"avatar"}})
 
         data = super(WebhookEditPayload, self).dict(**kwargs)
@@ -400,7 +401,7 @@ class GuildCreatePayload(pydantic.BaseModel):
     system_channel_flags: Optional[SystemChannelFlags]
 
     def dict(self, **kwargs) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         kwargs.update({"exclude": {"icon"}})
 
         data = super(GuildCreatePayload, self).dict(**kwargs)
@@ -415,7 +416,7 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
     icon: Optional[File]
 
     def dict(self, **kwargs) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         kwargs.update({"exclude": {"icon"}})
 
         data = super(GuildTemplateCreatePayload, self).dict(**kwargs)
@@ -424,6 +425,7 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
 
         data["icon"] = _file_to_image_data(icon)
         return data
+
 
 class TemplateCreatePayload(pydantic.BaseModel):
     name: str
@@ -444,7 +446,9 @@ class ScheduledEventCreatePayload(pydantic.BaseModel):
     def _check_cid_is_external(cls, _, **kwargs):
         if not _:
             if kwargs["values"]["entity_type"] != ScheduledEventEntityType.EXTERNAL:
-                raise ValueError("Channel ID must be provided for none external events!")
+                raise ValueError(
+                    "Channel ID must be provided for none external events!"
+                )
 
         return _
 
@@ -462,7 +466,7 @@ class ScheduledEventCreatePayload(pydantic.BaseModel):
         if external:
             if not data.location:
                 raise ValueError("location needed for external events")
-        
+
         return data
 
 
@@ -498,7 +502,7 @@ class EmojiCreatePayload(pydantic.BaseModel):
     roles: List[Role] = list()
 
     def dict(self, **kwargs) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         kwargs.update({"exclude": {"file"}})
 
         data = super(EmojiCreatePayload, self).dict(**kwargs)
@@ -516,7 +520,9 @@ class StageInstanceCreatePayload(pydantic.BaseModel):
     @pydantic.validator("topic")
     def _validate_topic(cls, topic):
         if topic and not 1 < len(topic) < 120:
-            raise ValueError("Stage topic must be less then 120 characters but greater then 1")
+            raise ValueError(
+                "Stage topic must be less then 120 characters but greater then 1"
+            )
         return topic
 
 
@@ -527,7 +533,9 @@ class StageInstanceEditPayload(pydantic.BaseModel):
     @pydantic.validator("topic")
     def _validate_topic(cls, topic):
         if topic and not 1 < len(topic) < 120:
-            raise ValueError("Stage topic must be less then 120 characters but greater then 1")
+            raise ValueError(
+                "Stage topic must be less then 120 characters but greater then 1"
+            )
         return topic
 
 

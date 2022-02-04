@@ -35,7 +35,7 @@ class Stage(Channel, Hashable):
         Parameters
         ----------
         reason: :class:`str`
-            Reason for deleting instance        
+            Reason for deleting instance
         """
         headers = {}
 
@@ -43,8 +43,7 @@ class Stage(Channel, Hashable):
             headers["X-Audit-Log-Reason"] = reason
 
         await self.conn.request(
-            Route("DELETE", path=f"/stage-instances/{self.channel_id}"),
-            headers=headers
+            Route("DELETE", path=f"/stage-instances/{self.channel_id}"), headers=headers
         )
 
     async def edit(self, *, reason: str = None, **data) -> Stage:
@@ -70,7 +69,7 @@ class Stage(Channel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/stage-instances/{self.channel_id}"),
             headers=headers,
-            data=_payload_dict_to_json(StageInstanceEditPayload, **data)
+            data=_payload_dict_to_json(StageInstanceEditPayload, **data),
         )
 
         return Stage(conn=self.conn, **(await r.json()))

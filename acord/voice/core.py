@@ -1,10 +1,7 @@
 # Voice websocket connection
 from __future__ import annotations
 
-from asyncio import (
-    AbstractEventLoop,
-    Event
-)
+from asyncio import AbstractEventLoop, Event
 import asyncio
 from datetime import datetime
 from aiohttp import ClientSession, WSMsgType
@@ -28,17 +25,13 @@ logger = logging.getLogger(__name__)
 
 class VoiceConnection(object):
     supported_modes = (
-        'xsalsa20_poly1305_lite',
-        'xsalsa20_poly1305_suffix',
-        'xsalsa20_poly1305',
+        "xsalsa20_poly1305_lite",
+        "xsalsa20_poly1305_suffix",
+        "xsalsa20_poly1305",
     )
 
-    def __init__(self, 
-        voice_packet: dict, 
-        loop: AbstractEventLoop, 
-        client, 
-        channel_id, 
-        **kwargs
+    def __init__(
+        self, voice_packet: dict, loop: AbstractEventLoop, client, channel_id, **kwargs
     ) -> None:
         # Defined in an async enviro so this is fine
         self._session = ClientSession(loop=loop, **kwargs)
@@ -82,23 +75,29 @@ class VoiceConnection(object):
         # connects to desired endpoint creating new websocket connection
         logger.debug(f"Attempting to connect to {self._packet['d']['endpoint']}")
         ws = await self._session.ws_connect(
-           f"wss://{self._packet['d']['endpoint']}?v={v}"
+            f"wss://{self._packet['d']['endpoint']}?v={v}"
         )
         CONNECTIONS += 1
         self._conn_id = CONNECTIONS
-        logger.info(f"Successfully connected to {self._packet['d']['endpoint']}, awaiting UDP handshake")
+        logger.info(
+            f"Successfully connected to {self._packet['d']['endpoint']}, awaiting UDP handshake"
+        )
 
         self._ws = ws
         self.disconnected = False
 
     async def disconnect(self, *, message: bytes = b"") -> None:
         if self.disconnected:
-            logger.warn(f"Disconnect called on disconnected socket, conn_id={self._conn_id}")
+            logger.warn(
+                f"Disconnect called on disconnected socket, conn_id={self._conn_id}"
+            )
             return
         if not self._keep_alive:
             raise ConnectionError("Keepalive doesn't exist, failed to disconnect ws")
 
-        logger.debug(f"Client disconnected from VC conn_id={self._conn_id}, ending operations")
+        logger.debug(
+            f"Client disconnected from VC conn_id={self._conn_id}, ending operations"
+        )
         self._keep_alive.end()
 
         try:
@@ -136,14 +135,16 @@ class VoiceConnection(object):
         await self.listen(**self._resume_kwargs)
 
         # Resume normally
-        await self._ws.send_json({
-            "op": 7,
-            "d": {
-                "server_id": self._packet["d"]["guild_id"],
-                "session_id": self._packet["d"]["session_id"],
-                "token": self._packet["d"]["token"]
+        await self._ws.send_json(
+            {
+                "op": 7,
+                "d": {
+                    "server_id": self._packet["d"]["guild_id"],
+                    "session_id": self._packet["d"]["session_id"],
+                    "token": self._packet["d"]["token"],
+                },
             }
-        })
+        )
         # Log the result
         logger.info(f"Resuming session for conn_id={self._conn_id}")
 
@@ -155,8 +156,8 @@ class VoiceConnection(object):
                 "user_id": self._packet["d"]["user_id"],
                 "session_id": self._packet["d"]["session_id"],
                 "token": self._packet["d"]["token"],
-                "video": video
-            }
+                "video": video,
+            },
         }
 
     def udp_payload(self, *, mode: str = None):
@@ -174,9 +175,9 @@ class VoiceConnection(object):
                 "data": {
                     "address": self._ready_packet["d"]["ip"],
                     "port": self._ready_packet["d"]["port"],
-                    "mode": mode
-                }
-            }
+                    "mode": mode,
+                },
+            },
         }
 
     def checked_add(self, attr, value, limit):
@@ -190,34 +191,42 @@ class VoiceConnection(object):
         # Finishes handshake whilst connected to vc
         # self._sock will be a tuple with the transport and protocol
 
-        logger.debug(f"Attempting to complete UDP connection for conn_id={self._conn_id}")
-        
+        logger.debug(
+            f"Attempting to complete UDP connection for conn_id={self._conn_id}"
+        )
+
         conn = UDPConnection(
-            self._ready_packet["d"]["ip"], 
+            self._ready_packet["d"]["ip"],
             self._ready_packet["d"]["port"],
-            self._loop, **kwargs)
+            self._loop,
+            **kwargs,
+        )
         await conn.connect()
 
-        logger.info(f"Successfully connected to {addr}:{port} for conn_id={self._conn_id}")
+        logger.info(
+            f"Successfully connected to {addr}:{port} for conn_id={self._conn_id}"
+        )
 
         self._sock = conn
 
     def _get_audio_packet(self, data: bytes) -> bytes:
         header = bytearray(12)
-        
+
         header[0] = 0x80
         header[1] = 0x78
 
-        pack_into('>H', header, 2, self.sequence)
-        pack_into('>I', header, 4, self.timestamp)
-        pack_into('>I', header, 8, self.ssrc)
+        pack_into(">H", header, 2, self.sequence)
+        pack_into(">I", header, 4, self.timestamp)
+        pack_into(">I", header, 8, self.ssrc)
 
         encrypter = getattr(self, f"_encrypt_{self.mode}")
         return encrypter(header, data)
 
-    async def send_audio_packet(self, 
-        data: bytes, frames: int,
-        *, 
+    async def send_audio_packet(
+        self,
+        data: bytes,
+        frames: int,
+        *,
         has_header: bool = False,
         sock_flags: int = 0,
     ) -> None:
@@ -233,31 +242,31 @@ class VoiceConnection(object):
             Whether the data has an RTC header attached to it.
             Defaults to False and should only be True if you know what your doing.
         frames: :class:`int`
-            Your encoders SAMPLES_PER_FRAME value, 
+            Your encoders SAMPLES_PER_FRAME value,
             used for generating timestamp
         sock_flags: :class:`int`
             Additional flags for the UDP socket
         """
-        self.checked_add('sequence', 1, 65535)
+        self.checked_add("sequence", 1, 65535)
 
         if not has_header:
             data = self._get_audio_packet(data)
 
         await self._sock.write(data, flags=sock_flags)
-        self.checked_add('timestamp', frames, 4294967295)
+        self.checked_add("timestamp", frames, 4294967295)
 
     async def client_connect(self) -> None:
-        await self._ws.send_json({
-            "op": OpCodes.VIDEO.value,
-            "d": {
-                "audio_ssrc": 0,
-                "rtx_ssrc": 0,
-                "streams": [
-                    {"type": "video", "active": False}
-                ],
-                "video_ssrc": 0,
+        await self._ws.send_json(
+            {
+                "op": OpCodes.VIDEO.value,
+                "d": {
+                    "audio_ssrc": 0,
+                    "rtx_ssrc": 0,
+                    "streams": [{"type": "video", "active": False}],
+                    "video_ssrc": 0,
+                },
             }
-        })
+        )
 
         logger.info(f"Sent ssrc for conn_id={self._conn_id}")
 
@@ -267,15 +276,13 @@ class VoiceConnection(object):
 
         payload = {
             "op": OpCodes.SPEAKING.value,
-            "d": {
-                "speaking": flags,
-                "delay": delay,
-                "ssrc": self.ssrc
-            }
+            "d": {"speaking": flags, "delay": delay, "ssrc": self.ssrc},
         }
 
         await self._ws.send_json(payload)
-        logger.info(f"Updated speaking state for conn_id={self._conn_id}, payload:\n{payload}")
+        logger.info(
+            f"Updated speaking state for conn_id={self._conn_id}, payload:\n{payload}"
+        )
 
     async def stop_speaking(self) -> None:
         # Stops speaking indicator, should be called after audio transmition
@@ -283,18 +290,20 @@ class VoiceConnection(object):
         logger.info(f"Client speaking indicator removed for conn_id={self._conn_id}")
 
     async def listen(self, **kwargs) -> None:
-        """ Begins to listen for websocket events, 
-        to terminate this simply end generated task """
+        """Begins to listen for websocket events,
+        to terminate this simply end generated task"""
         tsk = self._loop.create_task(self._handle_voice(**kwargs))
 
         self._listener = tsk
         self._resume_kwargs = kwargs
 
-    async def _handle_voice(self, *, after: _C = None, no_identity: bool = False, **kwargs) -> None:
-        """ Handles incoming data from websocket """
+    async def _handle_voice(
+        self, *, after: _C = None, no_identity: bool = False, **kwargs
+    ) -> None:
+        """Handles incoming data from websocket"""
         if not self._ws:
             raise ValueError("Not established websocket connecting")
-        
+
         if not no_identity:
             # Resume is doing its thing
             await self._ws.send_json(self.identity())
@@ -314,20 +323,30 @@ class VoiceConnection(object):
                 elif self._ws._close_code == 4014:
                     pass
                 elif message.type in (WSMsgType.CLOSED, WSMsgType.CLOSING):
-                    logger.warn(f"Voice WS closed for conn_id={self._conn_id}, disconecting shortly")
+                    logger.warn(
+                        f"Voice WS closed for conn_id={self._conn_id}, disconecting shortly"
+                    )
                 elif message.type == WSMsgType.ERROR:
-                    logger.error(f"Voice WS for conn_id={self._conn_id} has closed", exc_info=(
-                        type(message.extra), message.extra, message.extra.__traceback__
-                    ))
+                    logger.error(
+                        f"Voice WS for conn_id={self._conn_id} has closed",
+                        exc_info=(
+                            type(message.extra),
+                            message.extra,
+                            message.extra.__traceback__,
+                        ),
+                    )
                 else:
                     logger.info(
                         f"Received invalid json data for voice ws conn_id={self._conn_id},\
-                        closing ws, code={self._ws._close_code}")
-                
+                        closing ws, code={self._ws._close_code}"
+                    )
+
                 await self.disconnect()
                 break
             except (asyncio.CancelledError, asyncio.TimeoutError):
-                logger.warn(f"Voice WS adruptly closed for conn_id={self._conn_id}, ending connection")
+                logger.warn(
+                    f"Voice WS adruptly closed for conn_id={self._conn_id}, ending connection"
+                )
                 await self.disconnect()
                 break
 
@@ -343,7 +362,7 @@ class VoiceConnection(object):
                     data["d"]["port"],
                     client=self._client,
                     vc_Ws=self,
-                    conn_id=self._conn_id
+                    conn_id=self._conn_id,
                 )
 
                 udp_payload = self.udp_payload(**kwargs)
@@ -367,7 +386,9 @@ class VoiceConnection(object):
 
             elif data["op"] == OpCodes.SPEAKING.value:
                 print(data)
-                await self._client.dispatch("voice_channel_speak", self.channel_id, data["d"]["user_id"])
+                await self._client.dispatch(
+                    "voice_channel_speak", self.channel_id, data["d"]["user_id"]
+                )
 
             elif data["op"] == OpCodes.HEARTBEAT_ACK.value:
                 self.ping = datetime.utcnow().timestamp() - self.acked_at
@@ -395,8 +416,8 @@ class VoiceConnection(object):
         box = nacl.secret.SecretBox(bytes(self._decode_key))
         nonce = bytearray(24)
 
-        nonce[:4] = pack('>I', self._lite_nonce)
-        self.checked_add('_lite_nonce', 1, 4294967295)
+        nonce[:4] = pack(">I", self._lite_nonce)
+        self.checked_add("_lite_nonce", 1, 4294967295)
 
         return header + box.encrypt(bytes(data), bytes(nonce)).ciphertext + nonce[:4]
 

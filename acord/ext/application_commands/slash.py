@@ -14,12 +14,15 @@ from acord.bases import _C
 
 
 VALID_ATTR_NAMES = (
-    "name", "description",
+    "name",
+    "description",
     "options",
     "default_permission",
     "guild_ids",
-    "extend", "overwrite"
+    "extend",
+    "overwrite",
 )
+
 
 class SlashBase(UDAppCommand):
     """Base class for creating slash commands.
@@ -47,9 +50,9 @@ class SlashBase(UDAppCommand):
     For a more clearer example make sure to check out the examples in the github repo.
 
     .. rubric:: Valid on_call names
-    
+
     on_call's can be registered directly from creating the class or :meth:`SlashBase.set_call`.
-    
+
     Below they are represented as a list,
     were each element is the function signiture
 
@@ -92,7 +95,7 @@ class SlashBase(UDAppCommand):
     __pre_calls__: dict = {}
 
     def dict(self, **kwds) -> dict:
-        """ :meta private: """
+        """:meta private:"""
         d = super(SlashBase, self).dict(**kwds)
 
         to_pop = ["guild_ids", "overwrite", "extend", "__pre_calls__"]
@@ -137,7 +140,9 @@ class SlashBase(UDAppCommand):
         super().__init__(**kwds)
 
         if not all(i for i in self.options if type(i) == SlashOption):
-            raise SlashCommandError("Options in a slash command must all be of type SlashOption")
+            raise SlashCommandError(
+                "Options in a slash command must all be of type SlashOption"
+            )
 
     def __init_subclass__(cls, **kwds) -> None:
         # kwds is validated in the second for loop
@@ -174,7 +179,7 @@ class SlashBase(UDAppCommand):
                 total += attr_value._total_chars()
             else:
                 total += len(attr_value)
-        
+
         return total
 
     def set_call(self, name: str, function: _C) -> None:
@@ -241,9 +246,7 @@ class SlashBase(UDAppCommand):
             if on_error:
                 try:
                     await on_error(
-                        self,
-                        interaction,
-                        (type(exc), exc, exc.__traceback__)
+                        self, interaction, (type(exc), exc, exc.__traceback__)
                     )
                 except Exception as e_exc:
                     return future.set_result(e_exc)
@@ -255,7 +258,7 @@ class SlashBase(UDAppCommand):
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
-        """Generates slash command from a function, 
+        """Generates slash command from a function,
         taking same kwargs and options as intiating the command normally.
 
         Parameters
@@ -271,5 +274,5 @@ class SlashBase(UDAppCommand):
 
     @property
     def type(self):
-        """ Returns the type of command, always ``1`` """
+        """Returns the type of command, always ``1``"""
         return ApplicationCommandType.CHAT_INPUT

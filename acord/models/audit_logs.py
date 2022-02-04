@@ -85,7 +85,9 @@ class AuditLog(pydantic.BaseModel):
     users: List[User]
     webhooks: List[Webhook]
 
-    @pydantic.validator("guild_scheduled_events", "integrations", "threads", "users", "webhooks")
+    @pydantic.validator(
+        "guild_scheduled_events", "integrations", "threads", "users", "webhooks"
+    )
     def _validate_conns(cls, _, **kwargs):
         conn = kwargs["values"]["conn"]
 

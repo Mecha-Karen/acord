@@ -39,7 +39,9 @@ class VoiceChannel(Channel):
     rtc_region: Optional[str]
     """ voice region id for the voice channel, automatic when set to null """
 
-    async def join(self, self_mute: bool = False, self_deaf: bool = False) -> VoiceConnection:
+    async def join(
+        self, self_mute: bool = False, self_deaf: bool = False
+    ) -> VoiceConnection:
         """|coro|
 
         Joins this voice channel,
@@ -62,11 +64,11 @@ class VoiceChannel(Channel):
             guild_id=self.guild_id,
             channel_id=self.id,
             self_mute=self_mute,
-            self_deaf=self_deaf
+            self_deaf=self_deaf,
         )
 
         return await self.conn.client.wait_for(
-            "voice_server_update", 
+            "voice_server_update",
             check=self._vc_check,
         )
 
@@ -89,8 +91,5 @@ class VoiceChannel(Channel):
             raise VoiceError("Client is not connected to any/this channel")
 
         await self.conn.client.update_voice_state(
-            guild_id=self.guild_id, 
-            channel_id=None,
-            self_mute=False,
-            self_deaf=False
+            guild_id=self.guild_id, channel_id=None, self_mute=False, self_deaf=False
         )

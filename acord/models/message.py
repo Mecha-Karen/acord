@@ -9,7 +9,7 @@ from acord.bases.components import Component
 from acord.core.abc import Route, buildURL
 from acord.models import (
     Application,
-    User, 
+    User,
     Emoji,
     Sticker,
     Snowflake,
@@ -133,7 +133,7 @@ class Message(pydantic.BaseModel, Hashable):
     def _validate_author(cls, v, **kwargs):
         if not v:
             return
-            
+
         conn = kwargs["values"]["conn"]
         v.conn = conn
         return v
@@ -490,14 +490,14 @@ class WebhookMessage(pydantic.BaseModel):
         )
 
         r = await self.adapter.request(
-            "PATCH", buildURL(f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+            "PATCH",
+            buildURL(f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
             data=form_data,
         )
 
         return WebhookMessage(
-            adapter=self.adapter,
-            token=self.token, 
-            **(await r.json()))
+            adapter=self.adapter, token=self.token, **(await r.json())
+        )
 
     async def delete(self, *, reason: str = None, thread_id: Snowflake = None) -> None:
         """
@@ -512,8 +512,9 @@ class WebhookMessage(pydantic.BaseModel):
         headers = dict()
         if reason:
             headers.update({"X-Audit-Log-Reason": reason})
-        
+
         await self.adapter.request(
-            "DELETE", buildURL(f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
-            headers=headers
+            "DELETE",
+            buildURL(f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+            headers=headers,
         )

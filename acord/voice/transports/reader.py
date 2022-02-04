@@ -15,7 +15,9 @@ class BaseReceiver(BaseTransport):
         self.flags = flags
         self.is_closed = False
 
-        self._task = self.sock.loop.create_task(self.dispatcher(limit=limit, flags=flags))
+        self._task = self.sock.loop.create_task(
+            self.dispatcher(limit=limit, flags=flags)
+        )
 
     def __aiter__(self) -> Iterator[Optional[bytes]]:
         return self
@@ -30,14 +32,13 @@ class BaseReceiver(BaseTransport):
             self.is_closed = True
             raise StopAsyncIteration
 
-    async def recieve(self, 
-        *, 
-        limit: int = None, 
-        flags: int = -1, 
-        decode: bool = False
+    async def recieve(
+        self, *, limit: int = None, flags: int = -1, decode: bool = False
     ) -> Optional[bytes]:
         if decode:
-            raise NotImplementedError("Decoding voice data has not been implemented yet")
+            raise NotImplementedError(
+                "Decoding voice data has not been implemented yet"
+            )
         if self.is_closed:
             raise ValueError("Transport is closed")
 

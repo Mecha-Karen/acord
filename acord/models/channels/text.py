@@ -177,7 +177,7 @@ class TextChannel(Channel, ExtendedTextMethods):
             Route("GET", path=f"/channels/{self.id}/webhooks", bucket=bucket)
         )
 
-        for hook in (await r.json()):
+        for hook in await r.json():
             yield Webhook(adapter=self.conn, **hook)
 
     @pydantic.validate_arguments
@@ -473,7 +473,7 @@ class TextChannel(Channel, ExtendedTextMethods):
         r = await self.conn.request(
             Route("POST", path=f"/channels/{self.id}/webhooks"),
             data=payload.json(),
-            headers=headers
+            headers=headers,
         )
 
         return Webhook(**(await r.json()))

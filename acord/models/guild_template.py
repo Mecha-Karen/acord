@@ -76,9 +76,11 @@ class GuildTemplate(pydantic.BaseModel):
         payload = TemplateCreatePayload(**data)
 
         r = await self.conn.request(
-            Route("PATCH", path=f"/guilds/{self.source_guild_id}/templates/{self.code}"),
+            Route(
+                "PATCH", path=f"/guilds/{self.source_guild_id}/templates/{self.code}"
+            ),
             data=payload.json(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         return GuildTemplate(conn=self.conn, **(await r.json()))
@@ -89,7 +91,9 @@ class GuildTemplate(pydantic.BaseModel):
         Deletes template, returns template on success.
         """
         r = await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.source_guild_id}/templates/{self.code}")
+            Route(
+                "DELETE", path=f"/guilds/{self.source_guild_id}/templates/{self.code}"
+            )
         )
 
         return GuildTemplate(**(await r.json()))

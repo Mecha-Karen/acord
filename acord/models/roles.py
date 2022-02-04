@@ -82,7 +82,7 @@ class Role(pydantic.BaseModel, Hashable):
         """
         from acord.payloads import RoleEditPayload
 
-        headers = dict({'Content-Type': "application/json"})
+        headers = dict({"Content-Type": "application/json"})
 
         if reason:
             headers.update({"X-Audit-Log-Reason": reason})
@@ -92,7 +92,7 @@ class Role(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/roles/{self.id}"),
             headers=headers,
-            data=payload
+            data=payload,
         )
 
         role = Role(**(await r.json()))
@@ -113,10 +113,10 @@ class Role(pydantic.BaseModel, Hashable):
         headers = dict()
 
         if reason:
-            headers.update({'X-Audit-Log-Reason': reason})
+            headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
             Route("DELETE", path=f"/guilds/{self.guild_id}/roles/{self.id}"),
-            headers=headers
+            headers=headers,
         )
         (self.conn.get_guild(self.guild_id)).roles.pop(self.id)

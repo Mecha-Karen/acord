@@ -5,10 +5,10 @@ import pydantic
 import datetime
 
 from acord.bases import (
-    Hashable, 
+    Hashable,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
-    ScheduledEventStatus
+    ScheduledEventStatus,
 )
 from acord.core.abc import Route
 from acord.models import User, Member, Snowflake
@@ -68,7 +68,7 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
     def _add_user_conn(cls, creator: Optional[User], **kwargs) -> Optional[User]:
         if not creator:
             return
-        
+
         conn = kwargs["values"]["conn"]
         creator.conn = conn
         return creator
@@ -82,13 +82,14 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
             Route("DELETE", path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}")
         )
 
-
     @pydantic.validate_arguments
-    async def fetch_users(self, *,
+    async def fetch_users(
+        self,
+        *,
         limit: int = 100,
         with_member: bool = False,
         before: Snowflake = None,
-        after: Snowflake = None
+        after: Snowflake = None,
     ) -> Iterator[ScheduledEventUser]:
         """|coro|
 
@@ -108,16 +109,16 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         """
         r = await self.conn.request(
             Route(
-                "GET", 
+                "GET",
                 path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}/users",
                 limit=limit,
                 with_member=str(with_member).lower(),
                 before=before,
-                after=after
-                )
+                after=after,
+            )
         )
 
-        for sched_user in (await r.json()):
+        for sched_user in await r.json():
             u = User(conn=self.conn, **sched_user["user"])
 
             if with_member:
@@ -166,8 +167,7 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/scheduled-events/{self.id}"),
             headers=headers,
-            data=_payload_dict_to_json(ScheduledEventEditPayload, **data)
+            data=_payload_dict_to_json(ScheduledEventEditPayload, **data),
         )
 
         return GuildScheduledEvent(conn=self.conn, **(await r.json()))
-

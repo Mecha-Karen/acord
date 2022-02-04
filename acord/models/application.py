@@ -83,7 +83,6 @@ class Application(pydantic.BaseModel, Hashable):
     flags: Optional[ApplicationFlags]
     """ the application's public flags """
 
-
     @pydantic.validator("icon")
     def _validate_guild_icon(cls, icon: str, **kwargs) -> Optional[str]:
         if not icon:

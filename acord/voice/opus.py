@@ -5,9 +5,10 @@ from __future__ import annotations
 class PyOggNotInstalled(object):
     def __init__(self, *args, **kwargs) -> None:
         raise ImportError(
-            "PyOGG must be installed before using encoders/decoders" +
-            "\npip install acord['voice']"
+            "PyOGG must be installed before using encoders/decoders"
+            + "\npip install acord['voice']"
         )
+
 
 try:
     from pyogg import OpusEncoder, OpusDecoder
@@ -26,7 +27,7 @@ class OpusConfig(pydantic.BaseModel):
     SAMPLING_RATE: float = 48000
     CHANNELS: int = 2
     FRAME_LENGTH: int = 20  # in milliseconds
-    SAMPLE_SIZE: int = struct.calcsize('h') * CHANNELS
+    SAMPLE_SIZE: int = struct.calcsize("h") * CHANNELS
     SAMPLES_PER_FRAME: float = int(SAMPLING_RATE / 1000 * FRAME_LENGTH)
     FRAME_SIZE: float = SAMPLES_PER_FRAME * SAMPLE_SIZE
 
@@ -57,14 +58,12 @@ class Encoder(OpusEncoder):
         # )
 
         # if ef_frame_size < self.config.FRAME_SIZE:
-            # If frame size is lower then desired config
-            # Pad end of packet with silence
-            # This should only be applicable at the end of audio files
-            # Which is were you may notice that silence
+        # If frame size is lower then desired config
+        # Pad end of packet with silence
+        # This should only be applicable at the end of audio files
+        # Which is were you may notice that silence
         #    pcm += (b"\x00"
         #            * (self.config.FRAME_SIZE - ef_frame_size)
         #    )
 
-        return await self.loop.run_in_executor(
-            None, super().encode, pcm
-        )
+        return await self.loop.run_in_executor(None, super().encode, pcm)

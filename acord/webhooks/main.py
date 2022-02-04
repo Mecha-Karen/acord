@@ -4,15 +4,14 @@ import pydantic
 import re
 from aiohttp import ClientSession
 
-from acord.models import (
-    Snowflake,
-    User
-)
+from acord.models import Snowflake, User
 from acord.core.abc import buildURL
 from .types import WebhookType
 from .methods import WebhookMethods
 
-url_pattern = re.compile("(?P<scheme>https?):\/\/(?P<domain>(?:ptb\.|canary\.)?discord(?:app)?\.com)\/api(?:\/)?(?P<api_version>v\d{1,2})?\/webhooks\/(?P<webhook_identifier>\d{17,19})\/(?P<webhook_token>[\w-]{68})")
+url_pattern = re.compile(
+    "(?P<scheme>https?):\/\/(?P<domain>(?:ptb\.|canary\.)?discord(?:app)?\.com)\/api(?:\/)?(?P<api_version>v\d{1,2})?\/webhooks\/(?P<webhook_identifier>\d{17,19})\/(?P<webhook_token>[\w-]{68})"
+)
 
 
 class Webhook(WebhookMethods, pydantic.BaseModel):
@@ -29,7 +28,7 @@ class Webhook(WebhookMethods, pydantic.BaseModel):
     name: str
     """ the default name of the webhook """
     avatar: str
-    """ the default user avatar hash of the webhook """ 
+    """ the default user avatar hash of the webhook """
     token: Optional[str]
     """ the secure token of the webhook (returned for Incoming Webhooks) """
     application_id: Snowflake
@@ -40,17 +39,13 @@ class Webhook(WebhookMethods, pydantic.BaseModel):
     @classmethod
     async def from_id(cls, id: Snowflake):
         async with ClientSession() as client:
-            async with client.request(
-                "GET", buildURL(f"webhooks/{id}")
-            ) as r:
+            async with client.request("GET", buildURL(f"webhooks/{id}")) as r:
                 return cls(**(await r.json()))
 
     @classmethod
     async def from_token(cls, id: Snowflake, token: str):
         async with ClientSession() as client:
-            async with client.request(
-                "GET", buildURL(f"webhooks/{id}/{token}")
-            ) as r:
+            async with client.request("GET", buildURL(f"webhooks/{id}/{token}")) as r:
                 return cls(**(await r.json()))
 
 
@@ -60,13 +55,15 @@ class PartialWebhook(WebhookMethods):
     token: str
     """ Webhook token """
 
-    def __init__(self, adapter = None, *, url: str = None, **data):
+    def __init__(self, adapter=None, *, url: str = None, **data):
         if url is not None:
             url_match = url_pattern.match(url)
-            
+
             assert url_match is not None
 
-            id, token = url_match.group('webhook_identifier'), url_match.group('webhook_token')
+            id, token = url_match.group("webhook_identifier"), url_match.group(
+                "webhook_token"
+            )
             data.update(id=id, token=token)
 
         data.update(adapter=adapter)

@@ -70,11 +70,11 @@ class Sticker(pydantic.BaseModel, Hashable):
         headers = {}
         if reason is not None:
             headers["X-Audit-Log-Reason"] = reason
-        
+
         await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.guild_id}/stickers/{self.id}"), 
-            headers=headers
-            )
+            Route("DELETE", path=f"/guilds/{self.guild_id}/stickers/{self.id}"),
+            headers=headers,
+        )
 
     async def edit(self, *, reason: str = None, **data) -> Sticker:
         """|coro|
@@ -100,7 +100,7 @@ class Sticker(pydantic.BaseModel, Hashable):
         r = await self.conn.request(
             Route("PATCH", path=f"/guilds/{self.guild_id}/stickers/{self.id}"),
             headers=headers,
-            data=_payload_dict_to_json(StickerEditPayload, **data)
+            data=_payload_dict_to_json(StickerEditPayload, **data),
         )
 
         return Sticker(conn=self.conn, **(await r.json()))

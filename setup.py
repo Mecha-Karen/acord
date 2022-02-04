@@ -46,12 +46,12 @@ packages = [
     "acord.voice",
     "acord.voice.transports",
     "acord.ext",
-    "acord.ext.application_commands"
+    "acord.ext.application_commands",
 ]
 
 extra_requires = {
     "speedup": ["orjson>=3.5.4", "aiodns>=1.1", "brotli", "cchardet"],
-    "voice": ["pynacl", "git+https://github.com/TeamPyOgg/PyOgg"]
+    "voice": ["pynacl", "git+https://github.com/TeamPyOgg/PyOgg"],
 }
 # Using git+ for pyogg PyPi doesn't seem to install correct version
 

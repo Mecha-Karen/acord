@@ -1,10 +1,7 @@
 """ Simple bookmark message command """
 from traceback import print_exception
 from typing import Any, List, Union
-from acord import (
-    Client, MessageCommand, Intents,
-    Interaction, Message, Snowflake
-)
+from acord import Client, MessageCommand, Intents, Interaction, Message, Snowflake
 
 TESTING_GUILD_ID = ...  # Put your actual ID here
 bookmarks: dict = {}
@@ -17,7 +14,9 @@ class Bookmark(MessageCommand, extendable=True, overwritable=True):
 
     __ignore__ = ("client",)
 
-    async def callback(self, interaction: Interaction, message: Union[Message, Snowflake]) -> Any:
+    async def callback(
+        self, interaction: Interaction, message: Union[Message, Snowflake]
+    ) -> Any:
         if isinstance(message, int):
             message = await self.client.fetch_message(interaction.channel_id, message)
 
