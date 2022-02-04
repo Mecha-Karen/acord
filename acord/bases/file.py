@@ -5,8 +5,8 @@ import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]  # type: ignore
-    """ A file object or the path to the file """
+    fp: Union[str, Type[os.PathLike], Type[io.BufferedIOBase]]  # type: io.BufferedIOBase
+    """ A file like object or the path to the file """
     position: Optional[int] = 0
     """ Position to were the file should be read from """
     filename: Optional[str]
@@ -17,11 +17,9 @@ class File(pydantic.BaseModel):
     """ Whether ``fp`` is open or closed """
 
     @pydantic.validator("fp")
-    def _validate_fp(cls, fp, **kwargs):
+    def _validate_fp(cls, fp):
         if not isinstance(fp, io.BufferedIOBase):
             fp = open(fp, "rb")
-        else:
-            kwargs["values"]["position"] = fp.tell()
 
         return fp
 
