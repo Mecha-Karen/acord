@@ -242,8 +242,6 @@ class HTTPClient(object):
             await asyncio.sleep(trapped)
             self.trappedBuckets.pop(route.bucket, None)
 
-        url = route.url
-
         headers["Authorization"] = "Bot " + self.token
         headers["User-Agent"] = self.user_agent
 
@@ -254,7 +252,7 @@ class HTTPClient(object):
         kwargs.update(addtional_kwargs)
 
         logger.debug(f"Sending Request: bucket={route.bucket} path={route.path}")
-        resp = await self._session.request(method=route.method, url=url, **kwargs)
+        resp = await self._session.request(method=route.method, url=route.url, **kwargs)
         logger.info(f"Request made at {route.path} returned {resp.status}")
 
         if 200 <= resp.status < 300:
