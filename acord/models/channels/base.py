@@ -15,21 +15,6 @@ class Channel(pydantic.BaseModel, Hashable):
     type: ChannelTypes  # Channel type, e.g 0 -> GUILD_TEXT
 
     async def delete(self, *, reason: str) -> None:
-        # Only applies for guilds:
-        # If the channel is of a specific type, instead of making an extra call
-        # Raise forbidden directly
-        if getattr(self, "guild") and "COMMUNITY" in self.guild.features:
-            if any(
-                [
-                    self.guild.rules_channel_id == self.id,
-                    self.guild.system_channel_id == self.id,
-                    self.guild.public_updates_channel_id == self.id,
-                ]
-            ):
-                raise Forbidden(
-                    "For Community guilds, the Rules or Guidelines channel and the Community Updates channel cannot be deleted."
-                )
-
         await self.conn.request(
             Route("DELETE", path=f"/channels/{self.id}"),
             headers={"X-Audit-Log-Reason": reason},
