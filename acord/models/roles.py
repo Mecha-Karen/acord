@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 import pydantic
 
-from acord.bases import Hashable, Permissions, Color
+from acord.bases import Hashable, Permissions, EmbedColor
 from acord.core.abc import Route
 from acord.utils import _payload_dict_to_json
 from acord.models import Snowflake
@@ -21,7 +21,7 @@ class Role(pydantic.BaseModel, Hashable):
     """ Role ID """
     name: str
     """ Name of role """
-    color: Color
+    color: EmbedColor
     """ Colour of role """
     hoist: bool
     """ Role is pinned in the user listing """
@@ -67,7 +67,7 @@ class Role(pydantic.BaseModel, Hashable):
             name for role
         permissions: :class:`Permissions`
             enabled/disabled permissions
-        color: :class:`Color`
+        color: :class:`EmbedColor`
             Colour of the role
         hoist: :class:`bool`
             whether the role should be displayed separately in the sidebar

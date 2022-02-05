@@ -21,8 +21,8 @@ class InteractionSlashOption(pydantic.BaseModel):
     name: str
     type: ApplicationCommandType
     value: Any
-    options: Optional[InteractionSlashOption] = []
-    focused: Optional[bool] = False
+    options: List[InteractionSlashOption] = []
+    focused: bool = False
 
 
 class IMessageFlags(BaseFlagMeta):
@@ -86,7 +86,7 @@ class Interaction(pydantic.BaseModel, Hashable):
     @pydantic.validator("member", pre=True)
     def _validate_member(cls, member, **kwargs) -> Optional[Member]:
         if not member:
-            return
+            return None
 
         guild_id = kwargs["values"]["guild_id"]
         conn = kwargs["values"]["conn"]
@@ -98,7 +98,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         Fetches original message that was created when
         interaction responded.
         """
-        return await self.fetch_message("@original")
+        return await self.fetch_message("@original")    # type: ignore
 
     async def delete_original_response(self) -> None:
         """|coro|
@@ -106,7 +106,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         Deletes original message that was created when
         interaction responded
         """
-        return await self.delete_response("@original")
+        return await self.delete_response("@original")  # type: ignore
 
     async def delete_response(self, message_id: Snowflake) -> None:
         """|coro|

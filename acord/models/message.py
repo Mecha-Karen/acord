@@ -141,7 +141,7 @@ class Message(pydantic.BaseModel, Hashable):
     @pydantic.validator("member", pre=True)
     def _validate_member(cls, member, **kwargs) -> Optional[Member]:
         if not member:
-            return
+            return None
 
         guild_id = kwargs["values"]["guild_id"]
         member["guild_id"] = guild_id
@@ -203,10 +203,10 @@ class Message(pydantic.BaseModel, Hashable):
             )
         )
         data = await res.json()
-        users = list(map(lambda x: User(x), data))
-
-        if update:
-            pass
+        users = list(                                               # type: ignore
+            lambda user_data: User(conn=self.conn, **user_data),
+            data
+        )
 
         return users
 
@@ -457,6 +457,7 @@ class WebhookMessage(pydantic.BaseModel):
     adapter: Any
     webhook_id: Snowflake
     token: str
+    id: int
 
     async def edit(self, **data) -> WebhookMessage:
         """|coro|

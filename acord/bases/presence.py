@@ -2,7 +2,6 @@ from __future__ import annotations
 from ctypes import Union
 
 from enum import Enum, IntEnum
-from lib2to3.pgen2.token import OP
 from typing import Any, List, Optional
 import pydantic
 import time
@@ -49,7 +48,7 @@ class Presence(pydantic.BaseModel):
     """ Optional timestamp pointing to when client went idle, defaults to current call """
 
     @pydantic.validator("since", pre=True)
-    def _validate_since(cls, _, **kwargs) -> int:
+    def _validate_since(cls, _, **kwargs):
         idle = kwargs["values"]["status"] == StatusType.idle
 
         if not idle:

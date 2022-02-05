@@ -2,7 +2,7 @@
 # - TextChannel
 # - Thread
 # Without needing to make files huge
-from typing import Optional, Iterator, Union
+from typing import Any, Optional, Iterator, Union
 from aiohttp import FormData
 from pydantic import validate_arguments
 
@@ -12,6 +12,9 @@ from acord.core.abc import Route
 
 
 class ExtendedTextMethods:
+    conn: Any
+    id: Snowflake
+
     def _get_bucket(self):
         guild_id = getattr(self, "guild_id", None)
         return {"channel_id": self.id, "guild_id": guild_id}

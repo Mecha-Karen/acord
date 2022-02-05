@@ -40,7 +40,7 @@ from .embeds import (
     EmbedVideo,
     EmbedProvidor,
     Embed,
-    Color,
+    EmbedColor,
 )
 from .components import Component, SelectOption, SelectMenu, Button, ActionRow
 from .presence import (

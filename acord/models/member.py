@@ -101,7 +101,7 @@ class Member(pydantic.BaseModel, Hashable):
         data = dict(delete_message_days=delete_message_days)
 
         await self.conn.request(
-            Route("PUT", path=f"/guilds/{self.guild_id}/bans/{self.user.id}"),
+            Route("PUT", path=f"/guilds/{self.guild_id}/bans/{self.user.id}"),  # type: ignore
             headers=headers,
             data=data,
         )
@@ -122,7 +122,7 @@ class Member(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),
+            Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),    # type: ignore
             headers=headers,
         )
 
@@ -160,7 +160,7 @@ class Member(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
-            Route("PATCH", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),
+            Route("PATCH", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),     # type: ignore
             headers=headers,
             data=payload,
         )
@@ -194,13 +194,13 @@ class Member(pydantic.BaseModel, Hashable):
         await self.conn.request(
             Route(
                 "PUT",
-                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",     # type: ignore
             ),
             headers=headers,
         )
 
-        if role not in self.roles:
-            self.roles.append(role)
+        if role.id not in self.roles:
+            self.roles.append(role.id)  # type: ignore
 
     async def add_roles(self, *roles, reason: str = None) -> Member:
         """|coro|
@@ -244,13 +244,13 @@ class Member(pydantic.BaseModel, Hashable):
         await self.conn.request(
             Route(
                 "DELETE",
-                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",     # type: ignore
             ),
             headers=headers,
         )
 
-        if role in self.roles:
-            self.roles.remove(role)
+        if role.id in self.roles:
+            self.roles.remove(role.id)  # type: ignore
 
     async def remove_roles(self, *roles, reason: str = None) -> Member:
         """|coro|
