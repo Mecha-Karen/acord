@@ -112,12 +112,12 @@ class WebhookMethods(BaseModel):
 
         try:
             return WebhookMessage(
-                token=self.token, adapter=self.adapter, **(await r.json())
+                token=self.token, id=self.id, adapter=self.adapter, **(await r.json())
             )
         except Exception:
             # Message created wasn't returned
             # wait param was false
-            raise
+            return None
 
     async def edit(
         self, *, reason: str = None, with_token: bool = True, auth: str = None, **data
