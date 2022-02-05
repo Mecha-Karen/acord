@@ -1,10 +1,10 @@
 import io
-from typing import Optional, Union
+from typing import Optional, Type, Union
 import pydantic
 
 
 class File(pydantic.BaseModel):
-    fp: io.BufferedIOBase
+    fp: Type[io.BufferedIOBase]
     """ A file like object or the path to the file """
     position: Optional[int] = 0
     """ Position to were the file should be read from """
@@ -39,7 +39,7 @@ class File(pydantic.BaseModel):
 
         return spoiler
 
-    def reset(self, seek: Optional[bool] = False, position: int = 0) -> None:
+    def reset(self, seek: Optional[bool] = False, offset: int = 0, whence: int = 0) -> None:
         """Resets a files position
 
         Parameters
@@ -51,7 +51,7 @@ class File(pydantic.BaseModel):
         """
         if not seek:
             return
-        self.fp.seek(position)
+        self.fp.seek(offset, whence)    # type: ignore
 
     def read(self) -> Union[bytes, str]:
         """Reads file from start and closes it
@@ -61,11 +61,11 @@ class File(pydantic.BaseModel):
         position: :class:`int`
             change were to read file from
         """
-        data = self.fp.read()
+        data = self.fp.read()   # type: ignore
 
         return data
 
     def close(self) -> None:
         """Closes the file, which prevents it from being sent again"""
-        self.fp.close()
+        self.fp.close()     # type: ignore
         self.is_closed = True
