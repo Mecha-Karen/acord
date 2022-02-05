@@ -59,7 +59,7 @@ class PartialWebhook(WebhookMethods):
         if url is not None:
             url_match = url_pattern.match(url)
 
-            assert url_match is not None
+            assert url_match is not None, "Invalid webhook url"
 
             id, token = url_match.group("webhook_identifier"), url_match.group(
                 "webhook_token"
