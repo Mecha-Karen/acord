@@ -1,8 +1,9 @@
-from typing import Any, Optional, Literal, Union, List, Dict
+from typing import Any, Generic, Optional, Literal, Union, List
 import pydantic
 import datetime
 import imghdr
 import base64
+import io
 
 from acord.bases import (
     File,
@@ -34,9 +35,9 @@ from .models import (
 )
 
 
-def _get_image_mimetype(data: Union[File, bytes]):
+def _get_image_mimetype(data):
     if isinstance(data, File):
-        data = data.fp
+        data = data.fp  # type: io.BufferedIOBase
 
     fm = imghdr.what(data)
     return f"image/{fm}"
@@ -86,7 +87,7 @@ class MessageCreatePayload(pydantic.BaseModel):
     content: Optional[str]
     embeds: Optional[Union[List[Embed], Embed]] = list()
     files: Optional[Union[List[File], File]] = list()
-    message_reference: Optional[Union[Message, Snowflake, Dict, MessageReference]]
+    message_reference: Optional[Union[Message, Snowflake, MessageReference]]
     tts: Optional[bool] = False
     components: Optional[List[ActionRow]]
 
@@ -109,7 +110,7 @@ class MessageCreatePayload(pydantic.BaseModel):
         return files
 
     @pydantic.validator("message_reference")
-    def _validate_mr(cls, ref) -> int:
+    def _validate_mr(cls, ref) -> MessageReference:
         if isinstance(ref, int):
             return MessageReference(message_id=ref)
         if isinstance(ref, Message):
@@ -249,6 +250,7 @@ class ChannelCreatePayload(pydantic.BaseModel):
     @pydantic.validator("topic")
     def _validate_topic(cls, topic) -> str:
         assert 0 < len(topic) <= 1024, "Topic must be greater then 0 but less then 1024"
+        return topic
 
     @pydantic.validator("rate_limit_per_user")
     def _validate_slowmode(cls, sm) -> int:
@@ -295,7 +297,7 @@ class RoleMovePayload(pydantic.BaseModel):
     position: int
 
     @pydantic.validator("id", pre=True)
-    def _validate_role(cls, id) -> None:
+    def _validate_role(cls, id) -> int:
         if isinstance(id, Role):
             return id.id
 
@@ -342,8 +344,8 @@ class WebhookCreatePayload(pydantic.BaseModel):
         return name
 
     @pydantic.validator("avatar")
-    def _validate_av(cls, avatar: File) -> File:
-        assert avatar.is_closed() is False, "File must be open"
+    def _validate_av(cls, avatar) -> File:
+        assert avatar.is_closed() is False, "File must be open"     # type: ignore
         return avatar
 
     def dict(self, **kwargs) -> dict:
@@ -351,9 +353,10 @@ class WebhookCreatePayload(pydantic.BaseModel):
         kwargs.update({"exclude": {"avatar"}})
 
         data = super(WebhookCreatePayload, self).dict(**kwargs)
-        avatar: File = self.avatar
+        avatar = self.avatar
 
-        data["avatar"] = _file_to_image_data(avatar)
+        if avatar is not None:
+            data["avatar"] = _file_to_image_data(avatar)
         return data
 
 
@@ -372,8 +375,8 @@ class WebhookEditPayload(pydantic.BaseModel):
         return name
 
     @pydantic.validator("avatar")
-    def _validate_av(cls, avatar: File) -> File:
-        assert avatar.is_closed() is False, "File must be open"
+    def _validate_av(cls, avatar) -> File:
+        assert avatar.is_closed() is False, "File must be open"     # type: ignore
         return avatar
 
     def dict(self, **kwargs) -> dict:
@@ -381,9 +384,10 @@ class WebhookEditPayload(pydantic.BaseModel):
         kwargs.update({"exclude": {"avatar"}})
 
         data = super(WebhookEditPayload, self).dict(**kwargs)
-        avatar: File = self.avatar
+        avatar = self.avatar
 
-        data["avatar"] = _file_to_image_data(avatar)
+        if avatar is not None:
+            data["avatar"] = _file_to_image_data(avatar)
         return data
 
 
@@ -405,7 +409,7 @@ class GuildCreatePayload(pydantic.BaseModel):
         kwargs.update({"exclude": {"icon"}})
 
         data = super(GuildCreatePayload, self).dict(**kwargs)
-        icon: File = self.icon
+        icon = self.icon
 
         data["icon"] = _file_to_image_data(icon)
         return data
@@ -421,7 +425,7 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
 
         data = super(GuildTemplateCreatePayload, self).dict(**kwargs)
 
-        icon: File = self.icon
+        icon = self.icon
 
         data["icon"] = _file_to_image_data(icon)
         return data
@@ -472,12 +476,13 @@ class ScheduledEventCreatePayload(pydantic.BaseModel):
 
 class ScheduledEventEditPayload(ScheduledEventCreatePayload):
     # dont need to re-add validators
+    # ignored types due to mypy not liking how some params are now optional
     entity_type: Optional[ScheduledEventEntityType]
-    name: Optional[str]
+    name: Optional[str]                                 # type: ignore
     channel_id: Optional[Snowflake]
     entity_metadata: Optional[ScheduledEventMetaData]
     privacy_level: ScheduledEventPrivacyLevel
-    scheduled_start_time: Optional[datetime.datetime]
+    scheduled_start_time: Optional[datetime.datetime]   # type: ignore
     scheduled_end_time: Optional[datetime.datetime]
     description: Optional[str]
     status: Optional[ScheduledEventStatus]
@@ -506,7 +511,7 @@ class EmojiCreatePayload(pydantic.BaseModel):
         kwargs.update({"exclude": {"file"}})
 
         data = super(EmojiCreatePayload, self).dict(**kwargs)
-        image: File = self.image
+        image = self.image
 
         data["image"] = _file_to_image_data(image)
         return data
