@@ -8,11 +8,16 @@ from aiohttp import ClientSession, WSMsgType
 
 # For handling voice packets
 from struct import pack_into, pack
-import nacl.secret
 from acord.core.heartbeat import VoiceKeepAlive
 from acord.errors import VoiceError
 from .udp import UDPConnection
 from .codes import OpCodes
+
+try:
+    import nacl.secret
+    nacl = True
+except ImportError:
+    nacl = False
 
 from acord.bases import _C
 
