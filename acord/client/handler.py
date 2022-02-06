@@ -1,6 +1,8 @@
 import asyncio
 import datetime
 import time
+import logging
+from aiohttp import WSMsgType
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
@@ -10,7 +12,8 @@ from acord.errors import *
 from acord.models import *
 from acord.bases import *
 
-from aiohttp import WSMsgType
+CLOSE_CODES = (WSMsgType.CLOSED, WSMsgType.CLOSING, WSMsgType.CLOSE)
+logger = logging.getLogger(__name__)
 
 
 def get_slash_options(interaction: Interaction) -> dict:
@@ -28,10 +31,15 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
     while True:
         message = await ws.receive()
 
-        if self.dispatch_on_recv:
-            self.dispatch("socket_receive", message)
+        if message.type in CLOSE_CODES:
+            # Connection lost!
+            logger.info("Websocket connection has been closed, resuming session shortly")
+            break
+
+        self.dispatch("socket_receive", message)
 
         data = message.data
+
         if type(data) is bytes:
             data = decompressResponse(data)
 
@@ -47,9 +55,10 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
         OPERATION = data["op"]
         DATA = data["d"]
 
-        if EVENT != "VOICE_SERVER_UPDATE":
-            SEQUENCE = data["s"]
-            gateway.SEQUENCE = SEQUENCE
+        SEQUENCE = data["s"]
+
+        if SEQUENCE is not None:
+            self.sequence = SEQUENCE
 
         if OPERATION == gateway.INVALIDSESSION:
             raise GatewayConnectionRefused(
@@ -257,7 +266,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             user = User(conn=self.http, **DATA["user"])
             
             if guild is not None:
-                user = guild.get_member(user.id)
+                user = guild.members.pop(user.id, user)
             else:
                 guild = Snowflake(DATA["guild_id"])
             
@@ -269,10 +278,9 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
             if guild is not None:
                 b_member = guild.get_member(a_member.id)
+                guild.members.update({a_member.id: a_member})
             else:
                 b_member = None
-
-            guild.members.update({a_member.id: a_member})
             
             self.dispatch("member_update", b_member, a_member, guild)
 
