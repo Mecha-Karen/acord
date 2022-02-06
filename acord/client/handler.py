@@ -23,6 +23,7 @@ def get_slash_options(interaction: Interaction) -> dict:
 
 async def handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
+    UNAVAILABLE = dict()
 
     while True:
         message = await ws.receive()
@@ -49,8 +50,6 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
         if EVENT != "VOICE_SERVER_UPDATE":
             SEQUENCE = data["s"]
             gateway.SEQUENCE = SEQUENCE
-
-        UNAVAILABLE = dict()
 
         if OPERATION == gateway.INVALIDSESSION:
             raise GatewayConnectionRefused(
