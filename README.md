@@ -9,7 +9,7 @@
 
 License: **GPL-3.0 License** (see the LICENSE file for details) covers all files in the **acord** repository unless stated otherwise.
 
-> This library is in its planning stage, so bugs may be encountered!
+> This library is in its planning stage, so bugs may be encountered and breaking changes will occur!
 
 ## Features
 * Uses modern pythonic, ``await`` and ``async`` syntax
