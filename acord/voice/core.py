@@ -15,9 +15,9 @@ from .codes import OpCodes
 
 try:
     import nacl.secret
-    nacl = True
+    _nacl = True
 except ImportError:
-    nacl = False
+    _nacl = False
 
 from acord.bases import _C
 
@@ -38,6 +38,9 @@ class VoiceConnection(object):
     def __init__(
         self, voice_packet: dict, loop: AbstractEventLoop, client, channel_id, **kwargs
     ) -> None:
+        if _nacl is False:
+            raise VoiceError("PyNaCl must be installed before using voice")
+
         # Defined in an async enviro so this is fine
         self._session = ClientSession(loop=loop, **kwargs)
         self._packet = voice_packet
@@ -58,6 +61,7 @@ class VoiceConnection(object):
         self.timeout: float = 0
         self.ssrc: int = 0
         self._lite_nonce: int = 0
+        self._decode_key: list = None
         self.mode = None
 
         self.connect_event = Event()
@@ -275,7 +279,7 @@ class VoiceConnection(object):
 
         logger.info(f"Sent ssrc for conn_id={self._conn_id}")
 
-    async def change_speaking_state(self, flags: int = 1, delay: int = 5) -> None:
+    async def change_speaking_state(self, flags: int = 1, delay: int = 0) -> None:
         if not self.ssrc:
             raise VoiceError("Cannot update speaking state, no ssrc set")
 

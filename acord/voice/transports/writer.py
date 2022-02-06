@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 from io import BufferedIOBase
 from os import PathLike
@@ -121,7 +121,7 @@ class BasePlayer(BaseTransport):
             ) from exc
 
     async def play(
-        self, c_flags: int = 1, delay: int = 5, *, flags: int = 0
+        self, c_flags: int = 1, delay: int = 0, *, flags: int = 0
     ) -> Union[None, int]:
 
         await self.conn.change_speaking_state(c_flags, delay)
@@ -131,6 +131,7 @@ class BasePlayer(BaseTransport):
                 try:
                     await self.send(data=packet, flags=flags)
                 except AttributeError:
+                    raise
                     # Socket closed
                     return 1
 
