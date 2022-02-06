@@ -41,7 +41,7 @@ class KeepAlive(Thread):
         self.join()
 
     def get_payload(self):
-        return {"op": gateway.HEARTBEAT, "d": gateway.SEQUENCE}
+        return {"op": gateway.HEARTBEAT, "d": self._client.sequence}
 
 
 class VoiceKeepAlive(Thread):
