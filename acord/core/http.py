@@ -18,6 +18,7 @@ except ImportError:
     )
 
 import asyncio
+import time
 import typing
 import aiohttp
 import acord
@@ -223,6 +224,11 @@ class HTTPClient(object):
         self._keep_alive.start()
 
         return ws
+
+    async def ping_ws(self) -> float:
+        t = time.perf_counter()
+        await self.ws.ping()
+        return time.perf_counter() - t
 
     async def disconnect(self) -> None:
         logger.info("Disconnected from discord, closing WS & session")
