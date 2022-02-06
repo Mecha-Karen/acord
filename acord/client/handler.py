@@ -21,9 +21,11 @@ def get_slash_options(interaction: Interaction) -> dict:
 async def handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
 
-    async for message in ws:
+    while True:
+        message = await ws.receive()
+
         if self.dispatch_on_recv:
-            self.dispatch("socket_recieve", message)
+            self.dispatch("socket_receive", message)
 
         data = message.data
         if type(data) is bytes:
@@ -237,7 +239,10 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             member = Member(conn=self.http, **DATA)
             guild = self.get_guild(member.guild_id)
 
-            guild.members.update({member.id: member})
+            if guild is not None:
+                guild.members.update({member.id: member})
+            else:
+                guild = Snowflake(DATA["guild_id"])
 
             self.dispatch("member_join", member, guild)
 
@@ -255,7 +260,12 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
         elif EVENT == "GUILD_MEMBER_UPDATE":
             guild = self.get_guild(int(DATA["guild_id"]))
             a_member = Member(conn=self.http, **DATA)
-            b_member = guild.get_member(a_member.id)
+
+            if guild is not None:
+                b_member = guild.get_member(a_member.id)
+            else:
+                b_member = None
+
             guild.members.update({a_member.id: a_member})
             
             self.dispatch("member_update", b_member, a_member, guild)
