@@ -4,10 +4,6 @@ import logging
 import warnings
 import sys
 import traceback
-from numpy import partition
-
-from sympy import N
-
 from acord.core.abc import Route
 from acord.core.signals import gateway
 from acord.core.http import HTTPClient
