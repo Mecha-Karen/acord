@@ -363,7 +363,7 @@ class Client(object):
         *,
         guild_ids: Union[List[int], None] = None,
         extend: bool = True,
-    ) -> ApplicationCommand:
+    ) -> None:
         """Registers application command internally before client is ran,
         after client is ran this method is redundant.
         Consider using :meth:`Client.create_application_command`.
