@@ -140,8 +140,8 @@ class Guild(pydantic.BaseModel, Hashable):
 
     guild_hashes: Dict[Any, Any]
 
-    guild_scheduled_events: List[Dict[str, Any]]
-    """ List of scheduled guild events """  # TODO: events object
+    guild_scheduled_events: Dict[Snowflake, GuildScheduledEvent]
+    """ List of scheduled guild events """
 
     hub_type: Optional[bool]
 
@@ -185,7 +185,8 @@ class Guild(pydantic.BaseModel, Hashable):
     premium_tier: PremiumTierLevel
     """ premium tier (Server Boost level) """
     presences: Optional[List[Dict[str, Any]]]
-    """ presences of the members in the guild, will only include non-offline members if the size is greater than large threshold """
+    """ presences of the members in the guild, 
+    will only include non-offline members if the size is greater than large threshold """
     public_updates_channel_id: Optional[Snowflake]
     """ the id of the channel where admins and moderators of Community guilds receive notices from Discord """
 
@@ -316,6 +317,17 @@ class Guild(pydantic.BaseModel, Hashable):
         timestamp = ((kwargs["values"]["id"] >> 22) + DISCORD_EPOCH) / 1000
         return datetime.datetime.fromtimestamp(timestamp)
 
+    @pydantic.validator("guild_scheduled_events", pre=True)
+    def _validate_guild_events(cls, events, **kwargs) -> dict:
+        conn = kwargs["values"]["conn"]
+        data = {}
+
+        for event in events:
+            ev = GuildScheduledEvent(conn=conn, **event)
+            data[ev.id] = ev
+
+        return data
+
     def get_member(self, member_id: Snowflake, /) -> Optional[Member]:
         """|func|
 
@@ -339,14 +351,7 @@ class Guild(pydantic.BaseModel, Hashable):
         channel_id: :class:`Snowflake`
             ID of channel to get
         """
-        channel = self.conn.INTERNAL_STORAGE["channels"].get(channel_id)
-        if channel:
-            # check if channel guild id == self.id
-            # if not return
-            if not getattr(channel, "guild_id", 0) == self.id:
-                # if ID doesnt exists, "dm channels", set to 0 so can be compared
-                return
-            return channel
+        return self.channels.get(channel_id)
 
     async def fetch_channels(self) -> Iterator[Channel]:
         """|coro|
