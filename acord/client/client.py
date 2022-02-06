@@ -96,6 +96,7 @@ class Client(object):
 
         # Others
         self.session_id = None
+        self.sequence = None
         self.gateway_version = None
         self.user = None
         self.application_commands = dict()
