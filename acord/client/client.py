@@ -572,9 +572,7 @@ class Client(object):
             raise ValueError("No token provided")
 
         if not hasattr(self, "http"):
-            self.http = HTTPClient(loop=self.loop, token=self.token)
-
-        self.http.client = self
+            self.http = HTTPClient(self, loop=self.loop, token=self.token)
         self.token = token
 
         # Login to create session
