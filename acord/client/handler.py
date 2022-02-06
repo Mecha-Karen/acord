@@ -113,6 +113,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
                     possible_exc = await asyncio.wait_for(fut, None)
                     if isinstance(possible_exc, Exception):
+                        self.dispatch("")
                         self.on_error(f"app_cmd dispatcher : {udac.name}")
 
             self.dispatch("interaction_create", data)
@@ -208,9 +209,9 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                 guild.emojis.update({e.id: e})
                 bulk.append(e)
 
-                self.dispatch("emoji_update", e)
+                self.dispatch("guild_emoji_update", e)
 
-            self.dispatch("emojis_update", bulk)
+            self.dispatch("guild_emojis_update", bulk)
 
         elif EVENT == "GUILD_STICKERS_UPDATE":
             guild = self.get_guild(int(DATA["guild_id"]))
@@ -222,10 +223,88 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                 guild.stickers.update({s.id: s})
                 bulk.append(s)
 
-                self.dispatch("sticker_update", s)
+                self.dispatch("guild_sticker_update", s)
 
-            self.dispatch("stickers_update", bulk)
+            self.dispatch("guild_stickers_update", bulk)
 
+        elif EVENT == "GUILD_INTEGRATIONS_UPDATE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            if guild is None:
+                guild = Snowflake(DATA["guild_id"])
+            self.dispatch("guild_integrations_update", guild)
+
+        elif EVENT == "GUILD_MEMBER_ADD":
+            member = Member(conn=self.http, **DATA)
+            guild = self.get_guild(member.guild_id)
+
+            guild.members.update({member.id: member})
+
+            self.dispatch("member_join", member, guild)
+
+        elif EVENT == "GUILD_MEMBER_REMOVE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            user = User(conn=self.http, **DATA["user"])
+            
+            if guild is not None:
+                user = guild.get_member(user.id)
+            else:
+                guild = Snowflake(DATA["guild_id"])
+            
+            self.dispatch("member_remove", user, guild)
+
+        elif EVENT == "GUILD_MEMBER_UPDATE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            a_member = Member(conn=self.http, **DATA)
+            b_member = guild.get_member(a_member.id)
+            guild.members.update({a_member.id: a_member})
+            
+            self.dispatch("member_update", b_member, a_member, guild)
+
+        elif EVENT == "GUILD_ROLE_CREATE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            role = Role(conn=self.http, **(DATA["role"]))
+
+            guild.roles.update({role.id: role})
+
+            self.dispatch("role_create", role, guild)
+
+        elif EVENT == "GUILD_ROLE_UPDATE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            a_role = Role(conn=self.http, **(DATA["role"]))
+            b_role = guild.roles.get(a_role.id)
+
+            guild.roles.update({role.id: role})
+
+            self.dispatch("role_update", a_role, b_role, guild)
+
+        elif EVENT == "GUILD_ROLE_DELETE":
+            guild = self.get_guild(int(DATA["guild_id"]))
+            role = guild.roles.get(Snowflake(DATA["role_id"]))
+
+            self.dispatch("role_delete", role, guild)
+
+        elif EVENT == "GUILD_SCHEDULED_EVENT_CREATE":
+            event = GuildScheduledEvent(conn=self.http, **DATA)
+            guild = self.get_guild(event.guild_id)
+            guild.guild_scheduled_events.update({event.id: event})
+
+            self.dispatch("guild_scheduled_event_create", event, guild)
+
+        elif EVENT == "GUILD_SCHEDULED_EVENT_UPDATE":
+            event = GuildScheduledEvent(conn=self.http, **DATA)
+            guild = self.get_guild(event.guild_id)
+            guild.guild_scheduled_events.update({event.id: event})
+
+            self.dispatch("guild_scheduled_event_update", event, guild)
+
+        elif EVENT == "GUILD_SCHEDULED_EVENT_DELETE":
+            event = GuildScheduledEvent(conn=self.http, **DATA)
+            guild = self.get_guild(event.guild_id)
+
+            event = guild.scheduled_events.pop(event.id, event)
+
+            self.dispatch("guild_scheduled_event_delete", event, guild)
+    
         # NOTE: channels
 
         elif EVENT == "CHANNEL_CREATE":
@@ -241,7 +320,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.dispatch("channel_update", channel)
 
         elif EVENT == "CHANNEL_DELETE":
-            channel = self.INTERNAL_STORAGE["channels"].pop(int(DATA["id"]))
+            channel = self.INTERNAL_STORAGE["channels"].pop(int(DATA["id"]), None)
             self.dispatch("channel_delete", channel)
 
         # NOTE: threads
