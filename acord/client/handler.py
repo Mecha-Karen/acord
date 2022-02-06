@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import time
 
 from acord.core.decoders import ETF, JSON, decompressResponse
 from acord.core.signals import gateway
@@ -8,6 +9,8 @@ from acord.utils import _d_to_channel
 from acord.errors import *
 from acord.models import *
 from acord.bases import *
+
+from aiohttp import WSMsgType
 
 
 def get_slash_options(interaction: Interaction) -> dict:
@@ -26,6 +29,8 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
         if self.dispatch_on_recv:
             self.dispatch("socket_receive", message)
+        if message.type == WSMsgType.PONG:
+            self.dispatch("ws_pong", time.perf_counter())
 
         data = message.data
         if type(data) is bytes:
