@@ -113,7 +113,7 @@ class Client(object):
         self.INTERNAL_STORAGE["stage_instances"] = dict()
 
         self.acked_at = float("inf")
-        self.ping = float("inf")
+        self.latency = float("inf")
 
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
