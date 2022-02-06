@@ -131,7 +131,6 @@ class BasePlayer(BaseTransport):
                 try:
                     await self.send(data=packet, flags=flags)
                 except AttributeError:
-                    raise
                     # Socket closed
                     return 1
 
