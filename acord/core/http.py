@@ -222,19 +222,13 @@ class HTTPClient(object):
         self.ws.client = self
 
         self._keep_alive = KeepAlive(
-            self.getIdentityPacket(**identityPacketKwargs), ws, data
+            self.client,
+            self.getIdentityPacket(**identityPacketKwargs), 
+            ws, data
         )
         self._keep_alive.start()
 
         return ws
-
-    async def ping_ws(self) -> float:
-        t = time.perf_counter()
-        await self.ws.ping()
-
-        recv = await self.client.wait_for("ws_pong")
-
-        return recv - t
 
     async def disconnect(self) -> None:
         logger.info("Disconnected from discord, closing WS & session")

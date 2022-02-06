@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class KeepAlive(Thread):
-    def __init__(self, identity, ws, helloPacket: dict):
+    def __init__(self, client, identity, ws, helloPacket: dict):
+        self._client = client
         self._ws = ws
         self.packet = helloPacket
         self.identity = identity
@@ -32,6 +33,7 @@ class KeepAlive(Thread):
             time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
             self.loop.create_task(self._ws.send_json(self.get_payload()))
+            self._client.acked_at = time.perf_counter()
             logger.debug(
                 f"Sent heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds"
             )

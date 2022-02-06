@@ -29,8 +29,6 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
         if self.dispatch_on_recv:
             self.dispatch("socket_receive", message)
-        if message.type == WSMsgType.PONG:
-            self.dispatch("ws_pong", time.perf_counter())
 
         data = message.data
         if type(data) is bytes:
@@ -65,7 +63,11 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.dispatch("resume")
 
         elif OPERATION == gateway.HEARTBEATACK:
-            self.dispatch("heartbeat")
+            p = time.perf_counter()
+            ping = p - self.acked_at
+
+            self.latency = ping
+            self.dispatch("heartbeat", ping)
 
         elif EVENT == "READY":
             self.dispatch("ready")
