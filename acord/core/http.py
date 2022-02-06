@@ -64,6 +64,8 @@ class HTTPClient(object):
 
     def __init__(
         self,
+        client: typing.Any,
+        *,
         token: str = None,
         connecter: typing.Optional[aiohttp.BaseConnector] = None,
         wsTimeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(60, connect=None),
@@ -72,6 +74,7 @@ class HTTPClient(object):
         loop: typing.Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         unsync_clock: bool = True,
     ) -> None:
+        self.client = client
         self.token = token
         self.loop = loop
         self.wsTimeout = wsTimeout
@@ -228,7 +231,10 @@ class HTTPClient(object):
     async def ping_ws(self) -> float:
         t = time.perf_counter()
         await self.ws.ping()
-        return time.perf_counter() - t
+
+        recv = await self.client.wait_for("ws_pong")
+
+        return recv - t
 
     async def disconnect(self) -> None:
         logger.info("Disconnected from discord, closing WS & session")
