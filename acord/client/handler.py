@@ -255,7 +255,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             guild = self.get_guild(member.guild_id)
 
             if guild is not None:
-                guild.members.update({member.id: member})
+                guild.members.update({member.user.id: member})
             else:
                 guild = Snowflake(DATA["guild_id"])
 
@@ -277,8 +277,8 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             a_member = Member(conn=self.http, **DATA)
 
             if guild is not None:
-                b_member = guild.get_member(a_member.id)
-                guild.members.update({a_member.id: a_member})
+                b_member = guild.get_member(a_member.user.id)
+                guild.members.update({a_member.user.id: a_member})
             else:
                 b_member = None
             
