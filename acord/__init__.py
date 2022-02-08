@@ -20,6 +20,7 @@ from .webhooks.main import Webhook, PartialWebhook, WebhookType
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer
+from .voice.transports.ffmpeg import *
 from .voice.core import VoiceConnection
 from .voice.udp import UDPConnection
 from .ext.application_commands import *
