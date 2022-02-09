@@ -56,8 +56,8 @@ class BasePlayer(BaseTransport):
         super().__init__(conn)
 
     @property
-    def packet_limit(self):
-        return self.conn._sock.limit
+    def packet_size(self):
+        return self.encoder.config.FRAME_SIZE
 
     def __aiter__(self):
         if self.closed:
@@ -77,7 +77,7 @@ class BasePlayer(BaseTransport):
 
     def get_next_packet(self):
         self.index += 1
-        data = self.fp.read(self.encoder.config.FRAME_SIZE)
+        data = self.fp.read(self.packet_size)
         if data == b"":
             self.close()
             raise EOFError("Reached end of file")
@@ -106,10 +106,10 @@ class BasePlayer(BaseTransport):
         mem = await self.encoder.encode(data)
         try:
             # mem is a memoryview object
-            # fine to pass through socket as its a WriteOnlyBuffer
+            # fine to pass through socket as its classed as a WriteOnlyBuffer
             await self.conn.send_audio_packet(
                 mem,
-                self.encoder.config.SAMPLES_PER_FRAME,
+                len(mem),
                 has_header=False,
                 sock_flags=flags,
             )
@@ -134,9 +134,8 @@ class BasePlayer(BaseTransport):
                     # Socket closed
                     return 1
 
-                await asyncio.sleep(
-                    getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE)
-                )
+                await asyncio.sleep(getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE))
+
             except VoiceError as err:
                 if getattr(err, "closed", False):
                     return
