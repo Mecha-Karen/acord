@@ -51,6 +51,14 @@ class FfmpegPlayer(BasePlayer):
         self._spawn_process_args = (args, kwds)
 
         self._spawn_proc(args, kwds)
+        self._gen_pcm_source()
+
+    def _gen_pcm_source(self):
+        d, _ = self.process.communicate(self.fp.read())
+
+        self.fp = io.BytesIO(d)
+        self.fp.seek(self.pos)
+        self.pos = self.fp.tell()
 
     def _spawn_proc(self, args, kwds):
         logger.debug("Attempting to spawn ffmpeg process")
@@ -81,21 +89,10 @@ class FfmpegPlayer(BasePlayer):
         else:
             logger.info('ffmpeg process at pid=%s has terminated sucessfully with return code %s', self.process.pid, self.process.returncode)
 
-    def get_next_packet(self):
-        data = super().get_next_packet()
-
-        try:
-            d, *_ = self.process.communicate(data)
-        except Exception:
-            logger.exception("Failed write process with ffmpeg source pid=%s. This is not always an issue", self.process.pid, exc_info=1)
-            self.process.terminate()
-            return
-
-        return d
-
     async def cleanup(self, *, reset: bool = True) -> None:
         super().cleanup()
         self._kill_proc()
 
         if reset:
             self._spawn_proc(*self._spawn_process_args)
+            self._gen_pcm_source()
