@@ -30,6 +30,7 @@ class OpusConfig(pydantic.BaseModel):
     SAMPLE_SIZE: int = struct.calcsize("h") * CHANNELS
     SAMPLES_PER_FRAME: float = int(SAMPLING_RATE / 1000 * FRAME_LENGTH)
     FRAME_SIZE: float = SAMPLES_PER_FRAME * SAMPLE_SIZE
+    EF_FRAME_SIZE = FRAME_SIZE // 2 // CHANNELS
 
 
 DEFAULT_CONFIG = OpusConfig()
@@ -51,19 +52,19 @@ class Encoder(OpusEncoder):
         # NOTE: await further changes from PyOgg for bitrate and other funcs
 
     async def encode(self, pcm: bytes) -> bytes:
-        # ef_frame_size = (
-        #     len(pcm)
-        #     // 2    # Sample Width
-        #     // self.config.CHANNELS
-        # )
+        ef_frame_size = (
+            len(pcm)
+            // 2    # Sample Width
+            // self.config.CHANNELS
+        )
 
-        # if ef_frame_size < self.config.FRAME_SIZE:
-        # If frame size is lower then desired config
-        # Pad end of packet with silence
-        # This should only be applicable at the end of audio files
-        # Which is were you may notice that silence
-        #    pcm += (b"\x00"
-        #            * (self.config.FRAME_SIZE - ef_frame_size)
-        #    )
+        if ef_frame_size < self.config.EF_FRAME_SIZE:
+            # If frame size is lower then desired config
+            # Pad end of packet with silence
+            # This should only be applicable at the end of audio files
+            # Which is were you may notice that silence
+            pcm += (b"\x00"
+                    * (self.config.EF_FRAME_SIZE - ef_frame_size)
+            )
 
         return await self.loop.run_in_executor(None, super().encode, pcm)
