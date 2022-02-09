@@ -52,6 +52,7 @@ class FfmpegPlayer(BasePlayer):
 
         self._spawn_proc(args, kwds)
         self._gen_pcm_source()
+        self._kill_proc()
 
     def _gen_pcm_source(self):
         d, _ = self.process.communicate(self.fp.read())
