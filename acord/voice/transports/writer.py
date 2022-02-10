@@ -103,13 +103,14 @@ class BasePlayer(BaseTransport):
             raise VoiceError(
                 "Cannot send bytes through transport as transport is closed"
             )
-        mem = await self.encoder.encode(data)
+        encoded_packet = await self.encoder.encode(data)
+
         try:
-            # mem is a memoryview object
+            # encoded_packet is a memoryview object
             # fine to pass through socket as its classed as a WriteOnlyBuffer
             await self.conn.send_audio_packet(
-                mem,
-                len(mem),
+                encoded_packet,
+                len(encoded_packet),
                 has_header=False,
                 sock_flags=flags,
             )
