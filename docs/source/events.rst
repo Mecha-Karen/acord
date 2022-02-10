@@ -19,114 +19,131 @@ If using the :meth:`Client.on` decorator,
 its preferred to not start the event with ``on_``.
 However, it will still be accepted.
 
-on_connect
-~~~~~~~~~~
-Called when the client first connects to the gateway
+on_resume
+~~~~~~~~~
+Called when client session resumes
 
-on_ready
-~~~~~~~~
-Called when gateway dispatched ``READY``.
-Indicating that the client has successfully connected to the gateway.
+Parameters
+^^^^^^^^^^
+This event has no parameters
 
 on_heartbeat
 ~~~~~~~~~~~~
-Called when the client has sent a heartbeat and has received a successful response.
+Called when client responds to a heartbeat ack,
+an acknowledged heartbeat from discord.
 
-on_resume
-~~~~~~~~~
-Called when client connection resumed,
-meaning that the connection was reset by peer and needed to be reconnected.
+Parameters
+^^^^^^^^^^
+This event has no parameters
 
-.. warning::
-    You may notice changes in certain objects so track user made caches.
+on_ready
+~~~~~~~~
+Called when discord dispatches its ready event,
+noting the client has connected sucessfully and will begin receiving data such as joined guilds
+
+Parameters
+^^^^^^^^^^
+This event has no parameters
+
+on_interaction_create
+~~~~~~~~~~~~~~~~~~~~~
+Called when an interaction has been created via button clicks or application commands.
+
+Parameters
+^^^^^^^^^^
+interaction: :class:`Interaction`
+    Interaction created
+
+on_interaction_update
+~~~~~~~~~~~~~~~~~~~~~
+Called when an interaction has been updated
+
+Parameters
+^^^^^^^^^^
+interaction: :class:`Interaction`
+    Interaction updated
+
+on_interaction_delete
+~~~~~~~~~~~~~~~~~~~~~
+Called when an interaction has been deleted
+
+Parameters
+^^^^^^^^^^
+interaction: :class:`Interaction`
+    Interaction deleted
 
 on_message
 ~~~~~~~~~~
-Called when gateway dispatches ``MESSAGE_CREATE``.
-Indicating that a message has just been created.
+Called when a message has been created
 
 Parameters
-==========
-
+^^^^^^^^^^
 message: :class:`Message`
-    Message that was just created
+    Message created
 
 on_message_pin
 ~~~~~~~~~~~~~~
-Called when gateway dispatches ``CHANNEL_PINS_UPDATE``.
-Indicating a message has been pinned/unpinned.
-
-.. note::
-    This event is not called when pinned message is deleted
+Called when a message in a guild has been pinned or unpinned,
+not when a pinned message is deleted
 
 Parameters
-==========
-
+^^^^^^^^^^
 channel: :class:`Channel`
-    Channel were message was pinned/unpinned in
-
-timestamp: :obj:`py:datetime.datetime`
-    The timestamp of when message was pinned/unpinned
-
-on_guild_create
-~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_CREATE``.
-Indicating the client has joined a new guild, 
-this is different to ``on_guild_recv``.
-
-Parameters
-==========
-guild: :class:`Guild`
-    Guild client has just joined
+    Channel were message was pinned in
+last_pin_timestamp: :obj:`py:datetime.datetime`
+    The time at which the most recent pinned message was pinned
 
 on_guild_recv
 ~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_CREATE``.
-When the client receives a guild clients joined in.
+Called when an guild a client is already in has been received
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
-    Guild clients in
+    The guild client is in
 
-on_guild_delete
+on_guild_create
 ~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_DELETE``.
-Indicating that the client has just been removed from a server,
-this is different to ``on_guild_outage``
+Called when the client is added to a new guild
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
-    Guild client was removed from
+    Guild client has just joined
 
 on_guild_outage
 ~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_DELETE``.
-Indicating the client is in a guild that is unavailable due to an outage.
+Called when a guild a client is in is experiencing an outage
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
-    Guild thats experiencing an outage, :attr:`Guild.unavailable` should be true.
+    The client experiencing an outage
+
+on_guild_remove
+~~~~~~~~~~~~~~~
+Called when client is removed from a guild, e.g client got banned
+
+Parameters
+^^^^^^^^^^
+guild: :class:`Guild`
+    Guild client has been removed from
 
 on_guild_update
 ~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_UPDATE``.
-Indicating that a guild has been modifed.
+Called when a guild is updated
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
-    Guild that has been updated
+    Updated guild
 
-on_guild_ban
-~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_BAN_ADD``.
-Indicating a user has been banned
+on_guild_ban_add
+~~~~~~~~~~~~~~~~
+Called when a user has been banned from a guild
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
     Guild were user was banned from
 user: :class:`User`
@@ -134,182 +151,264 @@ user: :class:`User`
 
 on_guild_ban_remove
 ~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_BAN_REMOVE``.
-Indicating a user has been unbanned
+Called when a banned user has been unbanned
 
 Parameters
-==========
+^^^^^^^^^^
 guild: :class:`Guild`
-    Guild were user was unbanned from
+    Guild were a user has been unbanned
 user: :class:`User`
     User who was unbanned
 
-on_emoji_update
-~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_EMOJIS_UPDATE``.
-Indicating an emoji has been updated.
-This is different to ``on_emojis_update``,
-as this is a singular emoji not all of them.
+on_guild_emoji_update
+~~~~~~~~~~~~~~~~~~~~~
+Called when an emoji has been updated
 
 Parameters
-==========
+^^^^^^^^^^
 emoji: :class:`Emoji`
-    Emoji just updated
+    Emoji that has been updated
 
-on_emojis_update
-~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_EMOJIS_UPDATE``.
-Indicating many emojis have been updated.
-this is different to ``on_emoji_update``,
-as this contains all updated emojis instead of 1.
+on_guild_emojis_update
+~~~~~~~~~~~~~~~~~~~~~~
+Called when emojis have been updated in bulk,
+may be called when a single emoji has been updated.
 
 Parameters
-==========
+^^^^^^^^^^
 emojis: List[:class:`Emoji`]
     List of updated emojis
 
-on_sticker_update
-~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
-Indicating a sticker has been updated.
-This is different to ``on_stickers_update``,
-as this is a singular sticker not all of them.
+on_guild_sticker_update
+~~~~~~~~~~~~~~~~~~~~~~~
+Called when a sticker has been updated
 
 Parameters
-==========
+^^^^^^^^^^
 sticker: :class:`Sticker`
-    Sticker just updated
+    Sticker updated
 
-on_stickers_update
-~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``GUILD_STICKERS_UPDATE``.
-Indicating many stickers have been updated.
-this is different to ``on_stickers_update``,
-as this contains all updated stickers instead of 1.
+on_guild_stickers_update
+~~~~~~~~~~~~~~~~~~~~~~~~
+Called when stickers have been updated in bulk,
+may be called when a single sticker has been updated.
 
 Parameters
-==========
-sticker: List[:class:`Sticker`]
+^^^^^^^^^^
+stickers: List[:class:`Sticker`]
     List of updated stickers
+
+on_guild_integrations_update
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when an integration for a guild has been updated
+
+Parameters
+^^^^^^^^^^
+guild: Union[:class:`Guild`, :class:`Snowflake`]
+    Guild were integrations has been updated
+
+on_member_join
+~~~~~~~~~~~~~~
+Called when a user joins a guild
+
+Parameters
+^^^^^^^^^^
+member: :class:`Member`
+    member object of user who has just joined
+guild: :class:`Guild`
+    guild were user has joined
+
+on_member_remove
+~~~~~~~~~~~~~~~~
+Called when a user leaves a guild
+
+Parameters
+^^^^^^^^^^
+member: Union[:class:`Member`, :class:`User`]
+    Member who has just left
+guild: Union[:class:`Guild`, :class:`Snowflake`]
+    Guild were integrations has been updated
+
+on_member_update
+~~~~~~~~~~~~~~~~
+Called when a member is updated,
+include internal user fields as well
+
+Parameters
+^^^^^^^^^^
+b_member: :class:`Member`
+    Member before updates
+a_member: :class:`Member`
+    Member after updates
+guild: :class:`Guild`
+    Guild were member updated in
+
+on_role_create
+~~~~~~~~~~~~~~
+Called when a role is created in a guild
+
+Parameters
+~~~~~~~~~~
+role: :class:`Role`
+    Created role
+guild: :class:`Guild`
+    Guild were role was created
+
+on_role_update
+~~~~~~~~~~~~~~
+Called when a role in a guild is updated
+
+Parameters
+^^^^^^^^^^
+b_role: :class:`Role`
+    Role before updates
+a_role: :class:`Role`
+    Role after updates
+guild: :class:`Guild`
+    Guild were role was updated
+
+on_role_delete
+~~~~~~~~~~~~~~
+Called when a role in a guild is deleted
+
+Parameters
+^^^^^^^^^^
+role: :class:`Role`
+    Role deleted
+guild: :class:`Guild`
+    Guild were role was deleted
+
+on_guild_scheduled_event_create
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a guild scheduled event is created
+
+Parameters
+^^^^^^^^^^
+event: :class:`GuildScheduledEvent`
+    Event that was created
+guild: :class:`Guild`
+    Guild that event was created in
+
+on_guild_scheduled_event_update
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a guild scheduled event is updated
+
+Parameters
+^^^^^^^^^^
+event: :class:`GuildScheduledEvent`
+    Event that was updated
+guild: :class:`Guild`
+    Guild that event was updated in
+
+on_guild_scheduled_event_delete
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a guild scheduled event is deleted
+
+Parameters
+^^^^^^^^^^
+event: :class:`GuildScheduledEvent`
+    Event that was deleted
+guild: :class:`Guild`
+    Guild that event was deleted in
 
 on_channel_create
 ~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_CREATE``.
-This is called when any channels are created.
+Called when a channel is created
 
 Parameters
-==========
+^^^^^^^^^^
 channel: :class:`Channel`
-    Channel just created
+    Channel created
 
 on_channel_update
 ~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_UPDATE``.
-This is called when any channels are updated.
+Called when a channel is updated
 
 Parameters
-==========
+^^^^^^^^^^
 channel: :class:`Channel`
-    Channel that was just updated
+    Channel updated
 
 on_channel_delete
 ~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``CHANNEL_DELETE``.
-Indicating a channel has been deleted
+Called when a channel is deleted
 
 Parameters
-==========
+^^^^^^^^^^
 channel: :class:`Channel`
-    Channel that was just deleted
+    Channel deleted
 
 on_thread_create
 ~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_CREATE``.
-Indicating that a thread has been created.
+Called when a thread is created in a channel
 
 Parameters
-==========
+^^^^^^^^^^
 thread: :class:`Thread`
-    Thread thats just been created
+    Thread that was created
 
 on_thread_update
 ~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_UPDATE``.
-Indicating that a thread has been updated.
+Called when a thread is updated in a channel
 
 Parameters
-==========
+^^^^^^^^^^
 thread: :class:`Thread`
-    Thread thats just been updated
+    Thread that was updated
 
 on_thread_delete
 ~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_DELETE``.
-Indicating that a thread has been deleted.
+Called when a thread is deleted in a channel
 
 Parameters
-==========
+^^^^^^^^^^
 thread: :class:`Thread`
-    Thread thats just been deleted
+    Thread that was deleted
 
 on_thread_sync
 ~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_LIST_SYNC``.
-Indicating that the client has gotten access to new threads.
+Called when a threads sync when client gains access to them
 
 Parameters
-==========
+^^^^^^^^^^
 threads: List[:class:`Thread`]
-    A list of threads that the client has gained access to.
+    List of threads client has gained access to
 
 on_thread_member_update
 ~~~~~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_MEMBER_UPDATE``.
+Called when a thread member has been updated
 
 Parameters
-==========
-thread_member: :class:`ThreadMember`
-    Member that has been updated
+^^^^^^^^^^
+member: :class:`ThreadMember`
+    Thread member that was updated
 
 on_thread_members_update
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``THREAD_MEMBERS_UPDATE``.
+Called when many thread members are updated
 
 Parameters
-==========
-thread_member: :class:`Thread`
-    Updated thread, were :attr:`Thread.members` is updated
+^^^^^^^^^^
+thread: :class:`Thread`
+    New thread with updated members
 
-on_interaction_create
+on_voice_state_update
 ~~~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``INTERACTION_CREATE``,
-indication an interaction was created.
+Called when a members voice state updates
 
 Parameters
-==========
-interaction: :class:`Interaction`
-    Interaction created
+^^^^^^^^^^
+channel_id: :class:`Snowflake`
+    ID of channel member has left or joined,
+    ``None`` for left
+member: :class:`Member`
+    Member object with :class:`VoiceState` attached
 
-on_interaction_update
-~~~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``INTERACTION_UPDATE``,
-indication an interaction was updated.
-
-Parameters
-==========
-interaction: :class:`Interaction`
-    Interaction updated
-
-on_interaction_delete
-~~~~~~~~~~~~~~~~~~~~~
-Called when the gateway dispatches ``INTERACTION_DELETE``,
-indication an interaction was deleted.
+on_voice_server_update
+~~~~~~~~~~~~~~~~~~~~~~
+Called when the client joins a VC.
 
 Parameters
-==========
-id: :class:`int`
-    ID of interaction deleted
-guild_id: :class:`Snowflake`
-    ID of guild were interaction was created
-application_id: :class:`Snowflake`
-    ID of the bot/OAuth2 application for this discord integration
+^^^^^^^^^^
+voice_connection: :class:`VoiceConnection`
+    Connection to voice channel
