@@ -28,6 +28,13 @@ If you have any queries - `Click Here`_ to join our support server
 
 .. _Click Here: https://discord.gg/Q5mFhUM
 
+Alpha Notice
+^^^^^^^^^^^^
+ACord is currently a startup project is currently in its planning stage,
+bugs may be expected in the library. 
+Typos may exist in the docs.
+But we rely on you to report this issues to help us make ACord better!
+
 Features
 ========
 
@@ -74,9 +81,6 @@ Basic Example
     from acord import Client, Message, Intents
 
     class MyClient(Client):
-        def __init__(self, *args, **kwargs) -> None:
-            super().__init__(*args, **kwargs)
-
         async def on_message(self, message: Message) -> None:
             """ My on_message event handler! """
 
@@ -99,7 +103,7 @@ We also recommend installing the speedup package, which can be done using:
     pip install acord['speedup']
 
     # pip3 for Linux/MacOS
-    pip install git+https://github.com/Mecha-Karen/ACord#egg=speedup
+    pip install git+https://github.com/Mecha-Karen/ACord#egg=acord.speedup
 
 
 Contents
