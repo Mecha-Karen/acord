@@ -12,13 +12,35 @@ Models
 ******
 Our models use the ``Pydantic`` module for simple data parsing. 
 All methods from :class:`~pydantic.BaseModel` are inherited along with ours.
-These methods will not be shown in our docs, you can find them in the ``Pydantic`` documentation.
+These methods will not be shown in our docs, 
+you can find them in the ``Pydantic`` documentation.
 
 Snowflake
 ~~~~~~~~~~
-A snowflake is a representation of a discord ID, which is a unique integer.
-When working with a class type hinted with :class:`Snowflake`,
-its exactly the same as working with a :class:`int`.
+
+.. attributetable:: Snowflake
+
+.. autoclass:: Snowflake
+   :members:
+
+Application
+~~~~~~~~~~~
+
+.. attributetable:: Application
+
+.. autoclass:: Application
+   :members:
+
+Audit Logs
+==========
+
+AuditLog
+~~~~~~~~
+
+.. attributetable:: AuditLog
+
+.. autoclass:: AuditLog
+   :members:
 
 Emoji
 ~~~~~
@@ -152,6 +174,12 @@ Interaction
 .. autoclass:: Interaction
    :members:
 
+Interaction Data
+~~~~~~~~~~~~~~~~
+
+.. attributetable:: InteractionData
+
+
 Attachment
 ~~~~~~~~~~
 
@@ -179,15 +207,17 @@ Between 1 user.
 
 .. autoclass:: DMChannel
    :members:
+   :exclude-members: json, dict, construct, update_forward_refs, copy
 
 Group DM Channel
 ================
-Between multiple users
+A DM channel between multiple users
 
 .. attributetable:: GroupDMChannel
 
 .. autoclass:: GroupDMChannel
    :members:
+   :exclude-members: json, dict, construct, update_forward_refs, copy
 
 Integration
 ~~~~~~~~~~~
@@ -212,3 +242,5 @@ Webhook
 
 .. autoclass:: Webhook
    :members:
+
+
