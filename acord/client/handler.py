@@ -130,7 +130,6 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
                     possible_exc = await asyncio.wait_for(fut, None)
                     if isinstance(possible_exc, Exception):
-                        self.dispatch("")
                         self.on_error(f"app_cmd dispatcher : {udac.name}")
 
             self.dispatch("interaction_create", data)
