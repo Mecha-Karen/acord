@@ -1,3 +1,7 @@
+# Partials are basically any object which requires objects from
+# acord.models
+# But are not actual recourses
+
 from __future__ import annotations
 
 import pydantic
