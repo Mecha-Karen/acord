@@ -16,7 +16,7 @@ __all__ = (
     "Attachment",
     "Member",
     "GuildScheduledEvent", "ScheduledEventUser", "ScheduledEventMetaData",
-    "Message", "MessageReference", "WebhookMessage",
+    "Message", "MessageReference", "WebhookMessage", "MessageReaction",
     "InteractionSlashOption", "InteractionData", "Interaction", "IMessageFlags",
     "Invite",
     "Channel", "TextChannel", "Stage", "Thread", "ThreadMeta", "ThreadMember",
@@ -73,7 +73,7 @@ from .guild_sched_event import (
     ScheduledEventUser,
     ScheduledEventMetaData,
 )
-from .message import Message, MessageReference, WebhookMessage
+from .message import Message, MessageReference, MessageReaction, WebhookMessage
 from .interaction import (
     InteractionSlashOption,
     InteractionData,
