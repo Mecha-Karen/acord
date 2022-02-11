@@ -7,7 +7,7 @@ from aiohttp import ClientSession
 
 from acord.bases import Hashable
 from acord.core.abc import Route, buildURL
-from .channels import Channel
+from acord.models import Snowflake, GuildScheduledEvent
 from .user import User
 
 
@@ -23,9 +23,9 @@ class Invite(pydantic.BaseModel, Hashable):
 
     code: str
     """the invite code (unique ID)"""
-    guild: Optional[Any]
+    guild_id: Optional[Snowflake]
     """the guild this invite is for"""
-    channel: Optional[Channel]
+    channel_id: Snowflake
     """the channel this invite is for"""
     inviter: Optional[User]
     """the user who created the invite"""
@@ -43,8 +43,6 @@ class Invite(pydantic.BaseModel, Hashable):
     """the expiration date of this invite"""
     stage_instance: Optional[StageInstanceInvite]
     """stage instance data if there is a public Stage instance in the Stage channel this invite is for"""
-    guild_scheduled_event: Optional[Any]  # TODO: scheduled event object
-    """guild scheduled event"""
 
     @pydantic.validator("guild", pre=True)
     def _validate_guild(cls, partial_guild: dict, **kwargs):
