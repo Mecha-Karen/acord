@@ -41,7 +41,8 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             logger.info("Websocket connection has been closed, resuming session shortly")
             break
 
-        self.dispatch("socket_receive", message)
+        if self.dispatch_on_recv:
+            self.dispatch("socket_receive", message)
 
         data = message.data
 
@@ -186,6 +187,32 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             )
 
             self.dispatch("message_update", message)
+
+        elif EVENT == "MESSAGE_DELETE":
+            message = self.get_message(DATA["channel_id"], DATA["id"])
+            if message:
+                self.INTERNAL_STORAGE["messages"].pop(f"{DATA['channel_id']}:{DATA['id']}")
+                self.dispatch("message_delete", message)
+            else:
+                self.dispatch("partial_message_delete",
+                    Snowflake(DATA["channel_id"]),
+                    Snowflake(DATA["id"]),
+                    Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None
+                )
+
+        elif EVENT == "MESSAGE_DELETE_BULK":
+            messages = [
+                (
+                    self.get_message(DATA["channel_id"], id) or Snowflake(id)
+                )
+                for id in DATA["ids"]
+            ]
+
+            self.dispatch("bulk_message_delete", 
+                messages, 
+                Snowflake(DATA["channel_id"]),
+                Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None
+            )
 
         elif EVENT == "CHANNEL_PINS_UPDATE":
             channel = self.get_channel(int(DATA["channel_id"]))
