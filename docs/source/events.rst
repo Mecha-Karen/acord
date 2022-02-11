@@ -76,10 +76,57 @@ on_message_create
 ~~~~~~~~~~~~~~~~~
 Called when a message has been created
 
+.. versionchanged:: 0.0.1a3
+    on_message was renamed to on_message_create
+
 Parameters
 ^^^^^^^^^^
 message: :class:`Message`
     Message created
+
+on_message_update
+~~~~~~~~~~~~~~~~~
+Called when a message has been updated
+
+Parameters
+^^^^^^^^^^
+message: :class:`Message`
+    Message updated
+
+on_message_delete
+~~~~~~~~~~~~~~~~~
+Called when a message has been deleted
+
+Parameters
+^^^^^^^^^^
+message: :class:`Message`
+    Message deleted
+
+on_partial_message_delete
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a message has been deleted and cannot be found in the cache
+
+Parameters
+^^^^^^^^^^
+channel_id: :class:`Snowflake`
+    ID of channel
+id: :class:`Snowflake`
+    ID of the message
+guild_id: Optional[:class:`Snowflake`]
+    ID of guild if message was not deleted in a :class:`DMChannel`
+
+on_bulk_message_delete
+~~~~~~~~~~~~~~~~~~~~~~
+Called when messages were deleted in bulk
+
+Parameters
+^^^^^^^^^^
+messages: List[Union[:class:`Message`, :class:`Snowflake`]]
+    List of messages or message ids that were deleted
+channel_id: :class:`Snowflake`
+    ID of channel were messages were deleted
+guild_id: Optional[Snowflake]
+    ID of guild if message was not deleted in a :class:`DMChannel`
 
 on_message_pin
 ~~~~~~~~~~~~~~
@@ -92,6 +139,28 @@ channel: :class:`Channel`
     Channel were message was pinned in
 last_pin_timestamp: :obj:`py:datetime.datetime`
     The time at which the most recent pinned message was pinned
+
+on_invite_create
+~~~~~~~~~~~~~~~~
+Called when an invite for a channel has been created
+
+Parameters
+^^^^^^^^^^
+invite: :class:`Invite`
+    Invite created
+
+on_invite_delete
+~~~~~~~~~~~~~~~~
+Called when an invite for a channel has been deleted
+
+Parameters
+^^^^^^^^^^
+channel: Union[:class:`Channel`, :class:`Snowflake`]
+    Channel or Channel ID of were invite was deleted
+guild: Optional[Union[:class:`Guild`, :class:`Snowflake`]]
+    Guild or Guild ID of were invite was deleted
+code: :class:`str`
+    Code of deleted invite
 
 on_guild_recv
 ~~~~~~~~~~~~~
