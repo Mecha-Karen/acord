@@ -47,7 +47,6 @@ class MessageReaction(pydantic.BaseModel):
     channel_id: Snowflake
     message_id: Snowflake
     guild_id: Optional[Snowflake]
-    member: Optional[Member]
     emoji: PartialEmoji
 
 
