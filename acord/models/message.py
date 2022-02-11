@@ -4,8 +4,7 @@ from aiohttp.formdata import FormData
 import pydantic
 import datetime
 
-from acord.bases import Hashable, Embed, MessageFlags, ActionRow
-from acord.bases.components import Component
+from acord.bases import Hashable, Embed, MessageFlags, ActionRow, Component
 from acord.core.abc import Route, buildURL
 from acord.models import (
     Application,
@@ -15,6 +14,7 @@ from acord.models import (
     Snowflake,
     Attachment,
     Member,
+    PartialEmoji
 )
 from acord.errors import APIObjectDepreciated
 
@@ -40,6 +40,15 @@ class MessageReference(pydantic.BaseModel):
     channel_id: Optional[Snowflake]
     guild_id: Optional[Snowflake]
     fail_if_not_exists: Optional[bool] = True
+
+
+class MessageReaction(pydantic.BaseModel):
+    user_id: Snowflake
+    channel_id: Snowflake
+    message_id: Snowflake
+    guild_id: Optional[Snowflake]
+    member: Optional[Member]
+    emoji: PartialEmoji
 
 
 class Message(pydantic.BaseModel, Hashable):
@@ -90,8 +99,8 @@ class Message(pydantic.BaseModel, Hashable):
     """ Message nonce: used for verifying if message was sent """
     pinned: bool
     """ Message pinned in channel or not """
-    reactions: Optional[List[Any]] = list()
-    """ List of reactions """  # TODO: reaction object
+    reactions: Optional[List[MessageReaction]] = list()
+    """ List of reactions """
     referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """
     thread: Optional[Any]
