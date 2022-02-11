@@ -44,22 +44,8 @@ class Invite(pydantic.BaseModel, Hashable):
     stage_instance: Optional[StageInstanceInvite]
     """stage instance data if there is a public Stage instance in the Stage channel this invite is for"""
 
-    @pydantic.validator("guild", pre=True)
-    def _validate_guild(cls, partial_guild: dict, **kwargs):
-        conn = kwargs["values"]["conn"]
-        guild_id = int(partial_guild["id"])
-
-        return conn.client.get_guild(guild_id)
-
-    @pydantic.validator("channel", pre=True)
-    def _validate_channel(cls, partial_channel: dict, **kwargs):
-        conn = kwargs["values"]["conn"]
-        channel_id = int(partial_channel["id"])
-
-        return conn.client.get_channel(channel_id)
-
     @classmethod
-    async def from_code(cls, code: str, **params) -> Invite:
+    async def from_code(cls, client, code: str, **params) -> Invite:
         """|coro|
 
         Creates a new invite from its code,
@@ -71,6 +57,8 @@ class Invite(pydantic.BaseModel, Hashable):
 
         Parameters
         ----------
+        client: :class:`Client`
+            client being used to fetch invite
         code: :class:`str`
             code of invite to fetch
         with_counts: :class:`bool`
@@ -82,9 +70,10 @@ class Invite(pydantic.BaseModel, Hashable):
         """
         params = {k: str(v).lower() for k, v in params.items()}
 
-        async with ClientSession() as session:
-            async with session.get(buildURL(f"invites/{code}")) as r:
-                return cls()
+        async with client.http.request(
+            Route("GET", path=f"/invites/{code}")
+        ) as r:
+            return cls(conn=client.http, **(await r.json()))
 
     async def delete(self, *, reason: str) -> None:
         """|coro|
