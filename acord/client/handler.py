@@ -24,6 +24,11 @@ def get_slash_options(interaction: Interaction) -> dict:
     return data
 
 
+class Empty:
+    def dict(self):
+        return {}
+
+
 async def handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
     UNAVAILABLE = dict()
@@ -162,13 +167,48 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                 {f"{message.channel_id}:{message.id}": message}
             )
 
-            self.dispatch("message", message)
+            self.dispatch("message_create", message)
+
+        elif EVENT == "MESSAGE_UPDATE":
+            pre_existing = self.get_message(DATA["channel_id"], DATA["id"]) or Empty()
+            m_data = {**DATA, **pre_existing.dict()}
+
+            message = Message(conn=self.http, **m_data)
+
+            try:
+                if hasattr(message.channel, "last_message_id"):
+                    message.channel.last_message_id = message.id
+            except ValueError:
+                pass
+
+            self.INTERNAL_STORAGE["messages"].update(
+                {f"{message.channel_id}:{message.id}": message}
+            )
+
+            self.dispatch("message_update", message)
 
         elif EVENT == "CHANNEL_PINS_UPDATE":
             channel = self.get_channel(int(DATA["channel_id"]))
             ts = datetime.datetime.fromisoformat(DATA["last_pin_timestamp"])
 
             self.dispatch("message_pin", channel, ts)
+
+        # NOTE: invites
+        elif EVENT == "INVITE_CREATE":
+            invite = Invite(conn=self.http, **DATA)
+            self.dispatch("invite_create", invite)
+
+        elif EVENT == "INVITE_DELETE":
+            channel_id = DATA["channel_id"]
+            guild_id = DATA.get("guild_id", 0)
+            code = DATA["code"]
+
+            channel = self.get_channel(channel_id) or Snowflake(channel_id)
+            guild = self.get_guild(guild_id) or (
+                Snowflake(guild_id) if guild_id is not None else None
+            )
+
+            self.dispatch("invite_delete", channel, guild, code)
 
         # NOTE: Guilds
 

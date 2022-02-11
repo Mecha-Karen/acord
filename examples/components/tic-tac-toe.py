@@ -80,7 +80,7 @@ class MyClient(Client):
     async def on_ready(self) -> None:
         print(f"{self.user} is ready!")
 
-    async def on_message(self, message: Message) -> Any:
+    async def on_message_create(self, message: Message) -> Any:
         """This is were we handle our tic tac toe game creation"""
         content = message.content.lower()
         name, *args = content.split(" ")

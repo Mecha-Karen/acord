@@ -72,8 +72,8 @@ Parameters
 interaction: :class:`Interaction`
     Interaction deleted
 
-on_message
-~~~~~~~~~~
+on_message_create
+~~~~~~~~~~~~~~~~~
 Called when a message has been created
 
 Parameters

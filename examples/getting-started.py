@@ -8,7 +8,7 @@ class MyClient(acord.Client):
     async def on_ready(self):
         print(f"{self.user} is now online!")
 
-    async def on_message(self, message: acord.Message):
+    async def on_message_create(self, message: acord.Message):
         # Listen to all message, if content == ".ping"
         if message.content == ".ping":
             # Return "Pong!"

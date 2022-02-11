@@ -6,7 +6,7 @@ class MClient(Client):
     async def on_ready(self):
         print(f"{self.user} is now online!")
 
-    async def on_message(self, message: Message) -> None:
+    async def on_message_create(self, message: Message) -> None:
         if message.content.startswith(".guess"):
             number = random.randint(0, 20)
             _, *args = message.content.split(" ")

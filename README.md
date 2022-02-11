@@ -48,8 +48,8 @@ class MyClient(Client):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def on_message(self, message: Message) -> None:
-        """ My on_message event handler! """
+    async def on_message_create(self, message: Message) -> None:
+        """ My message event handler! """
 
         if message.content.lower() == ".ping":
             return await message.channel.send(content="Pong!")

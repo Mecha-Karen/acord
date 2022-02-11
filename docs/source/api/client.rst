@@ -21,7 +21,7 @@ Example
     from typing import Any
 
     class MyClient(Client):
-        async def on_message(self, message: Message) -> Any:
+        async def on_message_create(self, message: Message) -> Any:
             if message.content == ".ping":
                 return message.reply(content="Pong!")
     
