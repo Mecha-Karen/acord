@@ -18,7 +18,7 @@ from acord.models import (
 )
 from acord.errors import APIObjectDepreciated
 
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 async def _clean_reaction(string):
@@ -98,7 +98,7 @@ class Message(pydantic.BaseModel, Hashable):
     """ Message nonce: used for verifying if message was sent """
     pinned: bool
     """ Message pinned in channel or not """
-    reactions: Optional[List[MessageReaction]] = list()
+    reactions: Dict[PartialEmoji, List[MessageReaction]] = list()
     """ List of reactions """
     referenced_message: Optional[Union[Message, MessageReference]]
     """ Replied message """
@@ -119,6 +119,18 @@ class Message(pydantic.BaseModel, Hashable):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @pydantic.validator("reactions", pre=True)
+    def _validate_reactions(cls, reactions):
+        d = {}
+        for reaction in reactions:
+            r = MessageReaction(**reaction)
+            if r.emoji not in d:
+                d[r.emoji] = [r]
+            else:
+                d[r.emoji].append(r)
+
+        return d
 
     @pydantic.validator("timestamp")
     def _timestamp_validator(cls, timestamp):
@@ -180,7 +192,6 @@ class Message(pydantic.BaseModel, Hashable):
         self,
         emoji: Union[str, Emoji],
         *,
-        update: bool = True,
         after: Union[User, Snowflake],
         limit: int = 25,
     ) -> List[User]:
@@ -192,8 +203,6 @@ class Message(pydantic.BaseModel, Hashable):
         ----------
         emoji: Union[:class:`str`, :class:`Emoji`]
             Emoji to fetch reactions for
-        update: :class:`bool`
-            Whether to update message object, defaults to ``True``
         after: Union[:class:`Snowflake`, :class:`User`]
             Fetches users after this id
         limit: :class:`int`
@@ -362,7 +371,7 @@ class Message(pydantic.BaseModel, Hashable):
         resp = await self.conn.request(
             Route("POST", path=f"/channels/{channel.id}/messages/{self.id}/crosspost")
         )
-        message = Message(**(await resp.json()))
+        message = Message(conn=self.http, **(await resp.json()))
         self.conn.client.INTERNAL_STORAGE["messages"].update(
             {f"{message.channel_id}:{message.id}": message}
         )
