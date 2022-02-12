@@ -2,7 +2,7 @@
    :title: Documentation - Acord [Guides]
    :type: website
    :url: https://acord.readthedocs.io/guides/components.html
-   :description: Guides on how to use message components
+   :description: Guide on how to use message components
    :theme-color: #f54646
 
 .. currentmodule:: acord
