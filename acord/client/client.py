@@ -240,7 +240,7 @@ class Client(object):
         payload = dict(
             op=6,
             d=dict(
-                token=self.http.token, session_id=self.session_id, seq=gateway.sequence
+                token=self.http.token, session_id=self.session_id, seq=self.sequence
             ),
         )
 
@@ -542,7 +542,6 @@ class Client(object):
     def run(
         self,
         token: str = None,
-        *,
         reconnect: bool = True,
         resumed: bool = False,
         update_app_commands: bool = True,
@@ -578,6 +577,8 @@ class Client(object):
         if not hasattr(self, "http"):
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
         self.token = token
+
+        self._state = [token, reconnect, resumed, update_app_commands, exclude_app_cmds]
 
         # Login to create session
         try:
@@ -634,7 +635,8 @@ class Client(object):
                 # kill connection and re-run
                 self.loop.run_until_complete(self.http.disconnect())
 
-                return self.run(token=token, reconnect=reconnect, resumed=True)
+                self._state[2] = True
+                return self.run(*self._state)
 
             raise
 
