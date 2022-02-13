@@ -48,6 +48,7 @@ class InteractionData(pydantic.BaseModel):
     component_type: Optional[ComponentTypes]
     values: Optional[List[SelectOption]]
     target_id: Optional[Snowflake]
+    components: Any
 
 
 class _FormPartHelper(pydantic.BaseModel):
@@ -152,7 +153,6 @@ class Interaction(pydantic.BaseModel, Hashable):
             Modal to create
         """
         d = _FormPartHelper(type=InteractionCallback.MODAL, data=modal)
-        print(d.json())
 
         await self.conn.request(
             Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
