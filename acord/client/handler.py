@@ -33,17 +33,23 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
     UNAVAILABLE = dict()
 
-    self._resume = False
-
-    while not self._resume:
+    while True:
         message = await ws.receive()
 
         if message.type in CLOSE_CODES:
             # Connection lost!
             logger.info(f"Websocket connection has been closed, resuming session shortly : code={message.data}")
             
-            self._resume = True
-            return
+            # Re-prep ws for next iter
+            url, kwds = self.http._state
+
+            ws = await self.http._session.ws_connect(url, **kwds)
+            ws.client = self.http
+            self.http.ws = ws
+
+            await self.resume()
+
+            continue
 
         if self.dispatch_on_recv:
             self.dispatch("socket_receive", message)
