@@ -635,9 +635,6 @@ class Client(object):
                 # kill connection and re-run
                 self.loop.run_until_complete(self.http.disconnect())
 
-                self._state[2] = True
-                return self.run(*self._state)
-
             raise
 
     async def disconnect(self):
