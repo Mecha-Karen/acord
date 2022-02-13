@@ -209,6 +209,8 @@ class HTTPClient(object):
             "compress": compress,
         }
 
+        self._state = (GATEWAY_WEBHOOK_URL, kwargs)
+
         ws = await self._session.ws_connect(GATEWAY_WEBHOOK_URL, **kwargs)
 
         helloRecv = await ws.receive()
