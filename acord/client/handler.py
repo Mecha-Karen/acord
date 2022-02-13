@@ -49,6 +49,8 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
             await self.resume()
 
+            logger.debug("Resume payload sent, awaiting response")
+
             continue
 
         if self.dispatch_on_recv:
