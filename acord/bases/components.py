@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import Any, List, Optional
 import pydantic
+from typer import Option
 
-from acord.bases import ComponentTypes, ButtonStyles
+from acord.bases import ComponentTypes, ButtonStyles, TextInputStyle
 
 
 class Component(pydantic.BaseModel):
@@ -10,8 +11,6 @@ class Component(pydantic.BaseModel):
     """ Type of component """
     custom_id: Optional[str]
     """ Custom ID of component cannot be greater then 100 chars """
-    disabled: Optional[bool] = False
-    """ Whether component is disabled """
 
     @classmethod
     def from_data(cls, data) -> Component:
@@ -38,6 +37,8 @@ class SelectOption(pydantic.BaseModel):
 class ActionRow(Component):
     components: List[Component]
     """ List of components to add to row """
+    disabled: Optional[bool] = False
+    """ Whether component is disabled """
 
     @pydantic.validator("components")
     def _validate_lengths(cls, components) -> List[Component]:
@@ -85,6 +86,8 @@ class Button(Component):
     """ A partial emoji object """
     url: Optional[pydantic.AnyHttpUrl]
     """ URL for link style buttons """
+    disabled: Optional[bool] = False
+    """ Whether component is disabled """
 
     @pydantic.validator("label")
     def _validate_label(cls, label):
@@ -107,6 +110,8 @@ class SelectMenu(Component):
     """ Minimum values of selected items """
     max_values: Optional[int]
     """ Max values of selected items """
+    disabled: Optional[bool] = False
+    """ Whether component is disabled """
 
     @pydantic.validator("options")
     def _validate_options(cls, options):
@@ -152,3 +157,55 @@ class SelectMenu(Component):
             raise ValueError("Select menu cannot have more then 25 options")
 
         self.options.append(option)
+
+
+class TextInput(Component):
+    style: TextInputStyle
+    """ text input style """
+    label: str
+    """ label for input """
+    min_length: Optional[int]
+    """ minimum length for input, 0-4000 """
+    max_length: Optional[int]
+    """ maximum length for input, 0-4000 """
+    required: Optional[bool] = False
+    """ Whether this component is required to be filled """
+    value: Optional[str]
+    """ pre-filled value for input """
+    placeholder: Optional[str]
+    """ Custom placeholder if input is empty, 0-100 """
+
+    def __init__(self, **data: Any) -> None:
+        data.update({"type": ComponentTypes.TEXT_INPUT})
+
+        super().__init__(**data)
+
+    @pydantic.validator("min_length", "max_length")
+    def _validate_lengths(cls, v) -> int:
+        assert 0 <= v <= 4000, "Lengths must be >= 0 but <= 4000" 
+        return v
+
+    @pydantic.validator("placeholder")
+    def _validate_placeholder(cls, v) -> str:
+        assert len(v) <= 100, "Placeholder must be less then 100 chars"
+        return v
+
+
+class Modal(pydantic.BaseModel):
+    title: str
+    """ Title of modal """
+    custom_id: str
+    """ custom ID of the modal """
+    components: List[ActionRow]
+    """ List of action rows
+
+    .. note::
+        As of 13/02/2022, discord only allows :class:`TextInput` in the action row
+    """
+
+    @pydantic.validator("components")
+    def _validate_components(cls, v):
+        assert all(i for i in v if all(
+            j for j in i.components if j.__class__ == TextInput
+        )), "Modal can only contain text inputs!"
+        return v

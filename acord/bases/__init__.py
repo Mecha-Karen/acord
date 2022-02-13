@@ -14,7 +14,7 @@ from .enums.guild import (
     PremiumTierLevel,
     VerificationLevel,
 )
-from .enums.components import ComponentTypes, ButtonStyles
+from .enums.components import ComponentTypes, ButtonStyles, TextInputStyle
 from .enums.interactions import (
     InteractionType,
     InteractionCallback,
@@ -42,7 +42,15 @@ from .embeds import (
     Embed,
     EmbedColor,
 )
-from .components import Component, SelectOption, SelectMenu, Button, ActionRow
+from .components import (
+    Component, 
+    SelectOption, 
+    SelectMenu, 
+    Button, 
+    ActionRow, 
+    TextInput,
+    Modal,
+)
 from .presence import (
     ActivityType,
     Activity,

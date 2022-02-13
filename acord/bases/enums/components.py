@@ -5,6 +5,7 @@ class ComponentTypes(IntEnum):
     ACTION_ROW = 1
     BUTTON = 2
     SELECT_MENU = 3
+    TEXT_INPUT = 4
 
 
 class ButtonStyles(IntEnum):
@@ -18,3 +19,10 @@ class ButtonStyles(IntEnum):
     """ Red """
     LINK = 5
     """ Grey, navigates to URL """
+
+
+class TextInputStyle(IntEnum):
+    SHORT = 1
+    """ Single line inputs """
+    PARAGRAPH = 2
+    """ Multi line inputs """

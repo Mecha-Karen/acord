@@ -33,13 +33,17 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
     UNAVAILABLE = dict()
 
-    while True:
+    self._resume = False
+
+    while not self._resume:
         message = await ws.receive()
 
         if message.type in CLOSE_CODES:
             # Connection lost!
-            logger.info("Websocket connection has been closed, resuming session shortly")
-            break
+            logger.info(f"Websocket connection has been closed, resuming session shortly : code={message.data}")
+            
+            self._resume = True
+            return
 
         if self.dispatch_on_recv:
             self.dispatch("socket_receive", message)
@@ -173,8 +177,9 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
         elif EVENT == "MESSAGE_UPDATE":
             pre_existing = self.get_message(DATA["channel_id"], DATA["id"]) or Empty()
             m_data = {**DATA, **pre_existing.dict()}
+            m_data["conn"] = self.http
 
-            message = Message(conn=self.http, **m_data)
+            message = Message(**m_data)
 
             try:
                 if hasattr(message.channel, "last_message_id"):
@@ -213,6 +218,16 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
                 Snowflake(DATA["channel_id"]),
                 Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None
             )
+
+        elif EVENT == "MESSAGE_REACTION_ADD":
+            reaction = MessageReaction(**DATA)
+
+            message = self.get_message(reaction.channel_id, reaction.message_id)
+            if message is not None:
+                if reaction.emoji not in message.reactions:
+                    message.reactions[reaction.emoji] = [reaction]
+                else:
+                    message.reactions[reaction.emoji].append(reaction)
 
         elif EVENT == "CHANNEL_PINS_UPDATE":
             channel = self.get_channel(int(DATA["channel_id"]))

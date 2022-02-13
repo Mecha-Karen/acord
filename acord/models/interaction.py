@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import Any, List, Optional
 from aiohttp import FormData
 import pydantic
@@ -10,6 +11,7 @@ from acord.bases import (
     InteractionCallback,
     ComponentTypes,
     SelectOption,
+    Modal,
 )
 from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
@@ -35,9 +37,11 @@ class IMessageCreatePayload(MessageCreatePayload):
 
 
 class InteractionData(pydantic.BaseModel):
+    # All fields optional because they may not be provided with
+    # all types of interactions
     id: Optional[Snowflake]
     name: Optional[str]
-    type: ApplicationCommandType
+    type: Optional[ApplicationCommandType]
     resolved: Optional[Any]
     options: Optional[List[InteractionSlashOption]] = []
     custom_id: Optional[str]
@@ -48,7 +52,7 @@ class InteractionData(pydantic.BaseModel):
 
 class _FormPartHelper(pydantic.BaseModel):
     type: InteractionCallback
-    data: IMessageCreatePayload
+    data: Any
 
 
 class Interaction(pydantic.BaseModel, Hashable):
@@ -135,6 +139,26 @@ class Interaction(pydantic.BaseModel, Hashable):
         )
 
         return Message(**(await r.json()))
+
+    async def respond_with_modal(self, modal: Modal) -> None:
+        """|coro|
+
+        Responds to an interaction,
+        instead of creating a message this creates a modal.
+
+        Parameters
+        ----------
+        modal: :class:`Modal`
+            Modal to create
+        """
+        d = _FormPartHelper(type=InteractionCallback.MODAL, data=modal)
+        print(d.json())
+
+        await self.conn.request(
+            Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
+            data=d.json(),
+            headers={"Content-Type": "application/json"}
+        )
 
     async def respond(
         self, *, ack: bool = False, followup: bool = False, **data
