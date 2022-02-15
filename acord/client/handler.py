@@ -88,6 +88,12 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
         elif OPERATION == gateway.RESUME:
             self.dispatch("resume")
 
+        elif OPERATION == gateway.HEARTBEAT:
+            await ws.send_json(self.http._keep_alive.get_payload())
+
+            self.acked_at = time.perf_counter()
+            logger.debug("Server requested heartbeat has been sent")
+
         elif OPERATION == gateway.HEARTBEATACK:
             p = time.perf_counter()
             ping = p - self.acked_at
