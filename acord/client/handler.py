@@ -190,7 +190,7 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
         elif EVENT == "MESSAGE_UPDATE":
             pre_existing = self.get_message(DATA["channel_id"], DATA["id"]) or Empty()
-            m_data = {**DATA, **pre_existing.dict()}
+            m_data = {**pre_existing.dict(), **DATA}
             m_data["conn"] = self.http
 
             message = Message(**m_data)
