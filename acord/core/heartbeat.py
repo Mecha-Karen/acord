@@ -22,21 +22,22 @@ class KeepAlive(Thread):
     def run(self):
         packet = self.packet
 
-        self.loop.create_task(self._ws.send_json(self.identity))
+        asyncio.run_coroutine_threadsafe(self._ws.send_json(self.identity), self.loop)
         logger.info(f"Identity packet sent to gateway, starting heartbeats")
 
         while True:
             if packet["op"] != gateway.HELLO:
                 raise ValueError("Invalid hello packet provided")
 
-            logger.debug("Sending new heartbeat, waiting...")
-            time.sleep((packet["d"]["heartbeat_interval"] / 1000))
+            coro = self._ws.send_json(self.get_payload())
+            asyncio.run_coroutine_threadsafe(coro, self.loop)
 
-            self.loop.create_task(self._ws.send_json(self.get_payload()))
             self._client.acked_at = time.perf_counter()
             logger.debug(
-                f"Sent heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds"
+                f"Sending next heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds"
             )
+
+            time.sleep((packet["d"]["heartbeat_interval"] / 1000))
 
         self.join()
 
