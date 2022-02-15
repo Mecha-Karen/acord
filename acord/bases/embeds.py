@@ -210,7 +210,7 @@ class Embed(pydantic.BaseModel):
             raise ValueError("Embed cannot contain more then 21 fields")
 
         fields.append(field)
-        self.fields = field     # type: ignore
+        self.fields = fields
 
     def remove_field(self, index: int) -> Optional[EmbedField]:
         """
