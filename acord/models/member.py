@@ -74,6 +74,9 @@ class Member(pydantic.BaseModel, Hashable):
 
     @pydantic.validator("user")
     def _validate_user(cls, user, **kwargs):
+        if not user:
+            return
+
         conn = kwargs["values"]["conn"]
         user.conn = conn
 
