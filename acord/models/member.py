@@ -83,15 +83,15 @@ class Member(pydantic.BaseModel, Hashable):
         return user
 
     @pydantic.validator("avatar")
-    def _validate_av(cls, av, **kwds):
-        guild_id = kwds["values"]["guild_id"]
-        user = kwds["values"]["user"]
+    def _validate_av(cls, value, **kwargs):
+        guild_id = kwargs["values"]["guild_id"]
+        user = kwargs["values"]["user"]
 
         if user_id is None:
-            return av
+            return value
         user_id = user.id
 
-        return f"https://cdn.discordapp.com/guilds/{guild_id}/users/{user_id}/avatars/{av}.png"
+        return f"https://cdn.discordapp.com/guilds/{guild_id}/users/{user_id}/avatars/{value}.png"
 
     async def ban(self, *, reason: str = None, delete_message_days: int = 0) -> None:
         """|coro|
