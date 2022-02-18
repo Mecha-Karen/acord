@@ -36,7 +36,7 @@ class Member(pydantic.BaseModel, Hashable):
     nick: :class:`str`
         Guild specific nickname of the member
     avatar: :class:`str`
-        Member's guild avatar hash
+        Member's guild avatar hash or url
     roles: List[:class:`Snowflake`]
         List of role IDs of roles the user has
     joined_at: :class:`datetime.datetime`
@@ -81,6 +81,17 @@ class Member(pydantic.BaseModel, Hashable):
         user.conn = conn
 
         return user
+
+    @pydantic.validator("avatar")
+    def _validate_av(cls, av, **kwds):
+        guild_id = kwds["values"]["guild_id"]
+        user = kwds["values"]["user"]
+
+        if user_id is None:
+            return av
+        user_id = user.id
+
+        return f"https://cdn.discordapp.com/guilds/{guild_id}/users/{user_id}/avatars/{av}.png"
 
     async def ban(self, *, reason: str = None, delete_message_days: int = 0) -> None:
         """|coro|
