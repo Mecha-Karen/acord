@@ -256,7 +256,7 @@ class SlashBase(UDAppCommand):
                 except Exception as e_exc:
                     return future.set_result(e_exc)
             else:
-                future.set_result(exc)
+                return future.set_result(exc)
         else:
             return future.set_result(0)
         return future.set_result(1)
