@@ -87,7 +87,7 @@ class Member(pydantic.BaseModel, Hashable):
         guild_id = kwargs["values"]["guild_id"]
         user = kwargs["values"]["user"]
 
-        if user_id is None:
+        if user is None:
             return value
         user_id = user.id
 
