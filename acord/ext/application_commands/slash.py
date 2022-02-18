@@ -133,6 +133,7 @@ class SlashBase(UDAppCommand):
         for call_identifier in EXTENDED_CALLS:
             if call_identifier in kwds:
                 __pre_calls__[call_identifier] = kwds[call_identifier]
+                kwds.pop(call_identifier)
 
         if "callback" not in __pre_calls__:
             raise SlashCommandError("Slash command missing callback")
@@ -148,11 +149,15 @@ class SlashBase(UDAppCommand):
         # kwds is validated in the second for loop
         extend = kwds.pop("extendable", True)
         overwrite = kwds.pop("overwritable", False)
+
         cls.extend = extend
         cls.overwrite = overwrite
+        cls.__annotations__.update({"extend": bool, "overwrite": bool})
 
         for attr in kwds:
             if attr in VALID_ATTR_NAMES:
+
+                cls.__annotations__.update({attr: SlashBase.__annotations__[attr]})
                 setattr(cls, attr, kwds[attr])
 
         for attr in VALID_ATTR_NAMES:
@@ -268,8 +273,9 @@ class SlashBase(UDAppCommand):
         **kwds:
             Additional kwargs such as "name", "description".
         """
+        kwds.update({"callback": function})
+
         sc_ff = cls(**kwds)
-        sc_ff.set_callback(function)
         return sc_ff
 
     @property
