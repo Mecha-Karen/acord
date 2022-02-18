@@ -59,6 +59,7 @@ class Member(pydantic.BaseModel, Hashable):
 
     conn: Any  # connection object
 
+    guild_id: Snowflake
     user: Optional[User]  # not included in MESSAGE_CREATE and MESSAGE_UPDATE events
     nick: Optional[str]
     avatar: Optional[str]
@@ -69,7 +70,6 @@ class Member(pydantic.BaseModel, Hashable):
     mute: bool
     pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
-    guild_id: Snowflake
     voice_state: Optional[MemberVoiceState]
 
     @pydantic.validator("user")

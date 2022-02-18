@@ -189,18 +189,12 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.dispatch("message_create", message)
 
         elif EVENT == "MESSAGE_UPDATE":
-            pre_existing = self.get_message(DATA["channel_id"], DATA["id"]) or Empty()
-            m_data = {**pre_existing.dict(), **DATA}
-            m_data["conn"] = self.http
+            pre_existing: Message = self.get_message(DATA["channel_id"], DATA["id"])
+            if not pre_existing:
+                self.dispatch("partial_message_update", DATA)
+                continue
 
-            message = Message(**m_data)
-
-            try:
-                if hasattr(message.channel, "last_message_id"):
-                    message.channel.last_message_id = message.id
-            except ValueError:
-                pass
-
+            message = pre_existing.copy(update=DATA)
             self.INTERNAL_STORAGE["messages"].update(
                 {f"{message.channel_id}:{message.id}": message}
             )
