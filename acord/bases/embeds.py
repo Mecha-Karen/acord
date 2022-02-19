@@ -17,6 +17,10 @@ def _rgb_to_hex(rgb) -> str:
     return string
 
 
+class DiscordImageURL(pydantic.AnyUrl):
+    allowed_schemes = {'http', 'https', 'attachment'}
+
+
 class EmbedColor(Color):
     def __init__(self, color) -> None:
         if isinstance(color, int):
@@ -28,15 +32,15 @@ class EmbedColor(Color):
 
 class EmbedFooter(pydantic.BaseModel):
     text: str
-    icon_url: Optional[pydantic.AnyHttpUrl]
-    proxy_icon_url: Optional[pydantic.AnyHttpUrl]
+    icon_url: Optional[DiscordImageURL]
+    proxy_icon_url: Optional[DiscordImageURL]
 
 
 class EmbedAuthor(pydantic.BaseModel):
     name: str
-    url: Optional[pydantic.AnyHttpUrl]
-    icon_url: Optional[pydantic.AnyHttpUrl]
-    proxy_icon_url: Optional[pydantic.AnyHttpUrl]
+    url: Optional[DiscordImageURL]
+    icon_url: Optional[DiscordImageURL]
+    proxy_icon_url: Optional[DiscordImageURL]
 
 
 class EmbedField(pydantic.BaseModel):
@@ -46,29 +50,29 @@ class EmbedField(pydantic.BaseModel):
 
 
 class EmbedImage(pydantic.BaseModel):
-    url: pydantic.AnyHttpUrl
-    proxy_url: Optional[pydantic.AnyHttpUrl]
+    url: DiscordImageURL
+    proxy_url: Optional[DiscordImageURL]
     height: Optional[int]
     width: Optional[int]
 
 
 class EmbedThumbnail(pydantic.BaseModel):
-    url: pydantic.AnyHttpUrl
-    proxy_url: Optional[pydantic.AnyHttpUrl]
+    url: DiscordImageURL
+    proxy_url: Optional[DiscordImageURL]
     height: Optional[int]
     width: Optional[int]
 
 
 class EmbedVideo(pydantic.BaseModel):
-    url: Optional[pydantic.AnyHttpUrl]
-    proxy_url: Optional[pydantic.AnyHttpUrl]
+    url: Optional[DiscordImageURL]
+    proxy_url: Optional[DiscordImageURL]
     height: Optional[int]
     width: Optional[int]
 
 
 class EmbedProvidor(pydantic.BaseModel):
     name: Optional[str]
-    url: Optional[pydantic.AnyHttpUrl]
+    url: Optional[DiscordImageURL]
 
 
 class Embed(pydantic.BaseModel):
@@ -88,7 +92,7 @@ class Embed(pydantic.BaseModel):
     """ Embed type, defaults to rich """
     description: Optional[str]
     """ Embed description, must be under 4096 chars if provided """
-    url: Optional[pydantic.AnyHttpUrl]
+    url: Optional[DiscordImageURL]
     """ Embed title hyperlink """
     timestamp: Optional[datetime.datetime]
     """ Embed timestamp """
