@@ -1,10 +1,25 @@
 import io
-from typing import Optional, Type, Union
+from typing import Optional, Union
 import pydantic
+
+from io import BufferedIOBase
+
+
+class FilePointer(BufferedIOBase):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, fp):
+        if not isinstance(fp, io.BufferedIOBase):
+            fp = open(fp, "rb")
+
+        return fp
 
 
 class File(pydantic.BaseModel):
-    fp: Type[io.BufferedIOBase]
+    fp: FilePointer
     """ A file like object or the path to the file """
     position: Optional[int] = 0
     """ Position to were the file should be read from """
