@@ -16,12 +16,12 @@ from acord.bases import (
 from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
 from acord.bases.flags.base import BaseFlagMeta
-from acord.ext.application_commands import ApplicationCommandType
+from acord.ext.application_commands import ApplicationCommandType, ApplicationCommandOptionType
 
 
 class InteractionSlashOption(pydantic.BaseModel):
     name: str
-    type: ApplicationCommandType
+    type: ApplicationCommandOptionType
     value: Any
     options: List[InteractionSlashOption] = []
     focused: bool = False
