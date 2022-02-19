@@ -217,7 +217,7 @@ class Interaction(pydantic.BaseModel, Hashable):
 
         form_data.add_field(
             name="payload_json",
-            value=payload.json(exclude={"files"}),
+            value=payload.json(exclude={"data": {"files"}}),
             content_type="application/json",
         )
 
