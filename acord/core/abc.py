@@ -5,7 +5,7 @@ from functools import wraps
 import yarl
 from typing import Optional, Literal, Type, Union
 
-API_VERSION = 9
+API_VERSION = 10
 BASE_API_URL = "https://discord.com/api"
 GATEWAY_ENCODING = Literal["JSON", "ETF"]
 DISCORD_EPOCH = 1420070400000
