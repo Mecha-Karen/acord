@@ -42,6 +42,9 @@ class ActionRow(Component):
 
     @pydantic.validator("components")
     def _validate_lengths(cls, components) -> List[Component]:
+        if len(components) > 1 and components[0].type == ComponentTypes.TEXT_INPUT:
+            raise ValueError("Modal can only contain 1 text input per row")
+
         if any(i for i in components if isinstance(i, ActionRow)):
             raise ValueError("Action row cannot contain another action row")
 
@@ -58,6 +61,9 @@ class ActionRow(Component):
 
         existing = data.get("components", list())
         existing.extend(components)
+
+        if not existing and self.__class__.__fields__["components"].default is not None:
+            existing = self.__class__.__fields__["components"].default
 
         data["components"] = existing
 
