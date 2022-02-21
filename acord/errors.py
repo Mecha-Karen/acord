@@ -18,6 +18,18 @@ class BaseExc(Exception):
         return object.__getattribute__(self, __name)
 
 
+class GatewayError(BaseExc): 
+    """ Raised when an error occurs during the handling of the gateway """
+
+
+class GatewayConnectionRefused(GatewayError):
+    """ Raised when gateway closes with an unknown error code """
+
+
+class GatewayConnectionClosed(GatewayError):
+    """ Raised when gateway closes and can no longer handle requests """
+
+
 class HTTPException(BaseExc):
     def __init__(self, code, message):
         super().__init__(f"Status {code}: {message}")
@@ -33,10 +45,6 @@ class SlashCommandError(BaseExc):
 
 class ApplicationCommandError(BaseExc):
     """Raised when an error occurs with application commands"""
-
-
-class GatewayConnectionRefused(BaseExc):
-    """Raised when connecting to gateway fails"""
 
 
 class APIObjectDepreciated(BaseExc):
