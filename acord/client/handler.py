@@ -29,7 +29,53 @@ class Empty:
         return {}
 
 
-async def handle_websocket(self, ws, on_ready_scripts=[]):
+def close_code_handler(code: int) -> None:
+    if code == gateway.UNKNOWN:
+        logger.info("An unknown error has occured, resuming")
+    elif code == gateway.UNKNOWN_OP:
+        logger.info("An unknown gateway OP was sent, resuming")
+    elif code == gateway.DECODE_ERROR:
+        logger.info("An incorrect payload was sent, resuming")
+    elif code == gateway.FORBIDDEN:
+        logger.info("A payload was sent before identifying, resuming")
+    elif code == gateway.AUTH_FAILED:
+        raise GatewayError("Incorrect token sent whilst identifying")
+    elif code == gateway.AUTH_COMPLETED:
+        logger.info("Another identity packet was sent, resuming")
+    elif code == gateway.FAILED_SEQUENCE:
+        logger.info("An incorrect sequence was sent during resume, resetting sequence")
+        return "sequence"
+    elif code == gateway.RATELIMIT:
+        logger.info("Too many payloads were sent, slow down, resuming")
+    elif code == gateway.SESSION_TIMED_OUT:
+        logger.info("Session timed out! Recreating new session.")
+    elif code == gateway.INVALID_SHARD:
+        raise GatewayError("An invalid shard was sent")
+    elif code == gateway.SHARD_REQUIRED:
+        raise GatewayError("Your client has too many guilds, enable sharding to continue!")
+    elif code == gateway.INVALID_GATEWAY_VER:
+        raise GatewayError("Looks like the gateway version is incorrect, don't mess with acord.core.abc!")
+    elif code == gateway.INVALID_INTENTS:
+        raise GatewayError("Invalid intent sent, check what you sent")
+    elif code == gateway.DISALLOWED_INTENT:
+        raise GatewayError("You have requested an intent you dont have access to")
+
+
+async def handle_websocket(self, ws, on_ready_scripts=[], *, ws_shard="?"):
+    _ = "err"
+    # define err here just incase an error occured 
+
+    try:
+        _ = await _handle_websocket(self, ws, on_ready_scripts)
+    except Exception:
+        raise
+    finally:
+        if _ != "err":
+            raise GatewayConnectionClosed(f"Connection closed for shard={ws_shard}")
+        # We want to let the user know the connection closed if no error occured during the handling
+
+
+async def _handle_websocket(self, ws, on_ready_scripts=[]):
     ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
     UNAVAILABLE = dict()
 
@@ -38,18 +84,23 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
 
         if message.type in CLOSE_CODES:
             # Connection lost!
-            logger.info(f"Websocket connection has been closed, resuming session shortly : code={message.data}")
+            logger.info(f"Websocket connection has been closed, resuming if possible : code={message.data}")
             
+            _ = close_code_handler(message.data)
+
+            if _ == "sequence":
+                self.sequence = None
+
             # Re-prep ws for next iter
             url, kwds = self.http._state
 
             ws = await self.http._session.ws_connect(url, **kwds)
-            ws.client = self.http
+            ws.client = self
             self.http.ws = ws
 
             await self.resume()
 
-            logger.debug("Resume payload sent, awaiting response")
+            logger.debug("Resuming completed")
 
             continue
 
@@ -79,11 +130,10 @@ async def handle_websocket(self, ws, on_ready_scripts=[]):
             self.sequence = SEQUENCE
 
         if OPERATION == gateway.INVALIDSESSION:
-            raise GatewayConnectionRefused(
-                "Invalid session data, currently not handled in this version"
-                "\nCommon causes can include:"
-                "\n* Invalid intents"
-            )
+            logger.error("Gateway refused connection due to an invalid session")
+
+            # Skip error handling here and handle during close
+            continue
 
         elif OPERATION == gateway.RESUME:
             self.dispatch("resume")
