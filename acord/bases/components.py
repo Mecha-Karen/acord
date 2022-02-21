@@ -134,14 +134,10 @@ class SelectMenu(Component):
         return ph
 
     @pydantic.validator("min_values", "max_values")
-    def _validate_mv(cls, **kwargs):
-        min_value = kwargs["values"]["min_values"]
-        max_value = kwargs["values"]["max_value"]
-
-        assert 0 <= min_value <= 25, "Min value must be less then 25 and greater then 0"
-        assert 0 <= max_value <= 25, "Max value must be less then 25 and greater then 0"
-
-        return (min_value or 0), (max_value or 0)
+    def _validate_mv(cls, v):
+        assert 0 <= v <= 25, "Value must be less then 25 and greater then 0"
+        
+        return v
 
     def __init__(self, **data: Any) -> None:
         data.update({"type": ComponentTypes.SELECT_MENU})
