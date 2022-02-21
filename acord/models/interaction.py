@@ -46,7 +46,7 @@ class InteractionData(pydantic.BaseModel):
     options: Optional[List[InteractionSlashOption]] = []
     custom_id: Optional[str]
     component_type: Optional[ComponentTypes]
-    values: Optional[List[SelectOption]]
+    values: Optional[List[str]]
     target_id: Optional[Snowflake]
     components: Any
 
