@@ -24,6 +24,18 @@ VALID_ATTR_NAMES = (
 )
 
 
+def get_methods(cls):
+    for i in dir(cls):
+        try:
+            j = getattr(cls, i)
+        except Exception:
+            continue
+        else:
+            if not callable(j):
+                continue
+        
+        yield j
+
 class SlashBase(UDAppCommand):
     """Base class for creating slash commands.
 
@@ -145,6 +157,9 @@ class SlashBase(UDAppCommand):
                 "Options in a slash command must all be of type SlashOption"
             )
 
+        # Cache all autocompleters so we dont need to call during interaction create
+        self.auto_complete_handlers()
+
     def __init_subclass__(cls, **kwds) -> None:
         # kwds is validated in the second for loop
         extend = kwds.pop("extendable", True)
@@ -260,6 +275,28 @@ class SlashBase(UDAppCommand):
         else:
             return future.set_result(0)
         return future.set_result(1)
+
+    def auto_complete_handlers(self, *, cache: bool = True):
+        """Fetches all autocomplete handlers within the class,
+        returns a mapping of option: List[Callable]
+        """
+        hndlrs = {}
+
+        for i in get_methods(self):
+            if not hasattr(i, "__autocomplete__"):
+                continue
+
+            options, *_ = i.__autocomplete__
+
+            for option in options:
+                if option not in hndlrs:
+                    hndlrs.update({option: []})
+
+                hndlrs[option].append(i)
+
+        if cache:
+            self.__pre_calls__["__autocompleters__"] = hndlrs
+        return hndlrs
 
     @classmethod
     def from_function(cls, function: _C, **kwds) -> None:
