@@ -35,11 +35,15 @@ class HTTPException(BaseExc):
         super().__init__(f"Status {code}: {message}")
 
 
-class SlashOptionError(BaseExc):
+class SlashError(BaseExc):
+    """ Raised when an error occurs related to slash commands """
+
+
+class SlashOptionError(SlashError):
     """Raised when validating slash option fails"""
 
 
-class SlashCommandError(BaseExc):
+class SlashCommandError(SlashError):
     """Raised when validated slash command fails"""
 
 
