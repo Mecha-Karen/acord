@@ -175,7 +175,9 @@ class Interaction(pydantic.BaseModel, Hashable):
             List of choices to return the user,
             can be a list of dicts with the mapping name: value
         """
-        d = _FormPartHelper(type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=choices)
+        d = {"choices": choices}
+
+        d = _FormPartHelper(type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=d)
 
         await self.conn.request(
             Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
