@@ -289,10 +289,12 @@ class SlashBase(UDAppCommand):
             options, *_ = i.__autocomplete__
 
             for option in options:
-                if option not in hndlrs:
-                    hndlrs.update({option: []})
+                hndlrs[option] = i
 
-                hndlrs[option].append(i)
+                # if option not in hndlrs:
+                #     hndlrs.update({option: []})
+                # 
+                # hndlrs[option].append(i)
 
         if cache:
             self.__pre_calls__["__autocompleters__"] = hndlrs
