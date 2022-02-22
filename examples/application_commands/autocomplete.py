@@ -45,8 +45,9 @@ class AutoCompleteSlashExample(SlashBase, extendable=True, overwritable=False):
         if not match:
             return
 
-        return AutoCompleteChoice(name="name", value=match[0])
+        return [AutoCompleteChoice(name=i, value=i) for i in match]
 
 if __name__ == "__main__":
     client = Client(intents=Intents.ALL)
     client.register_application_command(AutoCompleteSlashExample())
+    client.run("TOKEN")
