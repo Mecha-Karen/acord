@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Optional
-from attr import attr
+from typing import Any, List, Optional, Union
 import pydantic
 
 from .types import ApplicationCommandOptionType
@@ -92,3 +91,8 @@ class SlashOption(GenericApplicationOption):
 
     def is_group(self):
         return self.type == ApplicationCommandOptionType.SUB_COMMAND_GROUP
+
+
+class AutoCompleteChoice(pydantic.BaseModel):
+    name: str
+    value: Union[str, int, float]
