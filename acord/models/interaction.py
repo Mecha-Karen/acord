@@ -10,13 +10,16 @@ from acord.bases import (
     InteractionType,
     InteractionCallback,
     ComponentTypes,
-    SelectOption,
     Modal,
 )
 from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
 from acord.bases.flags.base import BaseFlagMeta
-from acord.ext.application_commands import ApplicationCommandType, ApplicationCommandOptionType
+from acord.ext.application_commands import (
+    ApplicationCommandType, 
+    ApplicationCommandOptionType,
+    AutoCompleteChoice,
+)
 
 
 class InteractionSlashOption(pydantic.BaseModel):
@@ -153,6 +156,26 @@ class Interaction(pydantic.BaseModel, Hashable):
             Modal to create
         """
         d = _FormPartHelper(type=InteractionCallback.MODAL, data=modal)
+
+        await self.conn.request(
+            Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
+            data=d.json(),
+            headers={"Content-Type": "application/json"}
+        )
+
+    async def respond_to_autocomplete(self, choices: List[AutoCompleteChoice]) -> None:
+        """|coro|
+
+        Responds to an autocomplete interaction,
+        should usually be called from within your autocomplete func
+
+        Parameters
+        ----------
+        choices: List[:class:`AutoCompleteChoice`]
+            List of choices to return the user,
+            can be a list of dicts with the mapping name: value
+        """
+        d = _FormPartHelper(type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=choices)
 
         await self.conn.request(
             Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
