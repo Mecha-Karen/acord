@@ -15,6 +15,10 @@ All methods from :class:`~pydantic.BaseModel` are inherited along with ours.
 These methods will not be shown in our docs, 
 you can find them in the ``Pydantic`` documentation.
 
+.. comment:
+   The reason the if is not indented is due to jinja keeping it indented
+   This leads to sphinx not recognising the headers which is painful
+
 {% for object in dir(acord.models) %}
    {% set cls = getattr(acord.models, object, None) %}
    {% set cls_name = getattr(cls, "__name__", "") %}
