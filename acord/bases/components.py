@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Any, List, Optional
 import pydantic
-from typer import Option
 
 from acord.bases import ComponentTypes, ButtonStyles, TextInputStyle
 
