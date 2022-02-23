@@ -11,18 +11,6 @@ SHARED_PROPERTIES = ['Config', 'construct', 'copy', 'dict', 'from_orm',
                      'json', 'parse_file', 'parse_obj', 'parse_raw', 'schema', 
                      'schema_json', 'update_forward_refs', 'validate']
 
-
-def filter_properties(cls):
-    elements = dir(cls)
-    filtered = []
-
-    for element in elements:
-        if element.startswith("_") or element in SHARED_PROPERTIES:
-            continue
-        filtered.append(element)
-
-    return filtered
-
 def is_function(cls):
     if inspect.isfunction(cls):
         return True
@@ -40,7 +28,7 @@ def worker(app: Sphinx, docname: str, source: list):
             "getattr": getattr,
             "dir": dir,
             "disallow": ["final", ],
-            "filter_properties": filter_properties,
+            "SHARED_PROPERTIES": SHARED_PROPERTIES,
             "is_function": is_function
         }
     )
