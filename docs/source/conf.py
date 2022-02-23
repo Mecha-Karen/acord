@@ -2,7 +2,6 @@ import pydata_sphinx_theme
 import datetime
 import os
 import sys
-from acord.bases import Hashable
 
 sys.path.append(os.path.abspath("../extensions"))
 
@@ -19,6 +18,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "attributetable",
+    "jinja",
 ]
 
 intersphinx_mapping = {
