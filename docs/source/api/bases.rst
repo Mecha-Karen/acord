@@ -13,247 +13,26 @@ Bases
 Bases are objects which represent different objects in the discord API.
 They minify the code written and can help improve readability in your code!
 
-Embed
-~~~~~
 
-.. attributetable:: Embed
+{% for object in dir(acord.bases) %}
+   {% set cls = getattr(acord.bases, object, None) %}
+   {% set cls_name = getattr(cls, "__name__", "") %}
 
-.. autoclass:: Embed
-    :members:
+   {% if cls is callable and cls_name not in disallow %}
+{{ cls_name }}
+{{ "=" * cls_name|length() }}
 
-Components
-~~~~~~~~~~
+{% if is_function(cls) %}
+    .. autofunction:: acord.bases.{{ cls_name }}
 
-.. attributetable:: Component
+{% else %}
+    .. attributetable:: acord.bases.{{ cls_name }}
 
-.. autoclass:: Component
-    :members:
+    .. autoclass:: acord.bases.{{ cls_name }}
+        :members:
+        :inherited-members: {{ filter_properties(cls) }}
 
-ActionRow
-=========
+{% endif %}
 
-.. attributetable:: ActionRow
-
-.. autoclass:: ActionRow
-    :members:
-
-Button
-======
-
-.. attributetable:: Button
-
-.. autoclass:: Button
-    :members:
-
-SelectMenu
-==========
-
-.. attributetable:: SelectMenu
-
-.. autoclass:: SelectMenu
-    :members:
-
-
-SelectOption
-============
-
-.. attributetable:: SelectOption
-
-.. autoclass:: SelectOption
-    :members:
-
-PermissionsOverwrite
-~~~~~~~~~~~~~~~~~~~~
-
-.. attributetable:: PermissionsOverwrite
-
-.. autoclass:: PermissionsOverwrite
-    :members:
-
-AllowedMentions
-~~~~~~~~~~~~~~~
-
-.. attributetable:: AllowedMentions
-
-.. autoclass:: AllowedMentions
-    :members:
-
-Flags
-~~~~~
-
-BaseFlagMeta
-============
-.. autoclass:: BaseFlagMeta
-    :members: __call__
-
-Intents
-=======
-
-.. autoclass:: Intents
-    :members:
-
-Users
-=====
-
-.. autoclass:: UserFlags
-    :members:
-
-Permissions
-===========
-
-.. autoclass:: Permissions
-    :members:
-
-SystemChannelFlags
-==================
-
-.. autoclass:: SystemChannelFlags
-    :members:
-    :undoc-members:
-
-MessageFlags
-============
-
-.. autoclass:: MessageFlags
-    :members:
-    :undoc-members:
-
-Enums
-~~~~~
-
-GuildMessageNotification
-========================
-
-.. autoclass:: GuildMessageNotification
-    :members:
-    :undoc-members:
-
-ExplicitContentFilterLevel
-==========================
-
-.. autoclass:: ExplicitContentFilterLevel
-    :members:
-    :undoc-members:
-
-MFALevel
-========
-
-.. autoclass:: MFALevel
-    :members:
-    :undoc-members:
-
-NSFWLevel
-=========
-
-.. autoclass:: NSFWLevel
-    :members:
-    :undoc-members:
-
-PremiumTierLevel
-================
-
-.. autoclass:: PremiumTierLevel
-    :members:
-    :undoc-members:
-
-VerificationLevel
-=================
-
-.. autoclass:: VerificationLevel
-    :members:
-    :undoc-members:
-
-ComponentTypes
-==============
-
-.. autoclass:: ComponentTypes
-    :members:
-    :undoc-members:
-
-ButtonStyles
-============
-
-.. autoclass:: ButtonStyles
-    :members:
-    :undoc-members:
-
-InteractionType
-===============
-
-.. autoclass:: InteractionType
-    :members:
-    :undoc-members:
-
-ApplicationCommandType
-======================
-
-.. autoclass:: ApplicationCommandType
-    :members:
-    :undoc-members:
-
-InteractionCallback
-===================
-
-.. autoclass:: InteractionCallback
-    :members:
-    :undoc-members:
-
-ChannelTypes
-============
-
-.. autoclass:: ChannelTypes
-    :members:
-    :undoc-members:
-
-VoiceQuality
-============
-
-.. autoclass:: VoiceQuality
-    :members:
-    :undoc-members:
-
-ActivityType
-============
-
-.. autoclass:: ActivityType
-    :members:
-    :undoc-members:
-
-File
-~~~~
-
-.. attributetable:: File
-
-.. autoclass:: File
-    :members:
-
-Presence
-~~~~~~~~
-If working with the direct class itself is abit too much for you,
-consider using our helping functions.
-
-.. autofunction:: game
-
-.. autofunction:: listening
-
-.. autofunction:: watching
-
-.. autofunction:: competing
-
-.. autofunction:: streaming
-
-.. attributetable:: Presence
-
-.. autoclass:: Presence
-    :members:
-
-Activity
-========
-
-.. attributetable:: Activity
-
-.. autoclass:: Activity
-    :members:
-
-
-
+   {% endif %}
+{% endfor %}
