@@ -30,7 +30,8 @@ They minify the code written and can help improve readability in your code!
 
     .. autoclass:: acord.bases.{{ cls_name }}
         :members:
-        :inherited-members: {{ filter_properties(cls) }}
+        :inherited-members:
+        :exclude-members: {{ SHARED_PROPERTIES|join(", ") }}
 
 {% endif %}
 

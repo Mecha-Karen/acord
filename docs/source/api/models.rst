@@ -31,7 +31,8 @@ you can find them in the ``Pydantic`` documentation.
 
 .. autoclass:: acord.models.{{ cls_name }}
    :members:
-   :inherited-members: {{ filter_properties(cls) }}
+   :inherited-members:
+   :exclude-members: {{ SHARED_PROPERTIES|join(", ") }}
 
    {% endif %}
 {% endfor %}

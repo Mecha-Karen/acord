@@ -49,17 +49,20 @@ Installation
 ============
 Installing acord is as simple as ever!
 
-**Stable**
+.. comment:
 
-.. code-block:: sh
+    **Stable**
 
-    # windows
-    pip install acord
+    .. code-block:: sh
 
-    # linux
-    pip3 install acord
+        # windows
+        pip install acord
+
+        # linux
+        pip3 install acord
 
 **Development**
+This is the best option as of now!
 
 .. code-block:: sh
 
@@ -115,6 +118,9 @@ Contents
     api/client.rst
     api/models.rst
     api/bases.rst
+    api/webhooks.rst
+    api/voice.rst
+    api/ext/application_commands.rst
     guides/index.rst
 
 * :ref:`genindex`
