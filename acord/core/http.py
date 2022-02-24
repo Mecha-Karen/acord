@@ -103,7 +103,7 @@ class HTTPClient(object):
             self._lock = asyncio.Lock()
         self.trappedBuckets = dict()
 
-    def getIdentityPacket(self, intents=0):
+    def getIdentityPacket(self, intents=0, large_threshold=250, presence: dict = {}):
         if hasattr(intents, "value"):
             # enum.Flag cleanup
             intents = intents.value
@@ -120,6 +120,9 @@ class HTTPClient(object):
                     "$referrer": self._referrer,
                     "$referring_domain": self._referring_domain,
                 },
+                "compress": self.compress,
+                "large_threshold": large_threshold,
+                "presence": presence
             },
         }
 
