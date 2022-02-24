@@ -2,14 +2,16 @@
 # Client will normally run off a single shard
 from __future__ import annotations
 import asyncio
-from typing import Any
+import sys
+from typing import Any, Callable, Coroutine, Union
+from aiohttp import ClientSession
 import logging
-import pydantic
+from acord.core.heartbeat import KeepAlive
+from acord.errors import GatewayError
 
 from acord.models import Snowflake
 
 from .handler import handle_websocket
-from acord.core.http import HTTPClient
 from acord.core.signals import gateway
 from acord.payloads import (
     GenericWebsocketPayload,
@@ -20,24 +22,25 @@ from acord.bases import Presence
 logger = logging.getLogger(__name__)
 
 
-class ShardingClient(HTTPClient):
-    def getIdentityPacket(self, shard: tuple,
-        intents=0, large_threshold=250, presence: dict = {}
-    ):
-        d = super().getIdentityPacket(intents, large_threshold, presence)
-        d["d"]["shard"] = shard
+IDENTITY_PCK = {
+    "properties": {
+        "$os": sys.platform,
+        "$browser": "acord",
+        "$device": "acord",
+        "$referrer": None,
+        "$referring_domain": None,
+    },
+    "compress": True,
+    "large_threshold": 250,
+}
 
-        return d
 
+class Shard:
+    """Representation of a discord shard,
+    which is basically a connection to the gateway.
 
-class Shard(pydantic.BaseModel):
-    """Representation of a discord shard
-
-    Sharding is not enabled by default,
-    if discord requires you to shard you may expect an error whilst starting the bot.
-
-    .. note::
-        You can enable sharding by using the ``sharding_enabled`` kwarg with the client class
+    .. warning::
+        Shards are enabled by default but only Shard 0 will receive dms
 
     .. note::
         When providing a handler, 
@@ -48,7 +51,7 @@ class Shard(pydantic.BaseModel):
 
     .. code-block:: py
 
-        shard = Shard
+        shard = Shard("url", shard_id, num_shards, client)
 
         # Connect
         await shard.connect()
@@ -59,8 +62,7 @@ class Shard(pydantic.BaseModel):
             ...
 
     .. note::
-        You can always use :meth:`Shard.listen` to do this for you,
-        but make sure you have a handler attached.
+        You can always use :meth:`Shard.listen` to do this for you.
 
     Parameters
     ----------
@@ -69,58 +71,161 @@ class Shard(pydantic.BaseModel):
     handler: Callable[..., Coroutine[Any, Any, Any]]
         A handler to overwrite the default handler
     client: :class:`Client`
-        Client this shard is attached to
+        Client this shard is attached to.
     """
+    def __init__(self,
+        url: str,
+        shard_id: int,
+        num_shards: int,
+        client: Any,
+        handler: Callable[..., Coroutine[Any, Any, Any]] = handle_websocket
+    ):
+        self.url = url
+        self.shard_id = shard_id
+        self.num_shards = num_shards
+        self.client = client
+        self.session = client.http._session
+        self.handler = handler
 
-    shard_id: int
-    handler: Any = handle_websocket
-    client: Any     # type: acord.Client
+        self.ws = None
+        self.ready_event = asyncio.Event()
+        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
 
-    _ws: Any = None
-    _ready_event = asyncio.Event()
-    _http: Any = None
-    _loop: Any = asyncio.get_event_loop()
-    _task: Any = None
+        self.sequence = None
+        self.session_id = None
+        self.gateway_version = None
+        self.resuming = False
 
     def contains_guild(self, guild_id: Snowflake, /) -> bool:
-        return ((guild_id >> 22) % self.client.MAX_CONC) == self.shard_id
+        return ((guild_id >> 22) % self.num_shards) == self.shard_id
 
     async def wait_until_ready(self):
         """|coro|
 
-        Blocks until the shard is ready to receive messages
+        Blocks until the shard is ready
         """
         await self._ready_event.wait()
 
-    async def connect(self, token: str, *, encoding, compress=0, **kwds) -> None:
-        identity = kwds.pop("identity", {})
+    async def connect(self, **kwds) -> None:
+        """|coro|
 
-        if not self._http:
-            self._http = ShardingClient(
-                client=self.client, token=token,
-                **kwds
-            )
+        Connects to gateway
 
-        identity.update({"shard": (self.shard_id, self.client.MAX_CONC)})
+        Parameters
+        ----------
+        token: :class:`str`
+            Token to be used for identity packet
+        **kwds:
+            Additional kwargs to be passed through ``ws_connect`` 
+        """
+        logger.debug(f"Attempting to create a connection for shard {self.shard_id}")
 
-        ws = await self._http._connect(token=token, encoding=encoding, 
-                                       compress=compress, **identity)
-        self._ws = ws
+        self.ws = await self.session.ws_connect(self.url, **kwds)
+        self._snd_kwds = kwds
 
-        self._ready_event.set()
+        logger.info(f"Shard {self.shard_id} has connected sucessfully")
+
+    async def receive_hello(self):
+        """|coro|
+
+        Receives the hello packet from discord and begins heartbeating,
+        should be called directly after :meth:`Shard.connect`
+        """
+        logger.debug(f"Receiving hello packet for Shard {self.shard_id}")
+
+        packet = await self.ws.receive()
+        data = packet.json()
+
+        if not data["op"] == gateway.HELLO:
+            raise GatewayError(f"Invalid op code recieved, got {packet['op']} expected {10}")
+
+        self._keep_alive = KeepAlive(
+            self, data["d"]["heartbeat_interval"], self.loop
+        )
+        self._keep_alive.start()
+
+        logger.info(f"Hello packet sucessfully received, beginning heartbeats for Shard {self.shard_id}")
+
+    async def send_identity(self, token: str, intents: int, presence: Presence = None) -> None:
+        """|coro|
+
+        Sends an identity packet to discord
+
+        Parameters
+        ----------
+        token: :class:`str`
+            Bot token
+        intents: :class:`int`
+            Intents to send
+        presence: :class:`Presence`
+            An optional presence to update the client with
+        """
+        idn = IDENTITY_PCK.copy()
+        idn.update({
+            "token": token,
+            "intents": intents,
+            "presence": presence,
+            "shard": (self.shard_id, self.num_shards)
+        })
+
+        payload = GenericWebsocketPayload(
+            op=gateway.IDENTIFY,
+            d=idn
+        )
+
+        await self.ws.send_str(payload.json())
+
+        logger.info(f"Sent identity packet for Shard {self.shard_id}")
+
+    async def listen(self, **kwds):
+        """Generates task using handler,
+        this task is automatically terminated by :meth:`Shard.disconnect`.
+
+        .. note::
+            Any kwargs you pass through are sent to the handler
+        """
+        coro = self.handler(self, **kwds)
+
+        # task = self.loop.create_task(coro, name=f"ShardHandler:shard_id={self.shard_id}")
+        # self.task = task
+        await coro
 
     async def disconnect(self):
-        await self._http.disconnect()
+        logger.info(f"Disconnecting from shard {self.shard_id}")
 
-        if self._task:
-            self._task.cancel()
+        if self.task:
+            self.task.cancel(msg="Shard disconnected")
+
+        self._keep_alive._ended = True
+
+        await self.ws.close(code=4000)
 
         self.client.shards.remove(self)
 
-    async def listen(self, r_scripts, *args, **kwds) -> None:
-        await self.connect(*args, **kwds)
+    async def resume(self, *, restart: bool = False):
+        """|coro|
 
-        await handle_websocket(self.client, self.ws, r_scripts, ws_shard=self.shard_id)
+        Sends a resume packet to discord
+
+        Parameters
+        ----------
+        restart: :class:`bool`
+            Whether to restart the session
+        """
+        if restart:
+            await self.ws.close(code=4000)
+            await self.connect(**self._snd_kwds)
+
+        self.resuming = True
+
+        await self.ws.send_json({
+            "op": gateway.RESUME,
+            "d": {
+                "token": self.client.token,
+                "session_id": self.session_id,
+                "seq": self.sequence
+            }
+        })
 
     async def change_presence(self, presence: Presence) -> None:
         """|coro|
@@ -162,9 +267,8 @@ class Shard(pydantic.BaseModel):
         await self.ws.send_str(payload.json())
 
     @property
-    def ws(self):
-        return self._ws
-
-    @property
     def ratelimit_key(self):
-        return self.shard_id % self.client.MAX_CONC
+        return self.shard_id % self.session.MAX_CONC
+
+    def __repr__(self):
+        return f"Shard(id={self.id}, running={self.ws is not None})"
