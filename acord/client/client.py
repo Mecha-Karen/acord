@@ -35,14 +35,15 @@ class Client(object):
         Your API Token which can be generated at the developer portal
     intents: Union[:class:`Intents`, :class:`int`]
         Intents to be passed through when connecting to gateway, defaults to ``0``
+    presence: :class:`Presence`
+        Presence to be sent in the identity packet
     encoding: :class:`str`
         Any of ``ETF`` and ``JSON`` are allowed to be chosen, controls data recieved by discord,
         defaults to ``False``.
     compress: :class:`bool`
         Whether to read compressed stream when receiving requests, defaults to ``False``
-    sharding_enabled: :class:`bool`
-        Whether to shard client,
-        if False client will run of a single connection.
+    dispatch_on_recv: :class:`bool`
+        Whether on_socket_recv should be dispatched
 
     Attributes
     ----------
@@ -50,8 +51,12 @@ class Client(object):
         Loop client uses
     token: :class:`str`
         Token set when initialising class
+    dispatch_on_recv: :class:`bool`
+        Whether the on_socket_recv should be dispatched
     intents: Union[:class:`Intents`, :class:`int`]
         Intents set when intialising class
+    presence: :class:`Presence`
+        Presence to be sent in the identity packet
     encoding: :class:`str`
         Encoding set when initialising class
     compress: :class:`bool`
@@ -63,6 +68,8 @@ class Client(object):
         In form ``v[0-9]``.
     user: :class:`User`
         Client user object
+    application_commands: Dict[str, List[:class:`UDAppCommand`]]
+        Mapping of registered application commands
     shards: List[:class:`Shard`]
         List of shards client is handling
     INTERNAL_STORAGE: :class:`dict`
@@ -70,6 +77,8 @@ class Client(object):
         e.g. :meth:`Client.get_user`.
     MAX_CONC: :class:`int`
         Number of shards client has
+    guilds: List[:class:`Guilds`]
+        List of guilds client has access to
     """
 
     # SHOULD BE OVERWRITTEN
@@ -101,7 +110,6 @@ class Client(object):
 
         # Others
         self.session_id = None
-        self.sequence = None
         self.gateway_version = None
         self.user = None
         self.application_commands = dict()
@@ -117,9 +125,6 @@ class Client(object):
         self.INTERNAL_STORAGE["guilds"] = dict()
         self.INTERNAL_STORAGE["channels"] = dict()
         self.INTERNAL_STORAGE["stage_instances"] = dict()
-
-        self.acked_at = float("inf")
-        self.latency = float("inf")
 
         self.shards = list()
         self.MAX_CONC = 0
@@ -592,8 +597,19 @@ class Client(object):
         ))
 
     async def disconnect(self):
+        """|coro|
+
+        Disconnects client from discord, ends:
+
+        * Client spawned sessions
+        * Shards
+        * Voice Connections
+        """  
         logger.info("Disconnected from API, closing any open connections")
         await self.http.disconnect()
+
+        for shard in self.shards:
+            await shard.disconnect()
 
         for _, vc in self.voice_connections.items():
             await vc.disconnect()
