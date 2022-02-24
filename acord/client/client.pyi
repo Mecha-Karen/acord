@@ -13,7 +13,8 @@ from acord import (
     ApplicationCommand,
     VoiceConnection,
     Message,
-    Channel
+    Channel,
+    Shard
 )
 
 class Client(object):
@@ -30,6 +31,7 @@ class Client(object):
     voice_connections: Dict[int, VoiceConnection]
     acked_at: float
     latency: float
+    shards: Shard
 
     # Properties and what not
     guilds: List[Guild]
