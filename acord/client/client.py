@@ -22,6 +22,7 @@ from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, 
 
 # Cleans up client class
 from .handler import handle_websocket
+from .shard import Shard
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,7 @@ class Client(object):
 
         self.acked_at = float("inf")
         self.latency = float("inf")
+        self.shards = list()
 
     def bind_token(self, token: str) -> None:
         """Bind a token to the client, prevents new tokens from being set"""
