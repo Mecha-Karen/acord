@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
     "attributetable",
     "jinja",
 ]

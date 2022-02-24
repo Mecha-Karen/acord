@@ -16,3 +16,4 @@ or would like further support - join our support server!
 .. toctree::
    components
    application_commands
+   presences

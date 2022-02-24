@@ -1,27 +1,24 @@
 # A simple base client for handling responses from discord
+from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
+
 import asyncio
 import logging
-import warnings
 import sys
 import traceback
-from acord.core.abc import Route
-from acord.core.signals import gateway
+
+from acord.bases.presence import Presence
+
+from acord.core.abc import Route, API_VERSION
 from acord.core.http import HTTPClient
 from acord.errors import *
 from acord.payloads import (
-    GenericWebsocketPayload,
     StageInstanceCreatePayload,
-    VoiceStateUpdatePresence,
 )
 from acord.ext.application_commands import ApplicationCommand, UDAppCommand
-
-from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
-
-from acord.bases import Intents, Presence, _C
+from acord.bases import Intents, _C
 from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
 
-# Cleans up client class
-from .handler import handle_websocket
+from .shard import Shard
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +35,15 @@ class Client(object):
         Your API Token which can be generated at the developer portal
     intents: Union[:class:`Intents`, :class:`int`]
         Intents to be passed through when connecting to gateway, defaults to ``0``
+    presence: :class:`Presence`
+        Presence to be sent in the identity packet
     encoding: :class:`str`
         Any of ``ETF`` and ``JSON`` are allowed to be chosen, controls data recieved by discord,
         defaults to ``False``.
     compress: :class:`bool`
         Whether to read compressed stream when receiving requests, defaults to ``False``
+    dispatch_on_recv: :class:`bool`
+        Whether on_socket_recv should be dispatched
 
     Attributes
     ----------
@@ -50,8 +51,12 @@ class Client(object):
         Loop client uses
     token: :class:`str`
         Token set when initialising class
+    dispatch_on_recv: :class:`bool`
+        Whether the on_socket_recv should be dispatched
     intents: Union[:class:`Intents`, :class:`int`]
         Intents set when intialising class
+    presence: :class:`Presence`
+        Presence to be sent in the identity packet
     encoding: :class:`str`
         Encoding set when initialising class
     compress: :class:`bool`
@@ -63,9 +68,17 @@ class Client(object):
         In form ``v[0-9]``.
     user: :class:`User`
         Client user object
+    application_commands: Dict[str, List[:class:`UDAppCommand`]]
+        Mapping of registered application commands
+    shards: List[:class:`Shard`]
+        List of shards client is handling
     INTERNAL_STORAGE: :class:`dict`
         Cache of gateway objects, recomended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
+    MAX_CONC: :class:`int`
+        Number of shards client has
+    guilds: List[:class:`Guilds`]
+        List of guilds client has access to
     """
 
     # SHOULD BE OVERWRITTEN
@@ -76,8 +89,8 @@ class Client(object):
         *,
         token: Optional[str] = None,
         dispatch_on_recv: bool = False,
-        # IDENTITY PACKET ARGS
         intents: Optional[Union[Intents, int]] = 0,
+        presence: Presence = None,
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
@@ -87,6 +100,7 @@ class Client(object):
         self.token = token
         self.dispatch_on_recv = dispatch_on_recv
         self.intents = intents
+        self.presence = presence
 
         self._events = dict()
 
@@ -96,7 +110,6 @@ class Client(object):
 
         # Others
         self.session_id = None
-        self.sequence = None
         self.gateway_version = None
         self.user = None
         self.application_commands = dict()
@@ -113,15 +126,8 @@ class Client(object):
         self.INTERNAL_STORAGE["channels"] = dict()
         self.INTERNAL_STORAGE["stage_instances"] = dict()
 
-        self.acked_at = float("inf")
-        self.latency = float("inf")
-
-    def bind_token(self, token: str) -> None:
-        """Bind a token to the client, prevents new tokens from being set"""
-        if getattr(self, "_lruPermanent", None):
-            raise ValueError("Token already binded")
-
-        self._lruPermanent = token
+        self.shards = list()
+        self.MAX_CONC = 0
 
     def on(self, name: str, *, once: bool = False) -> Optional[_C]:
         """Register an event to be dispatched on call.
@@ -286,47 +292,6 @@ class Client(object):
         self.on(event)((fut, check))
 
         return asyncio.wait_for(fut, timeout=timeout)
-
-    async def change_presence(self, presence: Presence) -> None:
-        """|coro|
-
-        Changes client presence
-
-        Parameters
-        ----------
-        presence: :class:`Presence`
-            New presence for client,
-            You may want to checkout the guide for presences.
-            Which can be found `here <../guides/presence.html>`_.
-        """
-        payload = GenericWebsocketPayload(op=gateway.PRESENCE, d=presence)
-
-        logger.debug("Updating presence")
-
-        await self.http.ws.send_str(payload.json())
-
-        logger.info("Sent presence payload")
-
-    async def update_voice_state(self, **data) -> None:
-        """|coro|
-
-        Updates client voice state
-
-        Parameters
-        ----------
-        guild_id: :class:`Snowflake`
-            id of the guild
-        channel_id: :class:`Snowflake`
-            id of the voice channel client wants to join (``None`` if disconnecting)
-        self_mute: :class:`bool`
-            is the client muted
-        self_deaf: :class:`bool`
-            is the client deafened
-        """
-        voice_payload = VoiceStateUpdatePresence(**data)
-        payload = GenericWebsocketPayload(op=gateway.VOICE, d=voice_payload)
-
-        await self.http.ws.send_str(payload.json())
 
     async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
         """|coro|
@@ -539,11 +504,50 @@ class Client(object):
         for guild_id, commands in partitioned.items():
             await self.bulk_update_guild_app_commands(guild_id, commands)
 
+    async def shard_handler(self, *ready_scripts) -> None:
+        """|coro|
+
+        Default shard handler,
+        doesn't do much except intiate shards and waits till all have been disconnected.
+        """
+        gateway = await self.http.fetch_gateway()
+
+        GATEWAY_WEBHOOK_URL = gateway["url"]
+        GATEWAY_WEBHOOK_URL += f"?v={API_VERSION}"
+
+        if self.compress:
+            GATEWAY_WEBHOOK_URL += "&compress=zlib-stream"
+        GATEWAY_WEBHOOK_URL += f"&encoding={self.encoding}"
+
+        self.MAX_CONC = gateway["shards"]
+        TASK_LIST = []
+
+        for i in range(self.MAX_CONC):
+            # shard_id = i
+            shard = Shard(
+                url=GATEWAY_WEBHOOK_URL,
+                shard_id=i,
+                num_shards=self.MAX_CONC,
+                client=self
+            )
+
+            await shard.connect()
+            await shard.receive_hello()
+            await shard.send_identity(
+                self.token, self.intents, self.presence
+            )
+            
+            task = shard.listen(shard=shard, on_ready_scripts=ready_scripts)
+            TASK_LIST.append(task)
+
+            self.shards.append(shard)
+
+        await asyncio.gather(*TASK_LIST)
+
     def run(
         self,
         token: str = None,
         reconnect: bool = True,
-        resumed: bool = False,
         update_app_commands: bool = True,
         exclude_app_cmds: set = set(),
     ):
@@ -552,35 +556,27 @@ class Client(object):
         Parameters
         ----------
         token: :class:`str`
-            Token to be passed through, if binded both :attr:`Client.token` and are overwritten.
-            Else, this token will be used to connect to gateway,
-            if fails falls back onto :attr:`Client.token`.
+            Token to log into discord with,
+            if :class:`Client.token` is not None it will be used as a fallback,
+            just incase this token fails
         reconnect: :class:`bool`
-            Whether to reconnect it first connection fails, defaults to ``True``.
-        resumed: :class:`bool`
-            Whether this connection is being resumed
+            Whether to reconnect it first connection fails, 
+            defaults to ``True``.
         update_add_commands: :class:`bool`
             Whether to update app commands, *in bulk*.
         exclude_app_cmds: :class:`set`
             A set of app names to stop being updated/created
         """
-        if (token or self.token) and getattr(self, "_lruPermanent", False):
-            warnings.warn(
-                "Cannot use current token as another token was binded to the client",
-                CannotOverideTokenWarning,
-            )
-        token = getattr(self, "_lruPermanent", None) or (token or self.token)
+        token = token or self.token
 
         if not token:
             raise ValueError("No token provided")
 
         if not hasattr(self, "http"):
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
-        self.token = token
-
-        self._state = [token, reconnect, resumed, update_app_commands, exclude_app_cmds]
 
         # Login to create session
+        # Also validates token
         try:
             self.loop.run_until_complete(self.http.login(token=token))
         except HTTPException:
@@ -593,53 +589,27 @@ class Client(object):
                 return self.run(token=token, reconnect=False)
             raise
 
-        logger.debug("Client logged in")
+        self.token = token
 
-        coro = self.http._connect(
-            token,
-            encoding=self.encoding,
-            compress=self.compress,
-            # for identity
-            intents=self.intents,
-        )
-
-        # Connect to discord, send identity packet + start heartbeat
-        ws = self.loop.run_until_complete(coro)
-
-        self.dispatch("connect")
-        logger.info("Connected to websocket")
-
-        if resumed:
-            logger.debug("Attempting resume")
-            self.loop.run_until_complete(self.resume())
-
-        try:
-            logger.debug("Handling websocket")
-            self.loop.run_until_complete(
-                handle_websocket(
-                    self,
-                    ws,
-                    on_ready_scripts=[
-                        self._bulk_write_app_commands(exclude_app_cmds)
-                        if update_app_commands
-                        else None
-                    ],
-                )
-            )
-        except KeyboardInterrupt:
-            # Kill connection
-            self.loop.run_until_complete(self.disconnect())
-            sys.exit(0)
-        except OSError as e:
-            if e.args[0] == 104:
-                # kill connection and re-run
-                self.loop.run_until_complete(self.http.disconnect())
-
-            raise
+        self.loop.run_until_complete(self.shard_handler(
+            self._bulk_write_app_commands(exclude_app_cmds)
+            if update_app_commands else None
+        ))
 
     async def disconnect(self):
+        """|coro|
+
+        Disconnects client from discord, ends:
+
+        * Client spawned sessions
+        * Shards
+        * Voice Connections
+        """  
         logger.info("Disconnected from API, closing any open connections")
         await self.http.disconnect()
+
+        for shard in self.shards:
+            await shard.disconnect()
 
         for _, vc in self.voice_connections.items():
             await vc.disconnect()

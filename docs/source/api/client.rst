@@ -17,7 +17,7 @@ Example
 
 .. code-block:: py
 
-    from acord import Client, Message
+    from acord import Client, Message, Intents
     from typing import Any
 
     class MyClient(Client):
@@ -26,7 +26,7 @@ Example
                 return message.reply(content="Pong!")
     
     if __name__ == "__main__":
-        client = MyClient(token="My token")
+        client = MyClient(token="My token", intents=Intents.ALL)
         client.run()
 
 Client
@@ -35,4 +35,12 @@ Client
 .. attributetable:: Client
 
 .. autoclass:: Client
+    :members:
+
+Shard
+~~~~~
+
+.. attributetable:: Shard
+
+.. autoclass:: Shard
     :members:
