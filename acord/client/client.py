@@ -515,6 +515,7 @@ class Client(object):
         GATEWAY_WEBHOOK_URL += f"&encoding={self.encoding}"
 
         self.MAX_CONC = gateway["shards"]
+        TASK_LIST = []
 
         for i in range(self.MAX_CONC):
             # shard_id = i
@@ -530,16 +531,13 @@ class Client(object):
             await shard.send_identity(
                 self.token, self.intents, self.presence
             )
-            await shard.listen(on_ready_scripts=ready_scripts)
+            
+            task = shard.listen(shard=shard, on_ready_scripts=ready_scripts)
+            TASK_LIST.append(task)
 
             self.shards.append(shard)
 
-        try:
-            while self.shards:
-                continue
-        except KeyboardInterrupt:
-            for _ in range(len(self.shards)):
-                await self.shards[0].disconnect()
+        await asyncio.gather(*TASK_LIST)
 
     def run(
         self,
