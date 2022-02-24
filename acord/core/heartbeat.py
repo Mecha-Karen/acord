@@ -10,39 +10,41 @@ logger = logging.getLogger(__name__)
 
 
 class KeepAlive(Thread):
-    def __init__(self, client, identity, ws, helloPacket: dict):
-        self._client = client
-        self._ws = ws
-        self.packet = helloPacket
-        self.identity = identity
-        self.loop = asyncio.get_event_loop()
+    def __init__(self, shard, interval, loop=asyncio.get_event_loop()):
+        self.sent_at = None
+        self.latency = float("inf")
+        self.shard = shard
+
+        self._loop: asyncio.AbstractEventLoop = loop
+        self._ws = shard.ws
+        self._interval = interval / 1000
+        self._ended = False
 
         super().__init__(daemon=True)
 
     def run(self):
-        packet = self.packet
+        while not self._ended:
+            self.send_heartbeat()
 
-        asyncio.run_coroutine_threadsafe(self._ws.send_json(self.identity), self.loop)
-        logger.info(f"Identity packet sent to gateway, starting heartbeats")
-
-        while True:
-            if packet["op"] != gateway.HELLO:
-                raise ValueError("Invalid hello packet provided")
-
-            coro = self._ws.send_json(self.get_payload())
-            asyncio.run_coroutine_threadsafe(coro, self.loop)
-
-            self._client.acked_at = time.perf_counter()
-            logger.debug(
-                f"Sending next heartbeat after {(packet['d']['heartbeat_interval'] / 1000)} seconds"
-            )
-
-            time.sleep((packet["d"]["heartbeat_interval"] / 1000))
+            time.sleep(self._interval)
 
         self.join()
 
+    def send_heartbeat(self):
+        coro = self._ws.send_json(self.get_payload())
+        asyncio.run_coroutine_threadsafe(coro, self._loop)
+
+        self.sent_at = time.perf_counter()
+
+        logger.info(f"Sent heartbeat for shard {self.shard.shard_id}, waiting {self._interval} seconds...")
+
     def get_payload(self):
-        return {"op": gateway.HEARTBEAT, "d": self._client.sequence}
+        return {"op": gateway.HEARTBEAT, "d": self.shard.sequence}
+
+    def ack(self):
+        d = time.perf_counter()
+
+        self.latency = d - self.sent_at
 
 
 class VoiceKeepAlive(Thread):
