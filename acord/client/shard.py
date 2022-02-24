@@ -3,21 +3,23 @@
 from __future__ import annotations
 import asyncio
 import sys
-from typing import Any, Callable, Coroutine, Union
-from aiohttp import ClientSession
+from typing import Any, Callable, Coroutine
 import logging
-from acord.core.heartbeat import KeepAlive
-from acord.errors import GatewayError
 
+
+from acord.errors import GatewayError
 from acord.models import Snowflake
 
-from .handler import handle_websocket
 from acord.core.signals import gateway
+from acord.core.decoders import decodeResponse
+from acord.core.heartbeat import KeepAlive
+
 from acord.payloads import (
     GenericWebsocketPayload,
     VoiceStateUpdatePresence,
 )
 from acord.bases import Presence
+from .handler import handle_websocket
 
 logger = logging.getLogger(__name__)
 
@@ -134,10 +136,10 @@ class Shard:
         logger.debug(f"Receiving hello packet for Shard {self.shard_id}")
 
         packet = await self.ws.receive()
-        data = packet.json()
+        data = decodeResponse(packet.data)
 
-        if not data["op"] == gateway.HELLO:
-            raise GatewayError(f"Invalid op code recieved, got {packet['op']} expected {10}")
+        if not data.get("op", 0) == gateway.HELLO:
+            raise GatewayError(f"Invalid op code recieved")
 
         self._keep_alive = KeepAlive(
             self, data["d"]["heartbeat_interval"], self.loop
@@ -177,30 +179,25 @@ class Shard:
 
         logger.info(f"Sent identity packet for Shard {self.shard_id}")
 
-    async def listen(self, **kwds):
+    def listen(self, **kwds):
         """Generates task using handler,
         this task is automatically terminated by :meth:`Shard.disconnect`.
 
         .. note::
             Any kwargs you pass through are sent to the handler
         """
-        coro = self.handler(self, **kwds)
-
-        # task = self.loop.create_task(coro, name=f"ShardHandler:shard_id={self.shard_id}")
-        # self.task = task
-        await coro
+        coro = self.handler(**kwds)
+        
+        self.task = self.loop.create_task(coro)
+        return self.task
 
     async def disconnect(self):
         logger.info(f"Disconnecting from shard {self.shard_id}")
 
-        if self.task:
-            self.task.cancel(msg="Shard disconnected")
-
         self._keep_alive._ended = True
 
         await self.ws.close(code=4000)
-
-        self.client.shards.remove(self)
+        self.task.cancel(msg="Disconnect called")
 
     async def resume(self, *, restart: bool = False):
         """|coro|
@@ -215,6 +212,8 @@ class Shard:
         if restart:
             await self.ws.close(code=4000)
             await self.connect(**self._snd_kwds)
+
+            self._keep_alive._ws = self.ws
 
         self.resuming = True
 
