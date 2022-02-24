@@ -57,23 +57,60 @@ class Shard:
 
         # Connect
         await shard.connect()
+        await shard.receive_hello()
+        await shard.send_identity()
 
         await shard.wait_until_ready()
 
+        # Deal with messages
         async for message in shard.ws:
             ...
 
-    .. note::
-        You can always use :meth:`Shard.listen` to do this for you.
-
     Parameters
     ----------
+    url: :class:`str`
+        Gateway URL
     shard_id: :class:`int`
         ID of shard
+    num_shards: :class:`int`
+        Total number of shards client uses
     handler: Callable[..., Coroutine[Any, Any, Any]]
         A handler to overwrite the default handler
     client: :class:`Client`
         Client this shard is attached to.
+
+    Attributes
+    ----------
+    url: :class:`str`
+        Gateway url
+    shard_id: :class:`int`
+        ID of shard
+    num_shards: :class:`int`
+        Total number of shards client has
+    client: :class:`Client`
+        Client shard is attached to
+    session: :class:`~aiohttp.ClientSession`
+        Session being used to make requests
+    handler: Callable[..., Coroutine[Any, Any, Any]]
+        Handler to be used when :meth:`Shard.listen` is called
+    ws: :class:`~aiohttp.ClientWebSocketResponse`
+        WS connected to :attr:`Shard.url`,
+        only available after :meth:`Shard.connect` is called
+    ready_event: :obj:`py:asyncio.Event`
+        An event object which is set after shard receives READY
+    loop: :obj:`py:asyncio.AbstractEventLoop`
+        Loop that the shard is using
+    sequence: :class:`int`
+        Shard sequence,
+        value should be changed by user else unexpected errors may occur
+    session_id: :class:`str`
+        Session ID, used for resuming. Dont change it.
+    gateway_version: :class:`str`
+        Gateway version client is using
+    resuming: :class:`bool`
+        Whether the shard is in a resuming state
+    ratelimit_key: :class:`int`
+        Ratelimit key used for bucket ratelimiting gateway requests
     """
     def __init__(self,
         url: str,
@@ -192,12 +229,18 @@ class Shard:
         return self.task
 
     async def disconnect(self):
+        """|coro|
+
+        Disconnects from this shard
+        """
         logger.info(f"Disconnecting from shard {self.shard_id}")
 
         self._keep_alive._ended = True
 
         await self.ws.close(code=4000)
-        self.task.cancel(msg="Disconnect called")
+
+        if getattr(self, "task", None):
+            self.task.cancel(msg="Disconnect called")
 
     async def resume(self, *, restart: bool = False):
         """|coro|
