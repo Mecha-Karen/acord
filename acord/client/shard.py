@@ -91,6 +91,8 @@ class Shard(pydantic.BaseModel):
                 **kwds
             )
 
+        identity.update({"shard": (self.shard_id, self.client.MAX_CONC)})
+
         ws = await self._http._connect(token=token, encoding=encoding, 
                                        compress=compress, **identity)
         self._ws = ws
