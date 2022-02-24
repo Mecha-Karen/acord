@@ -3,13 +3,21 @@
 from __future__ import annotations
 import asyncio
 from typing import Any
-
+import logging
 import pydantic
 
 from acord.models import Snowflake
 
 from .handler import handle_websocket
 from acord.core.http import HTTPClient
+from acord.core.signals import gateway
+from acord.payloads import (
+    GenericWebsocketPayload,
+    VoiceStateUpdatePresence,
+)
+from acord.bases import Presence
+
+logger = logging.getLogger(__name__)
 
 
 class ShardingClient(HTTPClient):
@@ -29,7 +37,7 @@ class Shard(pydantic.BaseModel):
     if discord requires you to shard you may expect an error whilst starting the bot.
 
     .. note::
-        You can enable sharding by using the sharding kwarg with the client class
+        You can enable sharding by using the ``sharding_enabled`` kwarg with the client class
 
     .. note::
         When providing a handler, 
@@ -71,6 +79,8 @@ class Shard(pydantic.BaseModel):
     _ws: Any = None
     _ready_event = asyncio.Event()
     _http: Any = None
+    _loop: Any = asyncio.get_event_loop()
+    _task: Any = None
 
     def contains_guild(self, guild_id: Snowflake, /) -> bool:
         return ((guild_id >> 22) % self.client.MAX_CONC) == self.shard_id
@@ -99,6 +109,62 @@ class Shard(pydantic.BaseModel):
 
         self._ready_event.set()
 
+    async def disconnect(self):
+        await self._http.disconnect()
+
+        if self._task:
+            self._task.cancel()
+
+        self.client.shards.remove(self)
+
+    async def listen(self, r_scripts, *args, **kwds) -> None:
+        await self.connect(*args, **kwds)
+
+        await handle_websocket(self.client, self.ws, r_scripts, ws_shard=self.shard_id)
+
+    async def change_presence(self, presence: Presence) -> None:
+        """|coro|
+
+        Changes client presence
+
+        Parameters
+        ----------
+        presence: :class:`Presence`
+            New presence for client,
+            You may want to checkout the guide for presences.
+            Which can be found `here <../guides/presence.html>`_.
+        """
+        payload = GenericWebsocketPayload(op=gateway.PRESENCE, d=presence)
+
+        logger.debug(f"Updating presence for shard {self.shard_id}")
+
+        await self.ws.send_str(payload.json())
+
+    async def update_voice_state(self, **data) -> None:
+        """|coro|
+
+        Updates client voice state
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            id of the guild
+        channel_id: :class:`Snowflake`
+            id of the voice channel client wants to join (``None`` if disconnecting)
+        self_mute: :class:`bool`
+            is the client muted
+        self_deaf: :class:`bool`
+            is the client deafened
+        """
+        voice_payload = VoiceStateUpdatePresence(**data)
+        payload = GenericWebsocketPayload(op=gateway.VOICE, d=voice_payload)
+
+        await self.ws.send_str(payload.json())
+
     @property
     def ws(self):
         return self._ws
+
+    @property
+    def ratelimit_key(self):
+        return self.shard_id % self.client.MAX_CONC
