@@ -4,7 +4,7 @@ import time
 import logging
 from aiohttp import WSMsgType
 
-from acord.core.decoders import ETF, JSON, decompressResponse
+from acord.core.decoders import decodeResponse
 from acord.core.signals import gateway
 from acord.voice.core import VoiceConnection
 from acord.utils import _d_to_channel
@@ -134,19 +134,8 @@ async def _handle_websocket(shard, on_ready_scripts):
         if client.dispatch_on_recv:
             client.dispatch("socket_receive", message)
 
-        data = message.data
 
-        if type(data) is bytes:
-            data = decompressResponse(data)
-            print(repr(data))
-
-        if not data:
-            continue
-
-        if not data.startswith("{"):
-            data = ETF(data)
-        else:
-            data = JSON(data)
+        data = decodeResponse(message.data)
 
         EVENT = data["t"]
         OPERATION = data["op"]
