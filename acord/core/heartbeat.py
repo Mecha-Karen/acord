@@ -18,7 +18,9 @@ class KeepAlive(Thread):
         self._loop: asyncio.AbstractEventLoop = loop
         self._ws = shard.ws
         self._interval = interval / 1000
+
         self._ended = False
+        self._waiting_for_ack = False
 
         super().__init__(daemon=True)
 
@@ -35,6 +37,7 @@ class KeepAlive(Thread):
         asyncio.run_coroutine_threadsafe(coro, self._loop)
 
         self.sent_at = time.perf_counter()
+        self._waiting_for_ack = True
 
         logger.info(f"Sent heartbeat for shard {self.shard.shard_id}, waiting {self._interval} seconds...")
 
@@ -43,6 +46,7 @@ class KeepAlive(Thread):
 
     def ack(self):
         d = time.perf_counter()
+        self._waiting_for_ack = False
 
         self.latency = d - self.sent_at
 
