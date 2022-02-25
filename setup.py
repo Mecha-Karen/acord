@@ -38,6 +38,7 @@ packages = [
     "acord.bases.flags",
     "acord.bases.enums",
     "acord.client",
+    "acord.client.caches",
     "acord.core",
     "acord.core.signals",
     "acord.models",
