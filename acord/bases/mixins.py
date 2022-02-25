@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 
 class Hashable:
-    __slots__ = ()
+    __slots__ = ("__weakref__",)
 
     id: int
 
