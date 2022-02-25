@@ -1,7 +1,7 @@
 # Cache handler for acord
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence, Optional, Type
+from typing import Any, Dict, Iterator, Optional
 from weakref import WeakValueDictionary
 from abc import ABC, abstractmethod
 from acord import (
@@ -74,7 +74,7 @@ class Cache(ABC, pydantic.BaseModel):
     # NOTE: Users
 
     @abstractmethod
-    def users(self) -> Sequence[User]:
+    def users(self) -> Iterator[User]:
         """ Returns all users that are currently cached. """
 
     @abstractmethod
@@ -88,7 +88,7 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def add_user(self, user: User) -> None:
+    def add_user(self, user: User, /) -> None:
         """Adds a :class:`User` to the cache.
 
         Parameters
@@ -98,7 +98,7 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def delete_user(self, user_id: Snowflake, /) -> Optional[User]:
+    def remove_user(self, user_id: Snowflake, *args) -> Optional[User]:
         """Removes a :class:`User` from the cache.
 
         Parameters
@@ -110,7 +110,7 @@ class Cache(ABC, pydantic.BaseModel):
     # NOTE: Guilds
 
     @abstractmethod
-    def guilds(self) -> Sequence[Guild]:
+    def guilds(self) -> Iterator[Guild]:
         """Returns all guilds that are currently cached."""
 
     @abstractmethod
@@ -124,7 +124,7 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def add_guild(self, guild: Guild) -> None:
+    def add_guild(self, guild: Guild, /) -> None:
         """Adds a :class:`Guild` to the cache.
 
         Parameters
@@ -134,7 +134,7 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def delete_guild(self, guild_id: Snowflake, /) -> Optional[Guild]:
+    def remove_guild(self, guild_id: Snowflake, *args) -> Optional[Guild]:
         """Removes a :class:`Guild` from the cache.
 
         Parameters
