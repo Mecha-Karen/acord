@@ -105,7 +105,7 @@ class User(pydantic.BaseModel, Hashable):
         )
 
         channel = DMChannel(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+        self.conn.client.cache.add_channel(channel)
 
         self.dm_id = channel.id
 
