@@ -47,6 +47,6 @@ Your activity which is the fancy text the user sees will be in the :class:`Activ
 
 .. code-block:: py
 
-    presence = Presence(activities=[Activity, Activity])
+    presence = Presence(activities=[Activity, Activity], status=StatusType)
 
-
+This is exactly what the :ref:`Functions` do.
