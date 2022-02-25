@@ -25,11 +25,11 @@ def parse_ratelimit_headers(headers: dict) -> dict:
     d = {}
 
     if limit := headers.get("X-RateLimit-Limit"):
-        d["limit"] = limit
+        d["limit"] = float(limit)
     if remaining := headers.get("X-RateLimit-Remaining"):
-        d["remaining"] = remaining
+        d["remaining"] = float(remaining)
     if reset := headers.get("X-RateLimit-Reset-After"):
-        d["reset"] = reset
+        d["reset"] = float(reset)
 
     return d
 
