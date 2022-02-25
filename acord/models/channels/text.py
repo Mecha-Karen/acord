@@ -27,7 +27,7 @@ from .thread import Thread
 async def _pop_task(client, channel_id, *messages) -> None:
     # Create task to pop all messages in bulk deletion
     for message in messages:
-        client.INTERNAL_STORAGE["messages"].pop(f"{channel_id}:{message}", None)
+        client.cache.remove_message(message.channel_id, message.id)
 
 
 class TextChannel(Channel, ExtendedTextMethods):
@@ -161,9 +161,7 @@ class TextChannel(Channel, ExtendedTextMethods):
 
         for message in data:
             msg = Message(**message)
-            self.conn.client.INTERNAL_STORAGE["messages"].update(
-                {f"{self.id}:{msg.id}": msg}
-            )
+            self.conn.client.cache.add_message(msg)
             yield msg
 
     async def fetch_webhooks(self) -> Iterator[Webhook]:
