@@ -16,9 +16,12 @@ from acord.payloads import (
 )
 from acord.ext.application_commands import ApplicationCommand, UDAppCommand
 from acord.bases import Intents, _C
-from acord.models import Message, Snowflake, User, Channel, Guild, TextChannel, Stage
+from acord.models import Message, Snowflake, User, Channel, Guild, Stage
+from acord.utils import _d_to_channel
 
 from .shard import Shard
+from .caches.cache import Cache
+from .caches.default import DefaultCache
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +47,8 @@ class Client(object):
         Whether to read compressed stream when receiving requests, defaults to ``False``
     dispatch_on_recv: :class:`bool`
         Whether on_socket_recv should be dispatched
+    cache: :class:`Cache`
+        Cache for the client to use
 
     Attributes
     ----------
@@ -72,7 +77,7 @@ class Client(object):
         Mapping of registered application commands
     shards: List[:class:`Shard`]
         List of shards client is handling
-    INTERNAL_STORAGE: :class:`dict`
+    cache: :class:`dict`
         Cache of gateway objects, recomended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
     MAX_CONC: :class:`int`
@@ -80,9 +85,7 @@ class Client(object):
     guilds: List[:class:`Guilds`]
         List of guilds client has access to
     """
-
-    # SHOULD BE OVERWRITTEN
-    INTERNAL_STORAGE: dict
+    cache: Cache
 
     def __init__(
         self,
@@ -94,6 +97,7 @@ class Client(object):
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
+        cache: Cache = DefaultCache()
     ) -> None:
 
         self.loop = loop
@@ -118,13 +122,10 @@ class Client(object):
         self.awaiting_voice_connections = dict()
         self.voice_connections = dict()
 
-        self.INTERNAL_STORAGE = dict()
+        if not isinstance(cache, Cache):
+            raise TypeError("Cache must be a subclass of Cache")
 
-        self.INTERNAL_STORAGE["messages"] = dict()
-        self.INTERNAL_STORAGE["users"] = dict()
-        self.INTERNAL_STORAGE["guilds"] = dict()
-        self.INTERNAL_STORAGE["channels"] = dict()
-        self.INTERNAL_STORAGE["stage_instances"] = dict()
+        self.cache = cache
 
         self.shards = list()
         self.MAX_CONC = 0
@@ -559,6 +560,8 @@ class Client(object):
 
         if not hasattr(self, "http"):
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
+        
+        self.http.client = self
 
         # Login to create session
         # Also validates token
@@ -603,49 +606,51 @@ class Client(object):
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("messages", dict()).get(
-            f"{channel_id}:{message_id}"
-        )
+        return self.cache.get_message(channel_id, message_id)
 
     def get_user(self, user_id: int) -> Optional[User]:
         """Returns the user stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("users", dict()).get(user_id)
+        return self.cache.get_user(user_id)
 
     def get_guild(self, guild_id: int) -> Optional[Guild]:
         """Returns the guild stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("guilds", dict()).get(guild_id)
+        return self.cache.get_guild(guild_id)
 
     def get_channel(self, channel_id: int) -> Optional[Channel]:
         """Returns the channel stored in the internal cache, may be outdated"""
-        return self.INTERNAL_STORAGE.get("channels", dict()).get(channel_id)
+        return self.cache.get_channel(channel_id)
 
     # NOTE: Fetch from API:
 
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
+
         resp = await self.http.request(Route("GET", path=f"/users/{user_id}"))
         user = User(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE["users"].update({user.id: user})
+
+        self.cache.add_user(user)
         return user
 
     async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
         """Fetches channel from API and caches it"""
+
         resp = await self.http.request(Route("GET", path=f"/channels/{channel_id}"))
-        channel = TextChannel(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+        channel, _ = _d_to_channel((await resp.json()), self.http)
+
+        self.cache.add_channel(channel)
         return channel
 
     async def fetch_message(
         self, channel_id: int, message_id: int
     ) -> Optional[Message]:
         """Fetches message from API and caches it"""
+
         resp = await self.http.request(
             Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
         )
         message = Message(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE["messages"].update(
-            {f"{channel_id}:{message_id}": message}
-        )
+
+        self.cache.add_message(message)
         return message
 
     async def fetch_guild(
@@ -657,11 +662,13 @@ class Client(object):
             If with_counts is set to ``True``, it will allow fields ``approximate_presence_count``,
             ``approximate_member_count`` to be used.
         """
+
         resp = await self.http.request(
             Route("GET", path=f"/guilds/{guild_id}", with_counts=bool(with_counts)),
         )
         guild = Guild(conn=self.http, **(await resp.json()))
-        self.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
+
+        self.cache.add_guild(guild)
 
     async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
         """|coro|
@@ -690,21 +697,6 @@ class Client(object):
         )
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
-
-    # NOTE: Get from cache or Fetch from API:
-
-    async def gof_channel(self, channel_id: int) -> Optional[Any]:
-        """Attempts to get a channel, if not found fetches and adds to cache.
-        Raises :class:`NotFound` if cannot be fetched"""
-        channel = self.get_channel(channel_id)
-
-        if channel is None:
-            return await self.fetch_channel(channel_id)
-        return channel
-
-    @property
-    def guilds(self):
-        return self.INTERNAL_STORAGE["guilds"]
 
     # NOTE: default event handlers
 
