@@ -57,9 +57,7 @@ class ExtendedTextMethods:
         )
 
         message = Message(**(await resp.json()))
-        self.conn.client.INTERNAL_STORAGE["messages"].update(
-            {f"{self.id}:{message.id}": message}
-        )
+        self.conn.client.cache.add_message(message.channel_id, message.id)
 
         return message
 
@@ -121,9 +119,7 @@ class ExtendedTextMethods:
         )
 
         n_msg = Message(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE["messages"].update(
-            {f"{self.id}:{n_msg.id}": n_msg}
-        )
+        self.conn.client.cache.add_message(n_msg)
         return n_msg
 
     async def trigger_typing(self) -> None:
@@ -148,8 +144,6 @@ class ExtendedTextMethods:
         messages = await r.json()
 
         for message in messages:
-            msg = Message(**message)
-            self.conn.client.INTERNAL_STORAGE["messages"].update(
-                {f"{self.id}:{msg.id}": msg}
-            )
+            msg = Message(conn=self.conn, **message)
+            self.conn.client.cache.add_message(message)
             yield msg
