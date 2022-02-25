@@ -237,23 +237,6 @@ class Client(object):
 
         logger.info("Dispatched event: {}".format(event_name))
 
-    async def resume(self) -> None:
-        """|coro|
-
-        Resumes a closed gateway connection,
-        should only be called internally.
-        """
-        payload = dict(
-            op=6,
-            d=dict(
-                token=self.http.token, session_id=self.session_id, seq=self.sequence
-            ),
-        )
-
-        logger.debug("Resuming gateway connection")
-
-        await self.http.ws.send_json(payload)
-
     def wait_for(
         self, event: str, *, check: Callable[..., bool] = None, timeout: int = None
     ) -> _C:
@@ -537,10 +520,13 @@ class Client(object):
                 self.token, self.intents, self.presence
             )
             
-            task = shard.listen(shard=shard, on_ready_scripts=ready_scripts)
+            task = shard.listen(shard=shard)
             TASK_LIST.append(task)
 
             self.shards.append(shard)
+
+        for script in ready_scripts:
+            await script
 
         await asyncio.gather(*TASK_LIST)
 
