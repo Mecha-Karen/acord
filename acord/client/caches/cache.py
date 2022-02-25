@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Iterator, Optional
-from weakref import WeakValueDictionary
 from abc import ABC, abstractmethod
+from weakref import WeakValueDictionary
 from acord import (
     User,
     Guild,
@@ -14,18 +14,17 @@ from acord import (
 import pydantic
 
 
-class CacheData(WeakValueDictionary):
+class CacheData(dict):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v) -> WeakValueDictionary:
-        if isinstance(v, dict):
-            return cls(v)
-        assert isinstance(v, WeakValueDictionary), "Value must be a weak value dict"
+    def validate(cls, v) -> dict:
+        if isinstance(v, (dict, WeakValueDictionary)):
+            return v
 
-        return v
+        raise TypeError("Value must be a dict or WeakValueDictionary")
 
 
 class Cache(ABC, pydantic.BaseModel):
