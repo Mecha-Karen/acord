@@ -91,12 +91,12 @@ def close_code_handler(code: int) -> None:
         raise GatewayError("You have requested an intent you dont have access to")
 
 
-async def handle_websocket(shard, on_ready_scripts):
+async def handle_websocket(shard):
     _ = "err"
     # define err here just incase an error occured 
 
     try:
-        _ = await _handle_websocket(shard, on_ready_scripts)
+        _ = await _handle_websocket(shard)
     except Exception:
         raise
     finally:
@@ -105,8 +105,7 @@ async def handle_websocket(shard, on_ready_scripts):
         # We want to let the user know the connection closed if no error occured during the handling
 
 
-async def _handle_websocket(shard, on_ready_scripts):
-    ready_scripts = filter(lambda x: x is not None, on_ready_scripts)
+async def _handle_websocket(shard):
     UNAVAILABLE = dict()
 
     ws = shard.ws
@@ -180,11 +179,8 @@ async def _handle_websocket(shard, on_ready_scripts):
             shard.gateway_version = DATA["v"]
             client.user = User(conn=client.http, **DATA["user"])
 
-            for script in ready_scripts:
-                client.loop.create_task(script)
-
             UNAVAILABLE = {i["id"]: i["unavailable"] for i in DATA["guilds"]}
-            client.INTERNAL_STORAGE["users"].update({client.user.id: client.user})
+            client.cache.add_user(client.user)
 
             shard.ready_event.set()
 
@@ -285,9 +281,7 @@ async def _handle_websocket(shard, on_ready_scripts):
             except ValueError:
                 pass
 
-            client.INTERNAL_STORAGE["messages"].update(
-                {f"{message.channel_id}:{message.id}": message}
-            )
+            client.cache.add_message(message)
 
             client.dispatch("message_create", message)
 
@@ -298,16 +292,13 @@ async def _handle_websocket(shard, on_ready_scripts):
                 continue
 
             message = pre_existing.copy(update=DATA)
-            client.INTERNAL_STORAGE["messages"].update(
-                {f"{message.channel_id}:{message.id}": message}
-            )
+            client.cache.add_message(message)
 
             client.dispatch("message_update", message)
 
         elif EVENT == "MESSAGE_DELETE":
-            message = client.get_message(DATA["channel_id"], DATA["id"])
+            message = client.cache.remove_message(DATA["channel_id"], DATA["id"], None)
             if message:
-                client.INTERNAL_STORAGE["messages"].pop(f"{DATA['channel_id']}:{DATA['id']}")
                 client.dispatch("message_delete", message)
             else:
                 client.dispatch("partial_message_delete",
@@ -319,7 +310,8 @@ async def _handle_websocket(shard, on_ready_scripts):
         elif EVENT == "MESSAGE_DELETE_BULK":
             messages = [
                 (
-                    client.get_message(DATA["channel_id"], id) or Snowflake(id)
+                    client.cache.remove_message(DATA["channel_id"], id, None)
+                    or Snowflake(id)
                 )
                 for id in DATA["ids"]
             ]
@@ -374,7 +366,7 @@ async def _handle_websocket(shard, on_ready_scripts):
             else:
                 client.dispatch("guild_create", guild)
 
-            client.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
+            client.cache.add_guild(guild)
 
         elif EVENT == "GUILD_DELETE":
             if DATA.get("unavailable", None) is not None:
@@ -382,30 +374,31 @@ async def _handle_websocket(shard, on_ready_scripts):
                 UNAVAILABLE.pop(DATA["id"])
                 client.dispatch("guild_outage", guild)
 
-                client.INTERNAL_STORAGE["guilds"].update({int(DATA["id"]): guild})
+                client.cache.add_guild(guild)
             else:
-                guild = client.INTERNAL_STORAGE["guilds"].pop(DATA["id"])
+                guild = client.cache.remove_guild(int(DATA["id"]), None)
                 client.dispatch("guild_remove", guild)
 
         elif EVENT == "GUILD_UPDATE":
             guild = Guild(conn=client.http, **DATA)
 
-            client.INTERNAL_STORAGE["guilds"].update({guild.id: guild})
+            client.cache.add_guild(guild)
             client.dispatch("guild_update", guild)
 
         elif EVENT == "GUILD_BAN_ADD":
             guild = client.get_guild(int(DATA["guild_id"]))
             user = User(conn=client.http, **DATA["user"])
 
-            guild.members.pop(user.id)
-            client.INTERNAL_STORAGE["users"].update({user.id: user})
+            guild.members.pop(user.id, None)
+            
+            client.cache.add_user(user)
             client.dispatch("guild_ban", guild, user)
 
         elif EVENT == "GUILD_BAN_REMOVE":
             guild = client.get_guild(int(DATA["guild_id"]))
             user = User(conn=client.http, **DATA["user"])
 
-            client.INTERNAL_STORAGE["users"].update({user.id: user})
+            client.cache.add_user(user)
             client.dispatch("guild_ban_remove", guild, user)
 
         elif EVENT == "GUILD_EMOJIS_UPDATE":
@@ -462,6 +455,7 @@ async def _handle_websocket(shard, on_ready_scripts):
             else:
                 guild = Snowflake(DATA["guild_id"])
             
+            client.cache.add_user(user)
             client.dispatch("member_remove", user, guild)
 
         elif EVENT == "GUILD_MEMBER_UPDATE":
@@ -526,23 +520,24 @@ async def _handle_websocket(shard, on_ready_scripts):
         elif EVENT == "CHANNEL_CREATE":
             channel, _ = _d_to_channel(DATA, client.http)
 
-            client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+            client.cache.add_channel(channel)
             client.dispatch("channel_create", channel)
 
         elif EVENT == "CHANNEL_UPDATE":
             channel, _ = _d_to_channel(DATA, client.http)
 
-            client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+            client.cache.add_channel(channel)
             client.dispatch("channel_update", channel)
 
         elif EVENT == "CHANNEL_DELETE":
-            channel = client.INTERNAL_STORAGE["channels"].pop(int(DATA["id"]), None)
+            channel = client.cache.remove_channel(channel.id, None)
             client.dispatch("channel_delete", channel)
 
         # NOTE: threads
 
         elif EVENT == "THREAD_CREATE":
             thread = Thread(conn=client.http, **DATA)
+            client.cache.add_channel(thread)
 
             guild = client.get_guild(thread.guild_id)
             guild.threads.update({thread.id: thread})
@@ -551,6 +546,7 @@ async def _handle_websocket(shard, on_ready_scripts):
 
         elif EVENT == "THREAD_UPDATE":
             thread = Thread(conn=client.http, **DATA)
+            client.cache.add_channel(thread)
 
             guild = client.get_guild(thread.guild_id)
             guild.threads.update({thread.id: thread})
@@ -559,7 +555,8 @@ async def _handle_websocket(shard, on_ready_scripts):
 
         elif EVENT == "THREAD_DELETE":
             guild = client.get_guild(int(DATA["guild_id"]))
-            thread = guild.threads.pop(int(DATA["guild_id"]))
+            thread = guild.threads.pop(int(DATA["id"]), None)
+            client.cache.remove_channel(int(DATA["id"]), None)
 
             client.dispatch("thread_delete")
 
@@ -572,6 +569,7 @@ async def _handle_websocket(shard, on_ready_scripts):
                 threads.append(tr)
 
                 guild.threads.update({tr.id: tr})
+                client.cache.add_channel(tr)
 
             client.dispatch("thread_sync", threads)
 
@@ -617,12 +615,18 @@ async def _handle_websocket(shard, on_ready_scripts):
                 if conn is not None:
                     await conn.disconnect()
 
-            client.INTERNAL_STORAGE["guilds"][m.guild_id].members.update({m.user.id: m})
+            guild = client.cache.get_guild(m.guild_id)
+
+            if not guild:
+                continue
+
+            guild.members.update({m.user.id: m})
             channel_id = DATA["channel_id"]
 
             client.dispatch("voice_state_update", channel_id, m)
 
         # NOTE: VOICE EVENTS
+
         elif EVENT == "VOICE_SERVER_UPDATE":
             session_id, channel_id = client.awaiting_voice_connections.pop(
                 DATA["guild_id"], None
