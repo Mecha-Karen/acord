@@ -15,7 +15,12 @@ __author__ = "Mecha Karen"
 
 from .bases import *
 from .models import *
-from .client import Client, Shard
+from .client import (
+    Client, 
+    Shard,
+    CacheData,
+    Cache,
+)
 from .webhooks.main import Webhook, PartialWebhook, WebhookType
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver

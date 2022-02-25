@@ -1,7 +1,7 @@
 # Cache handler for acord
 from __future__ import annotations
 
-from typing import Any, Dict, Sequence, Optional
+from typing import Any, Dict, Sequence, Optional, Type
 from weakref import WeakValueDictionary
 from abc import ABC, abstractmethod
 from acord import (
@@ -12,44 +12,18 @@ from acord import (
 import pydantic
 
 
-class CacheSection(ABC, pydantic.BaseModel):
-    """An ABC for implementing sections for provided caches,
-    this may be useful as you can add constant values per cache section.
+class CacheData(WeakValueDictionary):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
 
-    .. warning::
-        When implementing with :class:`Cache`, 
-        if cache section is not provided,
-        we will construct one using limits from the cache.
+    @classmethod
+    def validate(cls, v) -> WeakValueDictionary:
+        if isinstance(v, dict):
+            return cls(v)
+        assert isinstance(v, WeakValueDictionary), "Value must be a weak value dict"
 
-    Parameters
-    ----------
-    name: :class:`str`
-        Name of section
-    data: :obj:`py:weakref.WeakValueDictionary`
-        Existing data to cache,
-        this is not constant and can be cleared.
-    constants: :obj:`py:weakref.WeakValueDictionary`
-        Constant values which never change,
-        inorder to fetch these values users must use :attr:`CacheSection.constants`
-    """
-    data: WeakValueDictionary
-    name: str
-    constants: WeakValueDictionary = WeakValueDictionary()
-
-    @abstractmethod
-    def clear(self) -> None:
-        """ Clears this cache section """
-
-    def __getattribute__(self, __name: str) -> Any:
-        # Allows us to use CacheSection.meth("name")
-        # without billions of abstract methods for .data
-        # Whilst still allowing us to overwrite said method
-        try:
-            return super().__getattribute__(__name)
-        except AttributeError:
-            # Reason we dont use constants is because we want to make sure
-            # only the user edits them
-            return getattr(self.data, __name)
+        return v
 
 
 class Cache(ABC, pydantic.BaseModel):
@@ -74,7 +48,7 @@ class Cache(ABC, pydantic.BaseModel):
 
         client = Client(cache=MyCache())
     """
-    sections: Dict[str, CacheSection] = {}
+    sections: Dict[str, CacheData] = {}
     """ Mapping of cache sections for cache """
 
     def __getitem__(self, item: Any) -> Any:
@@ -89,15 +63,8 @@ class Cache(ABC, pydantic.BaseModel):
     def __contains__(self, key: Any) -> bool:
         return key in self.sections
 
-    def __setitem__(self, key: str, value: CacheSection) -> None:
-        if value == "*":
-            self.sections[key] = CacheSection(
-                name=key,
-                limit=self.limits[key],
-                data=WeakValueDictionary()
-            )
-        else:
-            self.sections[key] = value
+    def __setitem__(self, key: str, value: CacheData) -> None:
+        self.sections[key] = CacheData.validate(value)
 
     @abstractmethod
     def clear(self) -> None:
