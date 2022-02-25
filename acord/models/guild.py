@@ -289,7 +289,7 @@ class Guild(pydantic.BaseModel, Hashable):
             channel.update({"guild_id": id})
             ch, _ = _d_to_channel(channel, conn)
 
-            conn.client.INTERNAL_STORAGE["channels"].update({ch.id: ch})
+            conn.client.cache.add_channel(ch)
             mapping.update({ch.id: ch})
 
         return mapping
@@ -999,7 +999,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
         channel, _ = _d_to_channel((await r.json()), self.conn)
 
-        self.conn.client.INTERNAL_STORAGE["channels"].update({channel.id: channel})
+        self.conn.client.cache.add_channel(channel)
         self.channels.update({channel.id: channel})
 
         return channel
