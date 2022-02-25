@@ -372,9 +372,7 @@ class Message(pydantic.BaseModel, Hashable):
             Route("POST", path=f"/channels/{channel.id}/messages/{self.id}/crosspost")
         )
         message = Message(conn=self.http, **(await resp.json()))
-        self.conn.client.INTERNAL_STORAGE["messages"].update(
-            {f"{message.channel_id}:{message.id}": message}
-        )
+        self.conn.client.cache.add_message(message)
         return message
 
     async def edit(self, **data) -> Message:
@@ -443,9 +441,7 @@ class Message(pydantic.BaseModel, Hashable):
         )
 
         n_msg = Message(conn=self.conn, **(await r.json()))
-        self.conn.client.INTERNAL_STORAGE["messages"].update(
-            {f"{self.id}:{n_msg.id}": n_msg}
-        )
+        self.conn.client.cache.add_message(n_msg)
         return n_msg
 
     @property
