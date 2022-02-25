@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 __file__ = __import__("os").path.abspath(__file__)
 __directory__ = __import__("os").path.dirname(__file__)
 __doc__ = "An API wrapper for the discord API"
-__version__ = "0.0.1a3"
+__version__ = "0.2.3a0"
 __author__ = "Mecha Karen"
 
 from .bases import *
