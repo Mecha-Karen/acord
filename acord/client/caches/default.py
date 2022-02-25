@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import typing
+from weakref import WeakValueDictionary
 from acord.models import (
     Snowflake,
     User,
@@ -13,16 +14,16 @@ from acord.models import (
 from .cache import CacheData, Cache
 
 SECTIONS = {
-    "messages": CacheData(),
-    "users": CacheData,
-    "guilds": CacheData(),
-    "channels": CacheData(),
-    "stage_instances": CacheData()
+    "messages": {},
+    "users": WeakValueDictionary(),
+    "guilds": {},
+    "channels": {},
+    "stage_instances": {}
 }
 
 
 class DefaultCache(Cache):
-    sections = SECTIONS
+    sections: typing.Dict[str, CacheData] = SECTIONS
 
     def clear(self):
         for cache in self.sections.values():
