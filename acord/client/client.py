@@ -185,7 +185,6 @@ class Client(object):
         """
         if not event_name.startswith("on_"):
             func_name = "on_" + event_name
-        logger.info("Dispatching event: {}".format(event_name))
 
         events = self._events.get(event_name, list())
         func: Callable[..., Coroutine] = getattr(self, func_name, None)
