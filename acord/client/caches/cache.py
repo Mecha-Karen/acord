@@ -7,7 +7,9 @@ from abc import ABC, abstractmethod
 from acord import (
     User,
     Guild,
-    Snowflake
+    Snowflake,
+    Message,
+    Channel
 )
 import pydantic
 
@@ -51,7 +53,7 @@ class Cache(ABC, pydantic.BaseModel):
     sections: Dict[str, CacheData] = {}
     """ Mapping of cache sections for cache """
 
-    def __getitem__(self, item: Any) -> Any:
+    def __getitem__(self, item: Any) -> CacheData:
         return self.sections[item]
 
     def __delitem__(self, item: Any) -> None:
@@ -141,4 +143,81 @@ class Cache(ABC, pydantic.BaseModel):
         ----------
         guild_id: :class:`Snowflake`
             The ID of guild to delete.
+        """
+
+    # NOTE: Channels
+
+    @abstractmethod
+    def channels(self):
+        """Returns all channels that are cached"""
+
+    @abstractmethod
+    def get_channel(self, channel_id: Snowflake, /) -> Optional[Channel]:
+        """Gets a :class:`Channel` from the cache.
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel
+        """
+
+    @abstractmethod
+    def add_channel(self, channel: Channel, /) -> None:
+        """Adds a :class:`Channel` to the cache
+
+        Parameters
+        ----------
+        channel: :class:`Channel`
+            Channel to add to cache
+        """
+
+    @abstractmethod
+    def remove_channel(self, channel_id: Snowflake, *args) -> None:
+        """Removes a :class:`Channel` from the cache.
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel to remove
+        """
+
+    # NOTE: Messages
+
+    @abstractmethod
+    def messages(self) -> Iterator[Message]:
+        """Returns all messages that are cached"""
+    
+    @abstractmethod
+    def get_message(self, channel_id: Snowflake, message_id: Snowflake, /) -> Optional[Message]:
+        """Gets a :class:`Message` from the cache.
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel were message is in
+        message_id: :class:`Snowflake`
+            ID of message to get
+        """
+
+    @abstractmethod
+    def add_message(self, message: Message, /) -> None:
+        """Adds a :class:`Message` to the cache
+
+        Parameters
+        ----------
+        message: :class:`Message`
+            Message to add,
+            overwrites if message already exists.
+        """
+
+    @abstractmethod
+    def remove_message(self, channel_id: Snowflake, message_id: Snowflake, *args) -> Optional[Message]:
+        """Removes a :class:`Message` from the cache.
+
+        Parameters
+        ----------
+        channel_id: :class:`Snowflake`
+            ID of channel were message is in
+        message_id: :class:`Snowflake`
+            ID of message to get
         """
