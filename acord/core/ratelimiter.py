@@ -215,4 +215,5 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
             return
 
         await sleep(bucket["reset"])
-        bucket["task"] = None
+        # Just incase it was popped earlier
+        self.cache.pop(bucket, None)
