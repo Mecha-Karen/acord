@@ -6,7 +6,7 @@ from acord import (
     User, 
     Presence, 
     Snowflake, 
-    Stage, 
+    StageInstance, 
     StagePrivacyLevel,
     Guild,
     UDAppCommand, 
@@ -91,7 +91,7 @@ class Client(object):
     @overload
     async def create_stage_instance(
         self, *, channel_id: Snowflake, topic: str
-    ) -> Stage: ...
+    ) -> StageInstance: ...
     @overload
     async def create_stage_instance(
         self,
@@ -100,7 +100,7 @@ class Client(object):
         topic: str,
         privacy_level: StagePrivacyLevel,
         reason: str,
-    ) -> Stage: ...
+    ) -> StageInstance: ...
     @overload
     def register_application_command(
         self,

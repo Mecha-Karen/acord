@@ -16,7 +16,7 @@ from acord.payloads import (
 )
 from acord.ext.application_commands import ApplicationCommand, UDAppCommand
 from acord.bases import Intents, _C
-from acord.models import Message, Snowflake, User, Channel, Guild, Stage
+from acord.models import Message, Snowflake, User, Channel, Guild, StageInstance
 from acord.utils import _d_to_channel
 
 from .shard import Shard
@@ -312,7 +312,7 @@ class Client(object):
 
         return asyncio.wait_for(fut, timeout=timeout)
 
-    async def create_stage_instance(self, *, reason: str = None, **data) -> Stage:
+    async def create_stage_instance(self, *, reason: str = None, **data) -> StageInstance:
         """|coro|
 
         Creates a stage instance
@@ -340,7 +340,7 @@ class Client(object):
             headers=headers,
         )
 
-        instance = Stage(conn=self.http, **(await r.json()))
+        instance = StageInstance(conn=self.http, **(await r.json()))
         self.cache.add_stage_instance(instance)
 
         return instance

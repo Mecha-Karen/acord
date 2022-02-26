@@ -9,7 +9,7 @@ from acord.models import (
     Guild,
     Channel,
     Message,
-    Stage
+    StageInstance
 )
 
 from .cache import CacheData, Cache
@@ -159,30 +159,30 @@ class DefaultCache(Cache):
         cache.pop(f"{channel_id}:{message_id}", *args)
 
     # NOTE: Stage Instances
-    def stage_instances(self) -> typing.Iterator[Stage]:
+    def stage_instances(self) -> typing.Iterator[StageInstance]:
         cache = self["stage_instances"]
 
         return cache.values()
 
-    def get_stage_instance(self, id: Snowflake, /) -> typing.Optional[Stage]:
+    def get_stage_instance(self, id: Snowflake, /) -> typing.Optional[StageInstance]:
         if not isinstance(id, Snowflake):
-            raise TypeError("Stage ID must be an int")
+            raise TypeError("StageInstance ID must be an int")
         
         cache = self["stage_instances"]
 
         return cache.get(id)
 
-    def add_stage_instance(self, stage_instance: Stage) -> None:
-        if not isinstance(stage_instance, Stage):
-            raise TypeError("Stage instance be an instance of Stage")
+    def add_stage_instance(self, stage_instance: StageInstance) -> None:
+        if not isinstance(stage_instance, StageInstance):
+            raise TypeError("StageInstance instance be an instance of StageInstance")
 
         cache = self["stage_instances"]
 
         cache[stage_instance.id] = stage_instance
 
-    def remove_stage_instance(self, id: Snowflake, *args) -> typing.Union[Stage, typing.Any]:
+    def remove_stage_instance(self, id: Snowflake, *args) -> typing.Union[StageInstance, typing.Any]:
         if not isinstance(id, Snowflake):
-            raise TypeError("Stage ID must be an int")
+            raise TypeError("StageInstance ID must be an int")
         
         cache = self["stage_instances"]
 

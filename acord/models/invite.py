@@ -3,11 +3,10 @@ import re
 from typing import Any, List, Optional
 import pydantic
 import datetime
-from aiohttp import ClientSession
 
 from acord.bases import Hashable
-from acord.core.abc import Route, buildURL
-from acord.models import Snowflake, GuildScheduledEvent
+from acord.core.abc import Route
+from acord.models import Snowflake
 from .user import User
 
 

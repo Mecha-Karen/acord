@@ -61,7 +61,7 @@ from .invite import Invite
 from .channels import (
     Channel,
     TextChannel,
-    Stage,
+    StageInstance,
     Thread,
     ThreadMeta,
     ThreadMember,

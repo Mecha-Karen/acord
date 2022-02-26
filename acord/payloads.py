@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, Literal, Union, List
+from typing import Any, Optional, Literal, Union, List
 import pydantic
 import datetime
 import imghdr

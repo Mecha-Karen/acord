@@ -14,7 +14,7 @@ from acord import (
 )
 import pydantic
 
-from acord.models.channels.stage import Stage
+from acord.models.channels.stage import StageInstance
 
 
 class CacheData(dict):
@@ -227,12 +227,12 @@ class Cache(ABC, pydantic.BaseModel):
     # NOTE: Stage instances
 
     @abstractmethod
-    def stage_instances(self) -> Iterator[Stage]:
+    def stage_instances(self) -> Iterator[StageInstance]:
         """Returns all stage instances currently cached"""
 
     @abstractmethod
-    def get_stage_instance(self, id: Snowflake, /) -> Optional[Stage]:
-        """Gets a :class:`Stage` from the cache.
+    def get_stage_instance(self, id: Snowflake, /) -> Optional[StageInstance]:
+        """Gets a :class:`StageInstance` from the cache.
 
         Parameters
         ----------
@@ -241,18 +241,18 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def add_stage_instance(self, stage_instance: Stage) -> None:
-        """Adds a :class:`Stage` to the cache.
+    def add_stage_instance(self, stage_instance: StageInstance) -> None:
+        """Adds a :class:`StageInstance` to the cache.
 
         Parameters
         ----------
-        stage_instance: :class:`Stage`
-            Stage instance to add
+        stage_instance: :class:`StageInstance`
+            StageInstance instance to add
         """
 
     @abstractmethod
-    def remove_stage_instance(self, id: Snowflake, *args) -> Union[Stage, Any]:
-        """Removes a :class:`Stage` from the cache
+    def remove_stage_instance(self, id: Snowflake, *args) -> Union[StageInstance, Any]:
+        """Removes a :class:`StageInstance` from the cache
 
         Parameters
         ----------

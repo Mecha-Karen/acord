@@ -10,7 +10,7 @@ from acord.utils import _payload_dict_to_json
 from typing import Any, Optional
 
 
-class Stage(Channel, Hashable):
+class StageInstance(Channel, Hashable):
     conn: Any
 
     guild_id: Snowflake
@@ -46,7 +46,7 @@ class Stage(Channel, Hashable):
             Route("DELETE", path=f"/stage-instances/{self.channel_id}"), headers=headers
         )
 
-    async def edit(self, *, reason: str = None, **data) -> Stage:
+    async def edit(self, *, reason: str = None, **data) -> StageInstance:
         """|coro|
 
         Edits this stage instance,
@@ -72,4 +72,4 @@ class Stage(Channel, Hashable):
             data=_payload_dict_to_json(StageInstanceEditPayload, **data),
         )
 
-        return Stage(conn=self.conn, **(await r.json()))
+        return StageInstance(conn=self.conn, **(await r.json()))
