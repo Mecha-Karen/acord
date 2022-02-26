@@ -4,7 +4,7 @@ from __future__ import annotations
 from asyncio import AbstractEventLoop, Event
 import asyncio
 from datetime import datetime
-from aiohttp import ClientSession, WSMsgType
+from aiohttp import  WSMsgType
 
 # For handling voice packets
 from struct import pack_into, pack
