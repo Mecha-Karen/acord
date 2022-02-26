@@ -22,6 +22,7 @@ from acord.utils import _d_to_channel
 from .shard import Shard
 from .caches.cache import Cache
 from .caches.default import DefaultCache
+from .ratelimiter import GatewayRatelimiter, DefaultGatewayRatelimiter
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ class Client(object):
         Whether on_socket_recv should be dispatched
     cache: :class:`Cache`
         Cache for the client to use
+    gateway_ratelimiter: :class:`GatewayRatelimiter`
+        Gateway ratelimiter for client to use
 
     Attributes
     ----------
@@ -77,8 +80,9 @@ class Client(object):
         Mapping of registered application commands
     shards: List[:class:`Shard`]
         List of shards client is handling
-    cache: :class:`dict`
-        Cache of gateway objects, recomended to fetch using built in methods,
+    cache: :class:`Cache`
+        Cache of gateway objects, 
+        recomended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
     MAX_CONC: :class:`int`
         Number of shards client has
@@ -97,7 +101,8 @@ class Client(object):
         loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
-        cache: Cache = DefaultCache()
+        cache: Cache = DefaultCache(),
+        gateway_ratelimiter: GatewayRatelimiter = DefaultGatewayRatelimiter()
     ) -> None:
 
         self.loop = loop
@@ -126,6 +131,7 @@ class Client(object):
             raise TypeError("Cache must be a subclass of Cache")
 
         self.cache = cache
+        self.gateway_ratelimiter = gateway_ratelimiter
 
         self.shards = list()
         self.MAX_CONC = 0
