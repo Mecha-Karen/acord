@@ -1342,6 +1342,15 @@ class Guild(pydantic.BaseModel, Hashable):
 
         return emoji
 
+    async def leave(self) -> None:
+        """|coro|
+
+        Leaves this guild
+        """
+        await self.conn.request(
+            Route("DELETE", path=f"/users/@me/guilds/{self.id}")
+        )
+
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
         """|coro|
