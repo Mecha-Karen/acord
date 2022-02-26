@@ -97,8 +97,19 @@ class Client(object):
         we recommend not playing around with this as it may lead to unexpected errors
 
         .. versionadded:: 0.2.3a0
-    MAX_CONC: :class:`int`
-        Number of shards client has
+    max_concurrency: :class:`int`
+        Number of identity client is allowed per 5 seconds
+
+        .. versionadded:: 0.2.3a0
+    num_shards: Optional[:class:`int`]
+        Number of shards client is using,
+        if None it means client has not been ran yet.
+
+        .. note::
+            This value can be overwritten but only before client is ran.
+            We dont recommend you do but oh well.
+
+        .. versionadded:: 0.2.3a0
     guilds: List[:class:`Guilds`]
         List of guilds client has access to
     """
@@ -147,7 +158,8 @@ class Client(object):
         self.gateway_ratelimiter = gateway_ratelimiter
 
         self.shards = list()
-        self.MAX_CONC = 0
+        self.max_concurrency = 0
+        self.num_shards = None
 
     def on(self, name: str, *, once: bool = False) -> Optional[_C]:
         """Register an event to be dispatched on call.
@@ -521,15 +533,20 @@ class Client(object):
             GATEWAY_WEBHOOK_URL += "&compress=zlib-stream"
         GATEWAY_WEBHOOK_URL += f"&encoding={self.encoding}"
 
-        self.MAX_CONC = gateway["shards"]
+        if not self.num_shards:
+            self.num_shards = gateway["shards"]
+
+        self.max_concurrency = gateway["session_start_limit"]["max_concurrency"]
         TASK_LIST = []
 
-        for i in range(self.MAX_CONC):
+        c = 0
+
+        for i in range(self.num_shards):
             # shard_id = i
             shard = Shard(
                 url=GATEWAY_WEBHOOK_URL,
                 shard_id=i,
-                num_shards=self.MAX_CONC,
+                num_shards=self.num_shards,
                 client=self
             )
 
@@ -543,6 +560,11 @@ class Client(object):
             TASK_LIST.append(task)
 
             self.shards.append(shard)
+            c += 1
+
+            if c == self.MAX_CONC:
+                await asyncio.sleep(5)
+                c = 0
 
         for script in ready_scripts:
             await script
