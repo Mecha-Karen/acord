@@ -339,7 +339,7 @@ class Shard:
 
     @property
     def ratelimit_key(self):
-        return self.shard_id % self.session.MAX_CONC
+        return self.shard_id % self.num_shards
 
     def __repr__(self):
         return f"Shard(id={self.id}, running={self.ws is not None})"
