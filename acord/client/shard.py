@@ -19,7 +19,9 @@ from acord.payloads import (
     VoiceStateUpdatePresence,
 )
 from acord.bases import Presence
+
 from .handler import handle_websocket
+from .ratelimiter import GatewayRatelimiter
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +119,7 @@ class Shard:
         shard_id: int,
         num_shards: int,
         client: Any,
-        handler: Callable[..., Coroutine[Any, Any, Any]] = handle_websocket
+        handler: Callable[..., Coroutine[Any, Any, Any]] = handle_websocket,
     ):
         self.url = url
         self.shard_id = shard_id
@@ -129,6 +131,9 @@ class Shard:
         self.ws = None
         self.ready_event = asyncio.Event()
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+
+        self.ratelimiter: GatewayRatelimiter = self.client.gateway_ratelimiter
+        self.ratelimiter.add_shard(self, overwrite=True)
 
         self.sequence = None
         self.session_id = None
@@ -212,6 +217,12 @@ class Shard:
             d=idn
         )
 
+        async with self.ratelimiter as lock:
+            if lock.exceeded(self.ratelimit_key):
+                await lock.hold_until_reset(self.ratelimit_key)
+
+            lock.increment(self.ratelimit_key, lock_if_exceed=True)
+
         await self.ws.send_str(payload.json())
 
         logger.info(f"Sent identity packet for Shard {self.shard_id}")
@@ -258,6 +269,12 @@ class Shard:
 
             self._keep_alive._ws = self.ws
 
+        async with self.ratelimiter as lock:
+            if lock.exceeded(self.ratelimit_key):
+                await lock.hold_until_reset(self.ratelimit_key)
+
+            lock.increment(self.ratelimit_key, lock_if_exceed=True)
+
         self.resuming = True
 
         await self.ws.send_json({
@@ -285,6 +302,12 @@ class Shard:
 
         logger.debug(f"Updating presence for shard {self.shard_id}")
 
+        async with self.ratelimiter as lock:
+            if lock.exceeded(self.ratelimit_key):
+                await lock.hold_until_reset(self.ratelimit_key)
+
+            lock.increment(self.ratelimit_key, lock_if_exceed=True)
+
         await self.ws.send_str(payload.json())
 
     async def update_voice_state(self, **data) -> None:
@@ -305,6 +328,12 @@ class Shard:
         """
         voice_payload = VoiceStateUpdatePresence(**data)
         payload = GenericWebsocketPayload(op=gateway.VOICE, d=voice_payload)
+
+        async with self.ratelimiter as lock:
+            if lock.exceeded(self.ratelimit_key):
+                await lock.hold_until_reset(self.ratelimit_key)
+
+            lock.increment(self.ratelimit_key, lock_if_exceed=True)
 
         await self.ws.send_str(payload.json())
 
