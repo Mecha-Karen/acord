@@ -59,4 +59,4 @@ class VersionInfo(NamedTuple):
     level: Literal["Pre-Alpha", "Alpha", "Beta", "Stable", "Final"]
 
 
-version_info: VersionInfo = VersionInfo(major=0, minor=2, micro=3, level="Pre-Alpha")
+version_info: VersionInfo = VersionInfo(major=0, minor=2, micro=3, level="Alpha")
