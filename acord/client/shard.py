@@ -286,6 +286,8 @@ class Shard:
             }
         })
 
+        return self.ws
+
     async def change_presence(self, presence: Presence) -> None:
         """|coro|
 
