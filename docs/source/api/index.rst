@@ -11,7 +11,6 @@ API Reference
 
 .. toctree::
     :titlesonly:
-    :max-depth: 1
 
     bases
     client
