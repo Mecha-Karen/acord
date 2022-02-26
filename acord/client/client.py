@@ -50,8 +50,12 @@ class Client(object):
         Whether on_socket_recv should be dispatched
     cache: :class:`Cache`
         Cache for the client to use
+
+        .. versionadded:: 0.2.3a0
     gateway_ratelimiter: :class:`GatewayRatelimiter`
         Gateway ratelimiter for client to use
+
+        .. versionadded:: 0.2.3a0
 
     Attributes
     ----------
@@ -80,10 +84,19 @@ class Client(object):
         Mapping of registered application commands
     shards: List[:class:`Shard`]
         List of shards client is handling
+
+        .. versionadded:: 0.2.3a0
     cache: :class:`Cache`
         Cache of gateway objects, 
         recomended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
+
+        .. versionadded:: 0.2.3a0
+    gateway_ratelimiter: :class:`GatewayRatelimiter`
+        Gateway ratelimiter for client to use,
+        we recommend not playing around with this as it may lead to unexpected errors
+
+        .. versionadded:: 0.2.3a0
     MAX_CONC: :class:`int`
         Number of shards client has
     guilds: List[:class:`Guilds`]
@@ -542,6 +555,7 @@ class Client(object):
         reconnect: bool = True,
         update_app_commands: bool = True,
         exclude_app_cmds: set = set(),
+        asyncio_debug: bool = False
     ):
         """Runs client, loop blocking.
 
@@ -558,7 +572,12 @@ class Client(object):
             Whether to update app commands, *in bulk*.
         exclude_app_cmds: :class:`set`
             A set of app names to stop being updated/created
+        asyncio_debug: :class:`bool`
+            Whether to enable debugging on the current loop.
         """
+        if asyncio_debug:
+            self.loop.set_debug(True)
+
         token = token or self.token
 
         if not token:
