@@ -286,7 +286,7 @@ async def _handle_websocket(shard):
             client.dispatch("message_create", message)
 
         elif EVENT == "MESSAGE_UPDATE":
-            pre_existing: Message = client.get_message(DATA["channel_id"], DATA["id"])
+            pre_existing: Message = client.get_message(int(DATA["channel_id"]), int(DATA["id"]))
             if not pre_existing:
                 client.dispatch("partial_message_update", DATA)
                 continue
@@ -297,7 +297,7 @@ async def _handle_websocket(shard):
             client.dispatch("message_update", message)
 
         elif EVENT == "MESSAGE_DELETE":
-            message = client.cache.remove_message(DATA["channel_id"], DATA["id"], None)
+            message = client.cache.remove_message(int(DATA["channel_id"]), int(DATA["id"]), None)
             if message:
                 client.dispatch("message_delete", message)
             else:
@@ -310,7 +310,7 @@ async def _handle_websocket(shard):
         elif EVENT == "MESSAGE_DELETE_BULK":
             messages = [
                 (
-                    client.cache.remove_message(DATA["channel_id"], id, None)
+                    client.cache.remove_message(int(DATA["channel_id"]), int(DATA["id"]), None)
                     or Snowflake(id)
                 )
                 for id in DATA["ids"]

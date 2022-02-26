@@ -149,26 +149,26 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
         self.cache[bucket] = data
 
     def bucket_is_limited(self, bucket: str, /) -> bool:
-        bucket = self.cache.get(bucket)
+        _bucket = self.cache.get(bucket)
 
-        if not bucket:
+        if not _bucket:
             return False
 
-        if ((bck := bucket.get("task")) is not None) or bucket["remaining"] <= 0:
+        if ((bck := _bucket.get("task")) is not None) or _bucket["remaining"] <= 0:
             if not bck:
                 task = loop.create_task(self._release_bucket_ratelimit_task(bucket))
-                bucket["task"] = task
+                _bucket["task"] = task
 
             return True
         return False
 
     async def hold_bucket(self, bucket: str, /) -> None:
-        bucket = self.cache.get(bucket)
+        _bucket = self.cache.get(bucket)
 
         if not bucket:
             return
 
-        task = bucket.get(task)
+        task = _bucket.get("task")
 
         if not task:
             return
@@ -211,11 +211,11 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
         self.global_lock = False
 
     async def _release_bucket_ratelimit_task(self, bucket: str) -> None:
-        bucket = self.cache.get(bucket)
+        _bucket = self.cache.get(bucket)
 
-        if not bucket:
+        if not _bucket:
             return
 
-        await sleep(bucket["reset"])
+        await sleep(_bucket["reset"])
         # Just incase it was popped earlier
         self.cache.pop(bucket, None)
