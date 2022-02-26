@@ -30,6 +30,8 @@ def parse_ratelimit_headers(headers: dict) -> dict:
         d["remaining"] = float(remaining)
     if reset := headers.get("X-RateLimit-Reset-After"):
         d["reset"] = float(reset)
+    if bucket := headers.get("X-RateLimit-Bucket"):
+        d["bucket"] = bucket
 
     return d
 

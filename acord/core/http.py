@@ -122,7 +122,6 @@ class HTTPClient(object):
 
         if self.ratelimiter.bucket_is_limited(route.bucket):
             await self.ratelimiter.hold_bucket(route.bucket)
-            return await self.request(route, data, headers, **kwds)
 
         headers["Authorization"] = "Bot " + self.token
         headers["User-Agent"] = self.user_agent
