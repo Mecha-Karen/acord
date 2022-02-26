@@ -454,19 +454,20 @@ async def _handle_websocket(shard):
                 user = guild.members.pop(user.id, user)
             else:
                 guild = Snowflake(DATA["guild_id"])
-            
-            client.cache.add_user(user)
+
             client.dispatch("member_remove", user, guild)
 
         elif EVENT == "GUILD_MEMBER_UPDATE":
             guild = client.get_guild(int(DATA["guild_id"]))
-            a_member = Member(conn=client.http, **DATA)
 
-            if guild is not None:
-                b_member = guild.get_member(a_member.user.id)
-                guild.members.update({a_member.user.id: a_member})
-            else:
-                b_member = None
+            if guild is None:
+                client.dispatch("u_member_update", DATA)
+                continue
+
+            b_member = guild.get_member(int(DATA["user"]["id"]))
+            if not b_member:
+                b_member = await guild.fetch_member(int(DATA["user"]["id"]))
+            a_member = b_member.copy(update=DATA)
             
             client.dispatch("member_update", b_member, a_member, guild)
 
