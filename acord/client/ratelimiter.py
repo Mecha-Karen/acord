@@ -214,8 +214,8 @@ class DefaultGatewayRatelimiter(GatewayRatelimiter):
         while True:
             await sleep(self.max_requests[1])
 
-            for key in self.max_requests:
-                self.max_requests[key] = 0
+            for key in self.current_requests:
+                self.current_requests[key] = 0
 
             if futs := self.tasks.get("futures"):
                 for future in futs:
