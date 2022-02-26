@@ -27,7 +27,6 @@ def _d_to_channel(DATA, conn):
         TextChannel,
         CategoryChannel,
         VoiceChannel,
-        Stage,
         DMChannel,
         GroupDMChannel,
     )
