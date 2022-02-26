@@ -115,12 +115,7 @@ Contents
     :titlesonly:
 
     events.rst
-    api/client.rst
-    api/models.rst
-    api/bases.rst
-    api/webhooks.rst
-    api/voice.rst
-    api/ext/application_commands.rst
+    api/index.rst
     guides/index.rst
 
 * :ref:`genindex`
