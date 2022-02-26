@@ -335,7 +335,10 @@ class Client(object):
             headers=headers,
         )
 
-        return Stage(conn=self.http, **(await r.json()))
+        instance = Stage(conn=self.http, **(await r.json()))
+        self.cache.add_stage_instance(instance)
+
+        return instance
 
     def register_application_command(
         self,
