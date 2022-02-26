@@ -98,9 +98,14 @@ class Client(object):
 
         .. versionadded:: 0.2.3a0
     max_concurrency: :class:`int`
-        Number of identity client is allowed per 5 seconds
+        Number of identity requests client is allowed per 5 seconds
 
         .. versionadded:: 0.2.3a0
+
+        .. versionchanged:: 0.2.3a0
+
+            Name changed from MAX_CONC to max_concurrency
+
     num_shards: Optional[:class:`int`]
         Number of shards client is using,
         if None it means client has not been ran yet.
@@ -565,7 +570,7 @@ class Client(object):
             self.shards.append(shard)
             c += 1
 
-            if c == self.MAX_CONC:
+            if c == self.max_concurrency:
                 await asyncio.sleep(5)
                 c = 0
 
