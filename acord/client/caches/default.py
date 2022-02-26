@@ -8,7 +8,8 @@ from acord.models import (
     User,
     Guild,
     Channel,
-    Message
+    Message,
+    Stage
 )
 
 from .cache import CacheData, Cache
@@ -156,3 +157,33 @@ class DefaultCache(Cache):
         cache = self["messages"]
 
         cache.pop(f"{channel_id}:{message_id}", *args)
+
+    # NOTE: Stage Instances
+    def stage_instances(self) -> typing.Iterator[Stage]:
+        cache = self["stage_instances"]
+
+        return cache.values()
+
+    def get_stage_instance(self, id: Snowflake, /) -> typing.Optional[Stage]:
+        if not isinstance(id, Snowflake):
+            raise TypeError("Stage ID must be an int")
+        
+        cache = self["stage_instances"]
+
+        return cache.get(id)
+
+    def add_stage_instance(self, stage_instance: Stage) -> None:
+        if not isinstance(stage_instance, Stage):
+            raise TypeError("Stage instance be an instance of Stage")
+
+        cache = self["stage_instances"]
+
+        cache[stage_instance.id] = stage_instance
+
+    def remove_stage_instance(self, id: Snowflake, *args) -> typing.Union[Stage, typing.Any]:
+        if not isinstance(id, Snowflake):
+            raise TypeError("Stage ID must be an int")
+        
+        cache = self["stage_instances"]
+
+        return cache.pop(id, *args)

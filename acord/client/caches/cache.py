@@ -1,5 +1,6 @@
 # Cache handler for acord
 from __future__ import annotations
+from ctypes import Union
 
 from typing import Any, Dict, Iterator, Optional
 from abc import ABC, abstractmethod
@@ -12,6 +13,8 @@ from acord import (
     Channel
 )
 import pydantic
+
+from acord.models.channels.stage import Stage
 
 
 class CacheData(dict):
@@ -219,4 +222,40 @@ class Cache(ABC, pydantic.BaseModel):
             ID of channel were message is in
         message_id: :class:`Snowflake`
             ID of message to get
+        """
+
+    # NOTE: Stage instances
+
+    @abstractmethod
+    def stage_instances(self) -> Iterator[Stage]:
+        """Returns all stage instances currently cached"""
+
+    @abstractmethod
+    def get_stage_instance(self, id: Snowflake, /) -> Optional[Stage]:
+        """Gets a :class:`Stage` from the cache.
+
+        Parameters
+        ----------
+        id: :class:`Snowflake`
+            ID of the stage instance
+        """
+
+    @abstractmethod
+    def add_stage_instance(self, stage_instance: Stage) -> None:
+        """Adds a :class:`Stage` to the cache.
+
+        Parameters
+        ----------
+        stage_instance: :class:`Stage`
+            Stage instance to add
+        """
+
+    @abstractmethod
+    def remove_stage_instance(self, id: Snowflake, *args) -> Union[Stage, Any]:
+        """Removes a :class:`Stage` from the cache
+
+        Parameters
+        ----------
+        id: :class:`Snowflake`
+            ID of the stage instance
         """
