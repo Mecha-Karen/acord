@@ -60,8 +60,8 @@ class VoiceConnection(object):
         if _nacl is False:
             raise VoiceError("PyNaCl must be installed before using voice")
 
-        # Defined in an async enviro so this is fine
-        self._session = ClientSession(loop=loop, **kwargs)
+        # Use existing session instead of creating a new one
+        self._session = client.http._session
         self._packet = voice_packet
         self._connect = False
         self._loop = loop
