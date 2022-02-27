@@ -64,7 +64,6 @@ class HTTPClient(object):
         *,
         token: str = None,
         connecter: aiohttp.BaseConnector = None,
-        wsTimeout: aiohttp.ClientTimeout = aiohttp.ClientTimeout(60, connect=None),
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
         ratelimiter: HTTPRatelimiter = DefaultHTTPRatelimiter(
             max_requests=(10000, (60 * 10))
@@ -73,7 +72,6 @@ class HTTPClient(object):
         self.client = client
         self.token = token
         self.loop = loop
-        self.wsTimeout = wsTimeout
         self.connector = connecter
         self.ratelimiter = ratelimiter
 
