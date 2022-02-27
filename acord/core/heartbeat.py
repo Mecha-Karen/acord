@@ -1,22 +1,28 @@
 # Basic heartbeat controller
 from abc import ABC, abstractmethod
-from datetime import datetime
 from threading import Thread
 import asyncio
 import time
 from .signals import gateway  # type: ignore
 import logging
 
-from aiohttp import ClientWebSocketResponse
-
 logger = logging.getLogger(__name__)
 
 
 class KeepAlive(Thread, ABC):
     _ended: bool
+    """ Whether we should stop heartbeating """
     _interval: int
+    """ Time to wait between heartbeats """
 
     def run(self):
+        """ Default .run function,
+        calls :meth:`KeepAlive.send_heartbeat` every n seconds.
+
+        .. note::
+            Once ended,
+            ``.join`` is called within this function
+        """
         while not self._ended:
             self.send_heartbeat()
 
@@ -34,7 +40,7 @@ class KeepAlive(Thread, ABC):
 
     @abstractmethod
     def ack(self):
-        """ Called when server responds with an ACK to the heartbeat """   
+        """ Called when server responds with an ACK to our heartbeat """   
 
 
 class GatewayKeepAlive(KeepAlive):
