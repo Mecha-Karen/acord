@@ -20,7 +20,10 @@ def decompressResponse(msg):
 
 def decodeResponse(data) -> dict:
     if type(data) is bytes:
-        data = decompressResponse(data)
+        try:
+            data = decompressResponse(data)
+        except Exception:
+            data = None
 
     if not data:
         return {}
