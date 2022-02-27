@@ -12,7 +12,7 @@ from acord.models import Snowflake
 
 from acord.core.signals import gateway
 from acord.core.decoders import decodeResponse
-from acord.core.heartbeat import KeepAlive
+from acord.core.heartbeat import GatewayKeepAlive
 
 from acord.payloads import (
     GenericWebsocketPayload,
@@ -183,7 +183,7 @@ class Shard:
         if not data.get("op", 0) == gateway.HELLO:
             raise GatewayError(f"Invalid op code recieved")
 
-        self._keep_alive = KeepAlive(
+        self._keep_alive = GatewayKeepAlive(
             self, data["d"]["heartbeat_interval"], self.loop
         )
         self._keep_alive.start()
