@@ -10,10 +10,23 @@ logger = logging.getLogger(__name__)
 
 
 class KeepAlive(Thread, ABC):
+    """Represents a keep alive handler.
+    
+    Attributes
+    ----------
+    
+    .. danger::
+        If you are not overwriting :meth:`KeepAlive.run`,
+        you will need to provide the following attrs.
+
+    _ended: :class:`bool`
+        Whether heartbeating has ended
+    _interval: :class:`int`
+        Time to wait between heartbeats,
+        in seconds.
+    """
     _ended: bool
-    """ Whether we should stop heartbeating """
     _interval: int
-    """ Time to wait between heartbeats """
 
     def run(self):
         """ Default .run function,
