@@ -44,6 +44,7 @@ class SlashBase(UDAppCommand):
     When creating slash commands you have 2 options,
     intialise this class normally (ex1).
     Or subclass it and add your attrs through:
+
     * class variables
     * direct call to super().__init__
 

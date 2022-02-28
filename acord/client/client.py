@@ -359,12 +359,15 @@ class Client(object):
         Parameters
         ----------
         command: :class:`UDAppCommand`
+
             .. note::
                 :class:`UDAppCommand` represents any class which inherits it,
                 this includes SlashBase.
+
             Command to register internally, to be dispatched.
         guild_ids: Union[List[:class:`int`], None]
             Additional guild IDs to restrict command to,
+
             if value is set to:
                 * ``None``: Reads from class (Default option)
                 * ``[]`` (Empty List): Makes it global
@@ -372,6 +375,7 @@ class Client(object):
             .. note::
                 If final value is false,
                 command will be registered globally
+
         extend: :class:`bool`
             Whether to extend current guild ids from the command class
         """
