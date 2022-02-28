@@ -1,6 +1,4 @@
-"""
-Main HTTP connection and websocket interaction between discord and your application
-"""
+from __future__ import annotations
 
 try:
     import uvloop
@@ -28,14 +26,12 @@ from acord.errors import (
     BadRequest,
     DiscordError,
     Forbidden,
-    GatewayConnectionRefused,
     HTTPException,
     NotFound,
 )
 from . import abc
 from .decoders import *
 from .ratelimiter import DefaultHTTPRatelimiter, HTTPRatelimiter, parse_ratelimit_headers
-
 from aiohttp import FormData
 
 logger = logging.getLogger(__name__)
@@ -43,19 +39,37 @@ logger = logging.getLogger(__name__)
 
 class HTTPClient(object):
     """
-    Base client used to connection and interact with the websocket.
+    Base HTTPClient for interacting with the REST API.
 
     Parameters
     ----------
-    loop: :class:`~asyncio.AbstractEventLoop`
-        A pre-existing loop for aiohttp to run of, defaults to ``asyncio.get_event_loop()``
-    reconnect: :class:`bool`
-        Attempt to reconnect to gateway if failed, If set to a integer, it will re-attempt n times.
-    **payloadData: :class:`dict`
-        A dictionary of payload data to be sent with any request
+    client: :class:`Client`
+        Client class is attached to
+    token: :class:`str`
+        Bot token to be used for authorizing requests
+    connector: :class:`~aiohttp.BaseConnector`
+        Connector be used when creating session
+    loop: :obj:`asyncio.AbstractEventLoop`
+        Loop to be used
+    ratelimiter: :class:`HTTPRatelimiter`
+        A ratelimiter for client to use.
+
+    Attributes
+    ----------
+    client: :class:`Client`
+        Client attached to this HTTPClient
+    token: :class:`str`
+        Token to be used for making HTTP Requests.
+    connection: :class:`~aiohttp.BaseConnector`
+        A connector class to be used with the session
+    ratelimiter: :class:`DefaultHTTPRatelimiter`
+        Ratelimiter being used by this HTTPClient
+    user_agent: :class:`str`
+        Default user agent to be sent with all requests.
 
         .. note::
-            This information can be overwritten with each response
+            This user agent is unique to this class,
+            different HTTPClients may have different user agents.
     """
 
     def __init__(
@@ -80,29 +94,54 @@ class HTTPClient(object):
             acord.__version__, sys.version, aiohttp.__version__
         )
 
+    async def login(self, *, token: str = None, **kwds) -> dict:
+        """|coro|
 
-    async def login(self, *, token: str = None) -> dict:
-        """Define a session for the http client to use."""
-        self._session = aiohttp.ClientSession(connector=self.connector)
+        Creates a session for client to use,
+        returns user data of client on completation
+
+        Parameters
+        ----------
+        token: :class:`str`
+            Token to overwrite :attr:`HTTPClient.token`,
+            becomes default token if token was not provided previously.
+        **kwds:
+            Any additional kwargs to be passed through :class:`~aiohttp.ClientSession`.
+
+            .. warning::
+                You may not include ``connector`` and ``loop`` kwargs.
+        """
+        self._session = aiohttp.ClientSession(connector=self.connector, loop=self.loop, **kwds)
 
         self.token = token or self.token
 
+        if not self.token:
+            raise 
+
         try:
-            data = await self.request(abc.Route("GET", path="/users/@me"))
+            r = await self.request(abc.Route("GET", path="/users/@me"))
+            r.raise_for_status()
             
             logger.info("Client has sucessfully logged in")
         except HTTPException as exc:
             logger.error("Failed to login to discord, improper token passed")
-            raise GatewayConnectionRefused("Invalid or Improper token passed") from exc
+            raise Forbidden("Invalid or Improper token passed") from exc
 
-        return data
+        return await r.json()
 
     async def logout(self):
-        """Logs client out from session"""
+        """|coro|
+        
+        Logs client out from session"""
         logger.info("Logging user out")
         await self.request(abc.Route("POST", path="/auth/logout"))
 
-    async def fetch_gateway(self):
+    async def fetch_gateway(self) -> dict:
+        """|coro|
+
+        Fetches the bot gateway,
+        returns a :class:`dict` with gateway connection info
+        """
         route = abc.Route("GET", path=f"/gateway/bot")
 
         r = await self.request(route)
@@ -111,21 +150,40 @@ class HTTPClient(object):
     async def request(
         self,
         route: abc.Route,
-        data: dict = None,
+        data: typing.Union[dict, FormData, typing.Any] = None,
         headers: dict = dict(),
         **kwds,
     ) -> aiohttp.ClientResponse:
+        """|coro|
+
+        Sends a request to the desired route.
+
+        Parameters
+        ----------
+        route: :class:`Route`
+            Route to send request to
+        data: Union[:class:`dict`, :class:`~aiohttp.FormData`, Any]
+            Data to be sent with request
+        headers: :class:`dict`
+            Headers to send with request
+        **kwds:
+            Additional kwargs to be passed through :meth:`~aiohttp.ClientSession.request`
+        """
         if self.ratelimiter.global_lock:
             await self.ratelimiter.hold_global_lock()
 
         if self.ratelimiter.bucket_is_limited(route.bucket):
             await self.ratelimiter.hold_bucket(route.bucket)
 
+        headers = kwds.pop("headers", None) or headers
+
+        if data is not None:
+            kwds["data"] = data
+
         headers["Authorization"] = "Bot " + self.token
         headers["User-Agent"] = self.user_agent
 
         kwargs = dict()
-        kwargs["data"] = data
         kwargs["headers"] = headers
 
         kwargs.update(kwds)
@@ -170,6 +228,8 @@ class HTTPClient(object):
 
         raise BadRequest(str(respData), payload=respData, status_code=resp.status)
 
-    @property
-    def connected(self):
-        return self._ws_connected
+    async def __aenter__(self) -> HTTPClient:
+        return self
+
+    async def __aexit__(self, *args) -> None:
+        pass
