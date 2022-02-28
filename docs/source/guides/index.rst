@@ -14,6 +14,7 @@ If you still don't understand how to use something,
 or would like further support - join our support server!
 
 .. toctree::
-   components
    application_commands
+   components
+   low_level_api
    presences
