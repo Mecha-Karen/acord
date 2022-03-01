@@ -463,14 +463,11 @@ class Message(pydantic.BaseModel, Hashable):
         return guild
 
 
-class WebhookMessage(pydantic.BaseModel):
-    __annotations__ = Message.__annotations__
-    __annotations__.pop("conn")
-
-    adapter: Any
+class WebhookMessage(Message):
     webhook_id: Snowflake
+    """ ID of webhook message was sent from """
     token: str
-    id: int
+    """ Token of webhook message was sent from """  
 
     async def edit(self, **data) -> WebhookMessage:
         """|coro|
@@ -503,14 +500,17 @@ class WebhookMessage(pydantic.BaseModel):
             content_type="application/json",
         )
 
-        r = await self.adapter.request(
-            "PATCH",
-            buildURL(f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+        r = await self.conn.request(
+            Route(
+                "PATCH",
+                f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"
+            ),
             data=form_data,
         )
 
         return WebhookMessage(
-            adapter=self.adapter, token=self.token, **(await r.json())
+            conn=self.conn, webhook_id=self.webhook_id, token=self.token,
+            **(await r.json())
         )
 
     async def delete(self, *, reason: str = None, thread_id: Snowflake = None) -> None:
@@ -527,8 +527,11 @@ class WebhookMessage(pydantic.BaseModel):
         if reason:
             headers.update({"X-Audit-Log-Reason": reason})
 
-        await self.adapter.request(
-            "DELETE",
-            buildURL(f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"),
+        await self.conn.request(
+            Route(
+                "DELETE",
+                f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}",
+                thread_id=thread_id
+            ),
             headers=headers,
         )

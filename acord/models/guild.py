@@ -49,7 +49,7 @@ from acord.bases import (
     PremiumTierLevel,
     VerificationLevel,
 )
-from acord.webhooks.main import Webhook
+from acord.webhooks.webhook import Webhook
 
 
 GUILD_TEXT = [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS]

@@ -15,7 +15,7 @@ from acord.payloads import (
 from acord.utils import _payload_dict_to_json
 from acord.errors import APIObjectDepreciated
 from acord.bases import PermissionsOverwrite
-from acord.webhooks.main import Webhook
+from acord.webhooks.webhook import Webhook
 
 from .textExt import ExtendedTextMethods
 from .base import Channel

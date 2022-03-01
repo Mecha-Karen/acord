@@ -21,7 +21,7 @@ from .client import (
     CacheData,
     Cache,
 )
-from .webhooks.main import Webhook, PartialWebhook, WebhookType
+from .webhooks.webhook import Webhook, WebhookType
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver
 from .voice.transports.writer import BasePlayer

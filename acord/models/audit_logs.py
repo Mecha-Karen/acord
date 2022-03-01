@@ -10,7 +10,7 @@ from acord.models import (
     PartialIntegration,
     Snowflake,
 )
-from acord.webhooks.main import Webhook
+from acord.webhooks.webhook import Webhook
 
 
 class AuditLogChange(pydantic.BaseModel):
@@ -92,7 +92,7 @@ class AuditLog(pydantic.BaseModel):
         conn = kwargs["values"]["conn"]
 
         if isinstance(_, Webhook):
-            _.conn = conn._session
+            _.__connection__ = conn
         if isinstance(_, list):
             for i in _:
                 i.conn = conn

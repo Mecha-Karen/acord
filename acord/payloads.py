@@ -134,6 +134,11 @@ class MessageCreatePayload(pydantic.BaseModel):
         return rows
 
 
+class WebhookMessageCreate(MessageCreatePayload):
+    username: str = None
+    avatar_url: pydantic.AnyHttpUrl = None
+
+
 class MessageEditPayload(pydantic.BaseModel):
     content: Optional[str]
     embeds: Optional[str]
