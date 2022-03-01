@@ -117,11 +117,12 @@ class Webhook(Hashable, pydantic.BaseModel):
 
         Executes a webhook.
 
+        .. note::
+            This function accepts all parameters from :class:`TextChannel.send`,
+            as a well a few extras which are documented below.
+
         Parameters
         ----------
-        This function accepts all parameters from :class:`TextChannel.send`,
-        as a well a few extras which are documented below.
-
         wait: :class:`bool`
             Whether to wait for message created to be returned
         thread_id: :class:`Snowflake`
