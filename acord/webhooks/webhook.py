@@ -21,7 +21,16 @@ url_pattern = re.compile(
 
 
 class Webhook(Hashable, pydantic.BaseModel):
-    """Representation of a discord webhook"""
+    """Representation of a discord webhook
+    
+    This class can simply be used for sending simple messages,
+    and editing and deleting them.
+    Only **IF** you stick to the default session.
+
+    If you pass your client through the args,
+    or overwrite :attr:`Webhook.conn` with :attr:`Client.http._session`.
+    Your able to properly interact with the generated message object.
+    """
     conn: Any
 
     id: Snowflake
