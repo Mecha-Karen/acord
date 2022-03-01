@@ -11,30 +11,28 @@
 Webhooks
 ********
 
-.. note::
-    Webhook messages cannot physically interact with normal messages,
-    this will be changed in future updates. 
-    But a quick work around is to simply fetch that message
+WebhookType
+~~~~~~~~~~~
 
-{% for cls in [acord.Webhook, acord.PartialWebhook, acord.WebhookType] %}
-   {% set cls_name = getattr(cls, "__name__", "") %}
+.. attributetable:: WebhookType
 
-   {% if cls is callable and cls_name not in disallow %}
-{{ cls_name }}
-{{ "=" * cls_name|length() }}
+.. autoclass:: WebhookType
+    :members:
 
-{% if is_function(cls) %}
-    .. autofunction:: acord.{{ cls_name }}
+Webhook
+~~~~~~~
 
-{% else %}
-    .. attributetable:: acord.{{ cls_name }}
+.. attributetable:: Webhook
 
-    .. autoclass:: acord.{{ cls_name }}
-        :members:
-        :inherited-members:
-        :exclude-members: {{ SHARED_PROPERTIES|join(", ") }}
+.. autoclass:: Webhook
+    :members:
+    :exclude-members: dict
 
-{% endif %}
+WebhookConnection
+~~~~~~~~~~~~~~~~~
 
-   {% endif %}
-{% endfor %}
+.. attributetable:: acord.webhooks.connection.WebhookConnection
+
+.. autoclass:: acord.webhooks.connection.WebhookConnection
+    :members:
+    :undoc-members:
