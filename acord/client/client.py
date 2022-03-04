@@ -88,7 +88,7 @@ class Client(object):
         .. versionadded:: 0.2.3a0
     cache: :class:`Cache`
         Cache of gateway objects, 
-        recomended to fetch using built in methods,
+        recommended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
 
         .. versionadded:: 0.2.3a0
@@ -598,7 +598,7 @@ class Client(object):
         token: :class:`str`
             Token to log into discord with,
             if :class:`Client.token` is not None it will be used as a fallback,
-            just incase this token fails
+            just in case this token fails
         reconnect: :class:`bool`
             Whether to reconnect it first connection fails, 
             defaults to ``True``.

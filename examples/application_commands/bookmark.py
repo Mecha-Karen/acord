@@ -35,7 +35,7 @@ class Bookmark(MessageCommand, extendable=True, overwritable=True):
 
     async def on_error(self, interaction: Interaction, exc_info: tuple) -> Any:
         print_exception(*exc_info)
-        return await interaction.respond(content="Oh no, an error occured!")
+        return await interaction.respond(content="Oh no, an error occurred!")
 
 
 client = Client(intents=Intents.ALL)

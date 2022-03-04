@@ -39,7 +39,7 @@ This event has no parameters
 on_ready
 ~~~~~~~~
 Called when discord dispatches its ready event,
-noting the client has connected sucessfully and will begin receiving data such as joined guilds
+noting the client has connected successfully and will begin receiving data such as joined guilds
 
 Parameters
 ^^^^^^^^^^

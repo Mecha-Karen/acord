@@ -122,7 +122,7 @@ class HTTPClient(object):
             r = await self.request(abc.Route("GET", path="/users/@me"))
             r.raise_for_status()
             
-            logger.info("Client has sucessfully logged in")
+            logger.info("Client has successfully logged in")
         except HTTPException as exc:
             logger.error("Failed to login to discord, improper token passed")
             raise Forbidden("Invalid or Improper token passed") from exc

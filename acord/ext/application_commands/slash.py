@@ -42,7 +42,7 @@ class SlashBase(UDAppCommand):
     .. rubric:: Guidance
 
     When creating slash commands you have 2 options,
-    intialise this class normally (ex1).
+    initialise this class normally (ex1).
     Or subclass it and add your attrs through:
 
     * class variables
@@ -249,14 +249,14 @@ class SlashBase(UDAppCommand):
         0:
             Dispatched without error
         1:
-            Dispatched but an error occured,
+            Dispatched but an error occurred,
             on_error was called if accessible
         Exception of any type:
-            Dispatched but an error occured with both callback and error handler
+            Dispatched but an error occurred with both callback and error handler
         """
         # 0 => Dispatched without error
-        # 1 => Dispatched but an error occured
-        # Exception => Dispatched but an error occured with both callback and error handler
+        # 1 => Dispatched but an error occurred
+        # Exception => Dispatched but an error occurred with both callback and error handler
         callback = self.__pre_calls__.get("callback")
         on_error = self.__pre_calls__.get("on_error")
 
