@@ -481,3 +481,38 @@ Parameters
 ^^^^^^^^^^
 voice_connection: :class:`VoiceConnection`
     Connection to voice channel
+
+on_guild_integration_create
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when an integration is created for a guild.
+
+Parameters
+^^^^^^^^^^
+guild_id: :class:`Snowflake`
+    ID of guild integration was created for
+integration: :class:`Integration`
+    Integration object
+
+on_guild_integration_update
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when an integration is updated for a guild.
+
+Parameters
+^^^^^^^^^^
+guild_id: :class:`Snowflake`
+    ID of guild integration was updated for
+integration: :class:`Integration`
+    Integration object
+
+on_guild_integration_delete
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when an integration for a guild is deleted.
+
+Parameters
+^^^^^^^^^^
+integration_id: :class:`Snowflake`
+    ID of deleted integration
+guild_id: :class:`Snowflake`
+    Guild ID of deleted integration
+application_id: :class:`Snowflake`
+    ID of Bot/OAuth2 application for this integration
