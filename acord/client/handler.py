@@ -325,12 +325,25 @@ async def _handle_websocket(shard):
         elif EVENT == "MESSAGE_REACTION_ADD":
             reaction = MessageReaction(**DATA)
 
-            message = client.get_message(reaction.channel_id, reaction.message_id)
-            if message is not None:
-                if reaction.emoji not in message.reactions:
-                    message.reactions[reaction.emoji] = [reaction]
-                else:
-                    message.reactions[reaction.emoji].append(reaction)
+            client.dispatch("message_reaction_create", reaction)
+
+        elif EVENT == "MESSAGE_REACTION_REMOVE":
+            reaction = MessageReaction(**DATA)
+
+            client.dispatch("message_reaction_remove", reaction)
+
+        elif EVENT == "MESSAGE_REACTION_REMOVE_ALL":
+            client.dispatch(
+                "message_reactions_clear",
+                Snowflake(DATA["channel_id"]),
+                Snowflake(DATA["message_id"]),
+                Snowflake(DATA["guild_id"]) if DATA.get("guild_id") is not None else None
+            )
+
+        elif EVENT == "MESSAGE_REACTION_REMOVE_EMOJI":
+            reaction = MessageReaction(**DATA)
+
+            client.dispatch("message_reaction_emoji_clear", reaction)
 
         elif EVENT == "CHANNEL_PINS_UPDATE":
             channel = client.get_channel(int(DATA["channel_id"]))
