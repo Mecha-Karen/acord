@@ -494,6 +494,8 @@ async def _handle_websocket(shard):
 
             client.dispatch("role_delete", role, guild)
 
+        # NOTE: Guild scheduled events
+
         elif EVENT == "GUILD_SCHEDULED_EVENT_CREATE":
             event = GuildScheduledEvent(conn=client.http, **DATA)
             guild = client.get_guild(event.guild_id)
@@ -515,6 +517,32 @@ async def _handle_websocket(shard):
             event = guild.scheduled_events.pop(event.id, event)
 
             client.dispatch("guild_scheduled_event_delete", event, guild)
+
+        # NOTE: Integrations
+
+        elif EVENT == "ON_INTEGRATION_CREATE":
+            d = Integration(conn=client.http, **DATA)
+
+            client.dispatch("guild_integration_create", d.guild_id, d)
+
+        elif EVENT == "ON_INTEGRATION_UPDATE":
+            d = Integration(conn=client.http, **DATA)
+
+            client.dispatch("guild_integration_update", d.guild_id, d)
+
+        elif EVENT == "ON_INTEGRATION_DELETE":
+            integration_id = Snowflake(DATA["id"])
+            guild_id = Snowflake(DATA["guild_id"])
+            
+            if (application_id := DATA.pop("application_id", None)):
+                application_id = Snowflake(application_id)
+
+            client.dispatch(
+                "guild_integration_delete",
+                integration_id,
+                guild_id,
+                application_id
+            )
     
         # NOTE: channels
 
