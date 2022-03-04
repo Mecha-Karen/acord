@@ -50,7 +50,13 @@ from .guild_sched_event import (
     ScheduledEventUser,
     ScheduledEventMetaData,
 )
-from .message import Message, MessageReference, MessageReaction, WebhookMessage
+from .message import (
+    Message, 
+    MessageReference, 
+    MessageReaction, 
+    WebhookMessage
+)
+    
 from .interaction import (
     InteractionSlashOption,
     InteractionData,
