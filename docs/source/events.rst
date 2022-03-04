@@ -538,3 +538,63 @@ channel_id: :class:`Snowflake`
     ID of channel invite was deleted from
 guild_id: Optional[:class:`Snowflake`]
     ID of guild where invite was deleted from
+
+on_message_reaction_create
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a reaction is created on a message
+
+.. note::
+    The message object is not updated with this reaction,
+    so it is advised to refetch the message OR 
+    use :meth:`Message.get_reactions`.
+
+Parameters
+^^^^^^^^^^
+reaction: :class:`MessageReaction`
+    Reaction added to message
+
+on_message_reaction_remove
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when a reaction is removed from a message
+
+.. note::
+    The message object is not updated with this reaction,
+    so it is advised to refetch the message OR 
+    use :meth:`Message.get_reactions`.
+
+Parameters
+^^^^^^^^^^
+reaction: :class:`MessageReaction`
+    Reaction removed from message
+
+on_message_reactions_clear
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when all reactions on a message are cleared
+
+.. note::
+    The message object is not updated,
+    so it is advised to refetch the message OR 
+    use :meth:`Message.get_reactions`
+
+Parameters
+^^^^^^^^^^
+channel_id: :class:`Snowflake`
+    Channel ID of message
+message_id: :class:`Snowflake`
+    ID of message
+guild_id: Optional[:class:`Snowflake`]
+    ID of guild
+
+on_message_reaction_emoji_clear
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Called when all reactions of a given emoji are cleared
+
+.. note::
+    The message object is not updated,
+    so it is advised to refetch the message OR 
+    use :meth:`Message.get_reactions`
+
+Parameters
+^^^^^^^^^^
+reaction: :class:`MessageReaction`:
+    Reaction removed
