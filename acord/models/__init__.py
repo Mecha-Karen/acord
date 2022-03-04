@@ -44,7 +44,11 @@ from .roles import Role, RoleTags
 from .emoji import Emoji
 from .sticker import Sticker
 from .attachment import Attachment
-from .member import Member
+from .member import (
+    Member,
+    MemberPresence,
+    MemberVoiceState
+)
 from .guild_sched_event import (
     GuildScheduledEvent,
     ScheduledEventUser,
