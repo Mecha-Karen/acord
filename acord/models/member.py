@@ -3,7 +3,11 @@ from typing import Any, List, Optional
 import pydantic
 import datetime
 
-from acord.bases import Hashable
+from acord.bases import (
+    Activity,
+    Hashable,
+    StatusType,
+)
 from acord.core.abc import Route
 from acord.models import Snowflake, Role
 from acord.utils import _payload_dict_to_json
@@ -23,6 +27,14 @@ class MemberVoiceState(pydantic.BaseModel):
     self_video: bool
     suppress: bool
     request_to_speak_timestamp: Optional[datetime.datetime]
+
+
+class MemberPresence(pydantic.BaseModel):
+    user_id: Snowflake
+    status: StatusType
+    guild_id: Snowflake
+    client_status: Any
+    activities: List[Activity]
 
 
 class Member(pydantic.BaseModel, Hashable):
@@ -55,6 +67,8 @@ class Member(pydantic.BaseModel, Hashable):
         ID of the guild member is in
     voice_state: :class:`MemberVoiceState`
         Voice state of a member
+    presence: :class:`MemberPresence`
+        Presence of member
     """
 
     conn: Any  # connection object
@@ -71,6 +85,7 @@ class Member(pydantic.BaseModel, Hashable):
     pending: Optional[bool]  # not included in non-GUILD_ events
     permissions: Optional[str]
     voice_state: Optional[MemberVoiceState]
+    presence: Optional[MemberPresence]
 
     @pydantic.validator("user")
     def _validate_user(cls, user, **kwargs):
