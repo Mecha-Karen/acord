@@ -514,5 +514,27 @@ integration_id: :class:`Snowflake`
     ID of deleted integration
 guild_id: :class:`Snowflake`
     Guild ID of deleted integration
-application_id: :class:`Snowflake`
+application_id: Optional[:class:`Snowflake`]
     ID of Bot/OAuth2 application for this integration
+
+on_invite_create
+~~~~~~~~~~~~~~~~
+Called when an invite is created
+
+Parameters
+^^^^^^^^^^
+invite: :class:`Invite`
+    Invite created
+
+on_invite_delete
+~~~~~~~~~~~~~~~~
+Called when an invite is deleted
+
+Parameters
+^^^^^^^^^^
+code: :class:`str`
+    Invite code
+channel_id: :class:`Snowflake`
+    ID of channel invite was deleted from
+guild_id: Optional[:class:`Snowflake`]
+    ID of guild where invite was deleted from
