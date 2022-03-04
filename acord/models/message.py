@@ -43,7 +43,7 @@ class MessageReference(pydantic.BaseModel):
 
 
 class MessageReaction(pydantic.BaseModel):
-    user_id: Snowflake
+    user_id: Optional[Snowflake]
     channel_id: Snowflake
     message_id: Snowflake
     guild_id: Optional[Snowflake]
