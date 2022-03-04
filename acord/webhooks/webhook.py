@@ -28,7 +28,7 @@ class Webhook(Hashable, pydantic.BaseModel):
     Only **IF** you stick to the default session.
 
     If you pass your client through the args,
-    or overwrite :attr:`Webhook.conn` with :attr:`Client.http._session`.
+    or overwrite :attr:`Webhook.conn` with :attr:`Client.http`.
     Your able to properly interact with the generated message object.
     """
     conn: Any
@@ -72,7 +72,6 @@ class Webhook(Hashable, pydantic.BaseModel):
         super().__init__(**kwds)
 
     ## NOTE: Methods
-    # Methods are all sync but return coros which can be awaited
 
     async def fetch_message(
         self, 

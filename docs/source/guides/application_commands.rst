@@ -25,7 +25,7 @@ Overview
 Application commands defined by the user must inherit the :class:`UDAppCommand`,
 which stands for "User Defined Application Command".
 
-In simple terms this is an unoffical object used to construct a payload to create an actual command.
+In simple terms this is an unofficial object used to construct a payload to create an actual command.
 It inherits :class:`~pydantic.BaseModel` and all attrs may be set through class vars.
 
 Generating command using custom args

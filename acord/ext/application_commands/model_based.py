@@ -1,5 +1,5 @@
 # m_based simply stands for model based
-# meaning command that are dependant on a model such as a message
+# meaning command that are dependent on a model such as a message
 from __future__ import annotations
 from email.mime import application
 
@@ -128,14 +128,14 @@ class GenericModelCommand(UDAppCommand):
         0:
             Dispatched without error
         1:
-            Dispatched but an error occured,
+            Dispatched but an error occurred,
             on_error was called if accessible
         Exception of any type:
-            Dispatched but an error occured with both callback and error handler
+            Dispatched but an error occurred with both callback and error handler
         """
         # 0 => Dispatched without error
-        # 1 => Dispatched but an error occured
-        # Exception => Dispatched but an error occured with both callback and error handler
+        # 1 => Dispatched but an error occurred
+        # Exception => Dispatched but an error occurred with both callback and error handler
         callback = self.__pre_calls__.get("callback")
         on_error = self.__pre_calls__.get("on_error")
 

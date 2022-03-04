@@ -1,8 +1,8 @@
 # Simple tic tac toe game written using acord
 # Now, this isn't the best way of doing this
-# We strongly recomend using a command handler
+# We strongly recommend using a command handler
 # But they aren't your thing, enjoy the example below
-# However, we honestly recomend using a command handler and use this as a guide!
+# However, we honestly recommend using a command handler and use this as a guide!
 
 from typing import Any
 from acord import Client, Message, Intents, Button, ActionRow, ButtonStyles

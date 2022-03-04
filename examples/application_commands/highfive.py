@@ -24,7 +24,7 @@ class HighFive(UserCommand, extendable=True, overwritable=False):
 
     async def on_error(self, interaction, exc_info):
         print_exception(*exc_info)
-        return await interaction.respond(content="Oh no, An Error Occured!")
+        return await interaction.respond(content="Oh no, An Error occurred!")
 
 
 client = Client(intents=Intents.ALL)

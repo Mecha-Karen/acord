@@ -11,7 +11,7 @@
 Application Commands
 ********************
 Application commands are recommended to be subclassed,
-but theres always a decorator for those who dont like that.
+but there's always a decorator for those who dont like that.
 
 
 {% for object in dir(acord.ext.application_commands) %}

@@ -73,7 +73,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Mecha-Karen/acord",
     project_urls={
-        "Documentation": "https://docs.mechakaren.xyz/acord",
+        "Documentation": "https://acord.rtfd.io",
         "Issue tracker": "https://github.com/Mecha-Karen/acord/issues",
         "Organisation": "https://github.com/Mecha-Karen",
     },

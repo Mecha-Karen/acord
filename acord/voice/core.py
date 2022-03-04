@@ -154,7 +154,7 @@ class VoiceConnection(object):
             pass
         # WS already closed or anything along them lines
 
-        # Disconnect called before sock was intialised
+        # Disconnect called before sock was initialised
         if self._sock:
             sock = getattr(self._sock, "_sock", f"UDP Socket conn_id={self._conn_id}")
             await self._sock.close()
@@ -375,7 +375,7 @@ class VoiceConnection(object):
         Shortcut method to :meth:`VoiceConnection.change_speaking_state`,
         tells discord that the client has stopped speaking
         """
-        # Stops speaking indicator, should be called after audio transmition
+        # Stops speaking indicator, should be called after audio transmission
         await self.change_speaking_state(0, 0)
         logger.info(f"Client speaking indicator removed for conn_id={self._conn_id}")
 
@@ -414,7 +414,7 @@ class VoiceConnection(object):
                     pass
                 elif message.type in (WSMsgType.CLOSED, WSMsgType.CLOSING):
                     logger.warn(
-                        f"Voice WS closed for conn_id={self._conn_id}, disconecting shortly"
+                        f"Voice WS closed for conn_id={self._conn_id}, disconnecting shortly"
                     )
                 elif message.type == WSMsgType.ERROR:
                     logger.error(

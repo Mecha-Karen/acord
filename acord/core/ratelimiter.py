@@ -217,5 +217,5 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
             return
 
         await sleep(_bucket["reset"])
-        # Just incase it was popped earlier
+        # Just in case it was popped earlier
         self.cache.pop(bucket, None)

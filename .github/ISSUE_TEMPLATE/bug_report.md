@@ -26,7 +26,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Enviroment (please complete the following information):**
+**Environment (please complete the following information):**
  - Service: [e.g. Desktop, Repl.it]
  - OS: [e.g. Windows, Linux]
  - Python Version: [e.g. Python 3.9.5]

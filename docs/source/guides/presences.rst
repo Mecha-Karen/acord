@@ -31,8 +31,8 @@ If the classes are too complicating look no further
 
 Changing presences
 ------------------
-You may have realised theres no change_presence function within :class:`Client`.
-Well thats because you need to change the presence per shard,
+You may have realised there's no change_presence function within :class:`Client`.
+Well that's because you need to change the presence per shard,
 which can be seen below.
 
 .. code-block:: py

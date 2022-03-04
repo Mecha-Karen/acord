@@ -13,7 +13,7 @@
 Low Level API
 *************
 ACord exposes its lower level API,
-just incase you need to use it.
+just in case you need to use it.
 We also allow you to customise the functionality of the library very easily,
 so be awair of what your doing.
 So lets start simple.
@@ -48,7 +48,7 @@ You can change the API Version, API Url and so on.
 
     core_abc.API_VERSION = 9
 
-    # Continue with your code as usualy
+    # Continue with your code as usually
 
 This file also contains the ``Route`` object and ``buildURL`` function.
 They can be used to make routes and URLs for the REST API.
@@ -97,7 +97,7 @@ which has the following methods you need to provide:
 * ack(self) -> Called when the WebSocket ACKs our heartbeat
 
 And the following attrs which is used by ``.run(self)`` func.
-You wont need this if you overwrite this function.
+You won't need this if you overwrite this function.
 
 * _ended: :class:`bool` : Whether the client has stopped heartbeating
 * _interval: :class:`int` : Time in seconds to wait for till next heartbeat
@@ -135,7 +135,7 @@ One of which is make requests.
 In this example we will simply leave a guild.
 
 .. note::
-    We recomend to use :meth:`Guild.leave`.
+    We recommend to use :meth:`Guild.leave`.
 
 .. code-block:: py
 

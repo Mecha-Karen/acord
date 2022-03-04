@@ -61,7 +61,7 @@ class Empty:
 
 def close_code_handler(code: int) -> None:
     if code == gateway.UNKNOWN:
-        logger.info("An unknown error has occured, resuming")
+        logger.info("An unknown error has occurred, resuming")
     elif code == gateway.UNKNOWN_OP:
         logger.info("An unknown gateway OP was sent, resuming")
     elif code == gateway.DECODE_ERROR:
@@ -93,7 +93,7 @@ def close_code_handler(code: int) -> None:
 
 async def handle_websocket(shard):
     _ = "err"
-    # define err here just incase an error occured 
+    # define err here just in case an error occurred 
 
     try:
         _ = await _handle_websocket(shard)
@@ -102,7 +102,7 @@ async def handle_websocket(shard):
     finally:
         if _ != "err":
             logger.info(f"Connection closed for shard {shard.shard_id}")
-        # We want to let the user know the connection closed if no error occured during the handling
+        # We want to let the user know the connection closed if no error occurred during the handling
 
 
 async def _handle_websocket(shard):
