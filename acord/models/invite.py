@@ -1,6 +1,5 @@
 from __future__ import annotations
-import re
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 import pydantic
 import datetime
 
@@ -18,6 +17,12 @@ class StageInstanceInvite(pydantic.BaseModel, Hashable):
 
 
 class Invite(pydantic.BaseModel, Hashable):
+    class Config:
+        allow_population_by_field_name = True
+        fields = {
+            "expires_at": {"alias": "max_age"}
+        }
+
     conn: Any  # Connection object - For internal use
 
     code: str
@@ -38,8 +43,15 @@ class Invite(pydantic.BaseModel, Hashable):
     """approximate count of online members"""
     approximate_member_count: Optional[int]
     """approximate count of total members"""
-    expires_at: Optional[datetime.datetime]
-    """the expiration date of this invite"""
+    expires_at: Optional[Union[datetime.datetime, int]]
+    """the expiration date of this invite.
+
+    .. note::
+        If value is an :class:`int`,
+        this is duration in seconds.
+    """
+    max_uses: Optional[int]
+    """Number of uses allowed on invite"""
     stage_instance: Optional[StageInstanceInvite]
     """stage instance data if there is a public Stage instance in the Stage channel this invite is for"""
 
