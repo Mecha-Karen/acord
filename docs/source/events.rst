@@ -598,3 +598,12 @@ Parameters
 ^^^^^^^^^^
 reaction: :class:`MessageReaction`:
     Reaction removed
+
+on_presence_update
+~~~~~~~~~~~~~~~~~~
+Called when a members presence is updated
+
+Parameters
+^^^^^^^^^^
+presence: :class:`MemberPresence`
+    Updated presence
