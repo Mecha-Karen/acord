@@ -543,6 +543,27 @@ async def _handle_websocket(shard):
                 guild_id,
                 application_id
             )
+
+        # NOTE: Invites
+
+        elif EVENT == "ON_INVITE_CREATE":
+            inv = Invite(conn=client.http, **DATA)
+
+            client.dispatch("invite_create", inv)
+
+        elif EVENT == "ON_INVITE_DELETE":
+            channel_id = Snowflake(DATA["channel_id"])
+            code = DATA["code"]
+            
+            if guild_id := DATA.pop("guild_id", None):
+                guild_id = Snowflake(guild_id)
+
+            client.dispatch(
+                "invite_delete",
+                code,
+                channel_id,
+                guild_id
+            )
     
         # NOTE: channels
 
