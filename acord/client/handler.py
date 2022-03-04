@@ -688,6 +688,19 @@ async def _handle_websocket(shard):
 
             client.dispatch("voice_state_update", channel_id, m)
 
+        # NOTE: Presences
+
+        elif EVENT == "PRESENCE_UPDATE":
+            user_id = DATA.pop("user").get("id")
+            presence = MemberPresence(user_id=user_id, **DATA)
+
+            guild = client.get_guild(presence.guild_id)
+
+            if guild and (member := guild.get_member(presence.user_id)):
+                member.presence = presence
+
+            client.dispatch("presence_update", presence)
+
         # NOTE: VOICE EVENTS
 
         elif EVENT == "VOICE_SERVER_UPDATE":
