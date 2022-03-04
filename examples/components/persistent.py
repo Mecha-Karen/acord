@@ -1,6 +1,6 @@
 # No, just use on_interaction_create and tada.
 # You will find out that your button will work even after restarting.
-# But just incase, here you go
+# But just in case, here you go
 
 from acord import ActionRow, Button, ButtonStyles, Client, Component, Interaction, InteractionType, Intents, Message
 from typing import List, Any
@@ -11,7 +11,7 @@ class ButtonRow(ActionRow):
         Button(
             style=ButtonStyles.SUCCESS,
             label="Click me",
-            custom_id="persistant:1"
+            custom_id="persistent:1"
         )
     ]
 
@@ -25,8 +25,8 @@ class MyClient(Client):
         if interaction.type == InteractionType.MESSAGE_COMPONENT:
             c_id = interaction.data.custom_id
 
-            if c_id == "persistant:1":
-                return await interaction.respond(content="Look, I can persistantly respond")
+            if c_id == "persistent:1":
+                return await interaction.respond(content="Look, I can persistently respond")
 
 if __name__ == "__main__":
     client = MyClient(intents=Intents.ALL)

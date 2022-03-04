@@ -151,7 +151,7 @@ class TextChannel(Channel, ExtendedTextMethods):
         params = {"around": around, "before": before, "after": after, "limit": limit}
 
         if not 0 < limit < 100:
-            raise ValueError("Messages to fetch must be an interger between 0 and 100")
+            raise ValueError("Messages to fetch must be an integer between 0 and 100")
 
         resp = await self.conn.request(
             Route("GET", path=f"/channels/{self.id}/messages", bucket=bucket, **params),
@@ -187,7 +187,7 @@ class TextChannel(Channel, ExtendedTextMethods):
         Deletes messages in bulk, in a channel.
 
         .. warning::
-            When deleting in bulk, you need atleast 2 messages and less then 100.
+            When deleting in bulk, you need at least 2 messages and less then 100.
 
             You must also provide your own messages to delete,
             for a ``purge`` like method,

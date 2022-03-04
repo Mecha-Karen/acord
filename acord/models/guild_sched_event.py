@@ -101,7 +101,7 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
             How many members to fetch
         with_member: :class:`bool`
             :attr:`ScheduledEventUser.member` will contain a member object,
-            of who suscribed to the event
+            of who subcribed to the event
         before: :class:`Snowflake`
             consider only users before given user id
         after: :class:`Snowflake`
@@ -137,7 +137,7 @@ class GuildScheduledEvent(pydantic.BaseModel, Hashable):
         Parameters
         ----------
         reason: :class:`str`
-            reason for editting event
+            reason for editing event
         entity_type: :class:`ScheduledEventEntityType`
             the entity type of the scheduled event
         name: :class:`str`

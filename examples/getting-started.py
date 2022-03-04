@@ -16,7 +16,7 @@ class MyClient(acord.Client):
 
 
 if __name__ == "__main__":
-    # Intialise client, using all intents
+    # Initialise client, using all intents
     client = MyClient(intents=acord.Intents.ALL)
     # Run your client!
     client.run(token=...)

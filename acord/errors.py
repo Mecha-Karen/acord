@@ -67,7 +67,7 @@ class Forbidden(BaseExc):
 
 class DiscordError(BaseExc):
     """Raised when requested recourse returns 500,
-    Indicating an error has occured on discords side"""
+    Indicating an error has occurred on discords side"""
 
 
 class NotFound(BaseExc):

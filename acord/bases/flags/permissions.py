@@ -5,8 +5,8 @@ from .base import BaseFlagMeta
 class Permissions(Flag, metaclass=BaseFlagMeta):
     """
     Permissions define what actions a user can or cannot do,
-    they are set and follow a hierachy.
-    If you try break the hierachy 403 will be raised.
+    they are set and follow a hierarchy.
+    If you try break the hierarchy 403 will be raised.
     E.g. Banning a member with a higher role then the client.
 
     .. rubric:: Usage

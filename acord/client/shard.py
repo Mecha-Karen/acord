@@ -167,7 +167,7 @@ class Shard:
         self.ws = await self.session.ws_connect(self.url, **kwds)
         self._snd_kwds = kwds
 
-        logger.info(f"Shard {self.shard_id} has connected sucessfully")
+        logger.info(f"Shard {self.shard_id} has connected successfully")
 
     async def receive_hello(self):
         """|coro|
@@ -188,7 +188,7 @@ class Shard:
         )
         self._keep_alive.start()
 
-        logger.info(f"Hello packet sucessfully received, beginning heartbeats for Shard {self.shard_id}")
+        logger.info(f"Hello packet successfully received, beginning heartbeats for Shard {self.shard_id}")
 
     async def send_identity(self, token: str, intents: int, presence: Presence = None) -> None:
         """|coro|

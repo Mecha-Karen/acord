@@ -47,7 +47,7 @@ class FfmpegPlayer(BasePlayer):
         kwds = {"stdout": subprocess.PIPE, "stdin": subprocess.PIPE}
         kwds.update(subprocess_kwds)
 
-        # Used for reseting state
+        # Used for resetting state
         self._spawn_process_args = (args, kwds)
 
         self._spawn_proc(args, kwds)
@@ -68,7 +68,7 @@ class FfmpegPlayer(BasePlayer):
                 args, creationflags=subprocess.CREATE_NO_WINDOW,
                 **kwds
             )
-            logger.info("Sucessfully spawned ffmpeg process at %s", self.process.pid)
+            logger.info("successfully spawned ffmpeg process at %s", self.process.pid)
         except FileNotFoundError as exc:
             raise VoiceError(f"path provided for ffmpeg executable not found") from exc
         except subprocess.SubprocessError:
@@ -88,7 +88,7 @@ class FfmpegPlayer(BasePlayer):
             self.process.communicate()
             logger.info('ffmpeg process at pid=%s has terminated with return code %s', self.process.pid, self.process.returncode)
         else:
-            logger.info('ffmpeg process at pid=%s has terminated sucessfully with return code %s', self.process.pid, self.process.returncode)
+            logger.info('ffmpeg process at pid=%s has terminated successfully with return code %s', self.process.pid, self.process.returncode)
 
     async def cleanup(self, *, reset: bool = True) -> None:
         super().cleanup()

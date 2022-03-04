@@ -42,7 +42,7 @@ class Echo(SlashBase, extendable=True, overwritable=False):
 
     async def on_error(self, interaction: Interaction, exc_info: tuple) -> Any:
         print_exception(*exc_info)
-        return await interaction.respond(content="Oh no, An Error Occured!")
+        return await interaction.respond(content="Oh no, An Error occurred!")
 
 
 client = Client(intents=Intents.ALL)

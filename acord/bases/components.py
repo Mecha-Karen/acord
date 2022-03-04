@@ -28,7 +28,7 @@ class SelectOption(pydantic.BaseModel):
     description: str
     """ an additional description of the option, max 100 characters """
     emoji: Optional[Any]
-    """ an emoji to dispay next to the label """
+    """ an emoji to display next to the label """
     default: Optional[bool]
     """ will render this option as selected by default """
 

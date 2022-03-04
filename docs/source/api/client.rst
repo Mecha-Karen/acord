@@ -10,7 +10,7 @@
 ******
 Client
 ******
-ACord's built in client enables rapid development, but this doesn't mean you cant create your own!
+ACord's built in client enables rapid development, but this doesn't mean you can't create your own!
 
 Example
 ~~~~~~~

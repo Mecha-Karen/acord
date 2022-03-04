@@ -1020,7 +1020,7 @@ class Guild(pydantic.BaseModel, Hashable):
             Colour of role,
             for reference checkout :attr:`Embed.color`
         hoist: :class:`bool`
-            Whether to dispay role seperatley
+            Whether to display role seperately
         icon: :class:`File`
             the role's icon image
         unicode_emoji: :class:`str`
