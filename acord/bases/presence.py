@@ -111,6 +111,12 @@ def streaming(
     name: str, url: str, *, status: StatusType = StatusType.online
 ) -> Presence:
     return Presence(
-        activities=[Activity(name=name, type=ActivityType.STREAMING, url=url)],
+        activities=[
+            Activity(
+                name=name, 
+                type=ActivityType.STREAMING, 
+                url=url
+            )
+        ],
         status=status,
     )
