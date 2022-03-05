@@ -4,3 +4,4 @@ from .caches.cache import (
     CacheData,
     Cache
 )
+from .caches.default import DefaultCache

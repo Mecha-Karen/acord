@@ -20,6 +20,7 @@ from .client import (
     Shard,
     CacheData,
     Cache,
+    DefaultCache
 )
 from .webhooks.webhook import Webhook, WebhookType
 from .voice.transports.base import BaseTransport
