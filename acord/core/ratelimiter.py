@@ -187,7 +187,7 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
         self.global_task = loop.create_task(self._def_release_global_lock_task())
 
     async def hold_global_lock(self) -> None:
-        if self.global_lock:
+        if not self.global_lock:
             return
         logger.info("REST Api has been ratelimited globally, waiting")
 
