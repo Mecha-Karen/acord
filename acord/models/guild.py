@@ -116,7 +116,7 @@ class Guild(pydantic.BaseModel, Hashable):
     banner: Optional[str]
     """ URL for the guild banner """
 
-    channels: Dict[Snowflake, Channel]
+    channels: Dict[Snowflake, Channel] = {}
     """ All channels in the guild """
     default_message_notifications: GuildMessageNotification
     """ Default message notification """
@@ -125,7 +125,7 @@ class Guild(pydantic.BaseModel, Hashable):
     """ the description of a Community guild """
     discovery_splash: Optional[str]
 
-    embedded_activities: List[Any]
+    embedded_activities: List[Any] = []
 
     emojis: Dict[Snowflake, Emoji]
     """ List of emojis in guild """
@@ -138,17 +138,19 @@ class Guild(pydantic.BaseModel, Hashable):
     features: List[str]
     """ List of guild features """
 
-    guild_hashes: Dict[Any, Any]
+    guild_hashes: Dict[Any, Any] = {}
 
-    guild_scheduled_events: Dict[Snowflake, GuildScheduledEvent]
+    guild_scheduled_events: Dict[Snowflake, GuildScheduledEvent] = {}
     """ List of scheduled guild events """
 
     hub_type: Optional[bool]
 
-    joined_at: datetime.datetime
-    """ When the user joined this guild """
+    joined_at: datetime.datetime = None
+    """ When the user joined this guild,
+    May be ``None`` if your fetching from API.
+    """
 
-    large: bool
+    large: bool = False
     """ Whether this guild is considered as large """
 
     lazy: Optional[bool]
@@ -159,10 +161,10 @@ class Guild(pydantic.BaseModel, Hashable):
     max_video_channel_users: Optional[int]
     """ The maximum amount of users in a video channel """
 
-    member_count: int
+    member_count: int = 0
     """ Amount of members in this guild """
 
-    members: Dict[Snowflake, Member]
+    members: Dict[Snowflake, Member] = {}
     """ Mapping of all members in guild """
 
     mfa_level: MFALevel
