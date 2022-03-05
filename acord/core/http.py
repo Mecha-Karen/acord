@@ -29,6 +29,7 @@ from acord.errors import (
     HTTPException,
     NotFound,
 )
+from acord.models import User
 from . import abc
 from .decoders import *
 from .ratelimiter import DefaultHTTPRatelimiter, HTTPRatelimiter, parse_ratelimit_headers
@@ -127,7 +128,10 @@ class HTTPClient(object):
             logger.error("Failed to login to discord, improper token passed")
             raise Forbidden("Invalid or Improper token passed") from exc
 
-        return await r.json()
+        user_data = await r.json()
+        self.client.user = User(conn=self, **user_data)
+
+        return user_data
 
     async def logout(self):
         """|coro|
