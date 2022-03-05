@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 __file__ = __import__("os").path.abspath(__file__)
 __directory__ = __import__("os").path.dirname(__file__)
 __doc__ = "An API wrapper for the discord API"
-__version__ = "0.2.3a0"
+__version__ = "1.4.0b2"
 __author__ = "Mecha Karen"
 
 from .bases import *
@@ -59,4 +59,4 @@ class VersionInfo(NamedTuple):
     level: Literal["Pre-Alpha", "Alpha", "Beta", "Stable", "Final"]
 
 
-version_info: VersionInfo = VersionInfo(major=0, minor=2, micro=3, level="Alpha")
+version_info: VersionInfo = VersionInfo(major=1, minor=4, micro=0, level="Beta")
