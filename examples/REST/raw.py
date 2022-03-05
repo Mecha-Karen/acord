@@ -20,7 +20,7 @@ class ClientCache:
 
 REST_API = HTTPClient(
     client=ClientCache(),
-    token="NzQxNzE0NTcxNjYzNzY5NjUw.Xy7lhg.OwCAYokltjlw3P2_ceIvCDd2M68",
+    token=...,
     # Actual token goes above
 )
 
@@ -36,7 +36,7 @@ async def main():
     d = await REST_API.login()
     REST_API.client.user = User(conn=REST_API, **d)
 
-    guild = await get_guild(740523643980873789)
+    guild = await get_guild(...)
     # Actual guild ID above
 
     print("Fetched Guild:\n\n", guild)
