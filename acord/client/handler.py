@@ -136,11 +136,14 @@ async def _handle_websocket(shard):
 
         data = decodeResponse(message.data)
 
-        EVENT = data["t"]
-        OPERATION = data["op"]
-        DATA = data["d"]
+        if not data:
+            continue
 
-        SEQUENCE = data["s"]
+        EVENT = data.get("t")
+        OPERATION = data.get("op")
+        DATA = data.get("d")
+
+        SEQUENCE = data.get("s")
 
         if SEQUENCE is not None:
             shard.sequence = SEQUENCE
