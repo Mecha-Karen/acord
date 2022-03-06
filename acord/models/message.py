@@ -464,74 +464,30 @@ class Message(pydantic.BaseModel, Hashable):
 
 
 class WebhookMessage(Message):
-    webhook_id: Snowflake
-    """ ID of webhook message was sent from """
-    token: str
-    """ Token of webhook message was sent from """  
+    webhook: Any
+    """ Webhook this message was sent from """ 
 
-    async def edit(self, **data) -> WebhookMessage:
+    async def edit(self, *kwds) -> WebhookMessage:
         """|coro|
 
-        Edits message
+        Edits this message.
 
-        Parameters
-        ----------
-        All parameters are the same as,
-        :meth:`Message.edit`
+        .. note::
+            Refer to :meth:`Webhook.edit_message` for parameters
+            and additional guidance.
         """
-        from acord.payloads import MessageEditPayload
-
-        payload = MessageEditPayload(**data)
-        form_data = FormData()
-
-        if payload.files:
-            for index, file in enumerate(payload.files):
-
-                form_data.add_field(
-                    name=f"file{index}",
-                    value=file.fp,
-                    filename=file.filename,
-                    content_type="application/octet-stream",
-                )
-
-        form_data.add_field(
-            name="payload_json",
-            value=payload.json(exclude={"files"}),
-            content_type="application/json",
+        return await self.webhook.edit_message(
+            self.id, **kwds
         )
 
-        r = await self.conn.request(
-            Route(
-                "PATCH",
-                f"webhooks/{self.webhook_id}/{self.token}/messages/{self.id}"
-            ),
-            data=form_data,
-        )
-
-        return WebhookMessage(
-            conn=self.conn, webhook_id=self.webhook_id, token=self.token,
-            **(await r.json())
-        )
-
-    async def delete(self, *, reason: str = None, thread_id: Snowflake = None) -> None:
+    async def delete(self, **kwds) -> None:
         """
-        Deletes the message from the channel.
-        Raises 403 is you don't have sufficient permissions or 404 is the message no longer exists.
+        Deletes this message.
 
-        Parameters
-        ----------
-        reason: :class:`str`
-            Reason for deleting message
+        .. note::
+            Refer to :meth:`Webhook.delete_message` for parameters
+            and additional guidance.
         """
-        headers = dict()
-        if reason:
-            headers.update({"X-Audit-Log-Reason": reason})
-
-        await self.conn.request(
-            Route(
-                "DELETE",
-                f"/webhooks/{self.webhook_id}/{self.token}/messages/{self.id}",
-                thread_id=thread_id
-            ),
-            headers=headers,
+        return await self.webhook.delete_message(
+            self.id, **kwds
         )
