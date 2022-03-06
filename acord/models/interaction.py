@@ -1,25 +1,21 @@
 from __future__ import annotations
-import json
 from typing import Any, List, Optional
-from aiohttp import FormData
 import pydantic
 
 from acord.models import Snowflake, Member, Message, User
 from acord.bases import (
     Hashable,
     InteractionType,
-    InteractionCallback,
     ComponentTypes,
     Modal,
 )
-from acord.payloads import MessageCreatePayload
 from acord.core.abc import Route
-from acord.bases.flags.base import BaseFlagMeta
 from acord.ext.application_commands import (
     ApplicationCommandType, 
     ApplicationCommandOptionType,
     AutoCompleteChoice,
 )
+import acord
 
 
 class InteractionSlashOption(pydantic.BaseModel):
@@ -28,15 +24,6 @@ class InteractionSlashOption(pydantic.BaseModel):
     value: Any
     options: List[InteractionSlashOption] = []
     focused: bool = False
-
-
-class IMessageFlags(BaseFlagMeta):
-    EPHEMERAL = 1 << 6
-    """ only the user receiving the message can see it """
-
-
-class IMessageCreatePayload(MessageCreatePayload):
-    flags: Optional[int]
 
 
 class InteractionData(pydantic.BaseModel):
@@ -54,13 +41,9 @@ class InteractionData(pydantic.BaseModel):
     components: Any
 
 
-class _FormPartHelper(pydantic.BaseModel):
-    type: InteractionCallback
-    data: Any
-
-
 class Interaction(pydantic.BaseModel, Hashable):
     conn: Any
+    hook: Any
 
     id: Snowflake
     """ ID of interaction """
@@ -85,6 +68,20 @@ class Interaction(pydantic.BaseModel, Hashable):
     message: Optional[Message]
     """ for components, the message they were attached to """
 
+    def __init__(self, **kwds) -> None:
+        super().__init__(**kwds)
+
+        self.hook = acord.Webhook(
+            conn=self.conn,
+            id=self.id,
+            type=3,
+            guild_id=self.guild_id,
+            channel_id=self.channel_id,
+            user=self.user or getattr(self.member, "user"),
+            token=self.token,
+            application_id=self.conn.client.user.id,
+        )
+
     @pydantic.validator("user", "member", "message")
     def _validate_conns(cls, v, **kwargs):
         conn = kwargs["values"]["conn"]
@@ -106,7 +103,10 @@ class Interaction(pydantic.BaseModel, Hashable):
         Fetches original message that was created when
         interaction responded.
         """
-        return await self.fetch_message("@original")    # type: ignore
+        return await self.hook.fetch_message(
+            "@original", 
+            use_application_id=True
+        )
 
     async def delete_original_response(self) -> None:
         """|coro|
@@ -114,60 +114,57 @@ class Interaction(pydantic.BaseModel, Hashable):
         Deletes original message that was created when
         interaction responded
         """
-        return await self.delete_response("@original")  # type: ignore
+        return await self.hook.delete_message(
+            "@original",
+            use_application_id=True
+        )
 
     async def delete_response(self, message_id: Snowflake) -> None:
         """|coro|
 
         Deletes message that was created by this interaction
+
+        Parameters
+        ----------
+        message_id: :class:`Snowflake`
+            ID of message to delete
         """
-        await self.conn.request(
-            Route(
-                "GET",
-                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
-            )
+        return await self.hook.delete_message(
+            message_id,
+            use_application_id=True
         )
 
     async def fetch_message(self, message_id: Snowflake):
         """|coro|
 
         Fetches a followup message created by interaction
+
+        Parameters
+        ----------
+        message_id: :class:`Snowflake`
+            ID of message to fetch
         """
-        from acord import Message
-
-        r = await self.conn.request(
-            Route(
-                "GET",
-                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
-            )
+        return await self.hook.fetch_message(
+            message_id,
+            use_application_id=True
         )
-
-        return Message(**(await r.json()))
 
     async def respond_with_modal(self, modal: Modal) -> None:
         """|coro|
 
-        Responds to an interaction,
-        instead of creating a message this creates a modal.
+        Responds to an interaction using a modal.
 
         Parameters
         ----------
         modal: :class:`Modal`
-            Modal to create
+            Modal to respond with
         """
-        d = _FormPartHelper(type=InteractionCallback.MODAL, data=modal)
-
-        await self.conn.request(
-            Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
-            data=d.json(),
-            headers={"Content-Type": "application/json"}
-        )
+        return await self.hook.respond_with_modal(modal)
 
     async def respond_to_autocomplete(self, choices: List[AutoCompleteChoice]) -> None:
         """|coro|
 
-        Responds to an autocomplete interaction,
-        should usually be called from within your autocomplete func
+        Responds to an interaction with a list of choices
 
         Parameters
         ----------
@@ -175,162 +172,48 @@ class Interaction(pydantic.BaseModel, Hashable):
             List of choices to return the user,
             can be a list of dicts with the mapping name: value
         """
-        d = {"choices": choices}
+        return await self.hook.respond_to_autocomplete(choices)
 
-        d = _FormPartHelper(type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=d)
-
-        await self.conn.request(
-            Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
-            data=d.json(),
-            headers={"Content-Type": "application/json"}
-        )
-
-    async def respond(
-        self, *, ack: bool = False, followup: bool = False, **data
-    ) -> None:
+    async def respond(self, **kwds) -> None:
         """|coro|
 
         Responds to an interaction.
 
-        Parameters
-        ----------
-        flags: :class:`IMessageFlags`
-            Additional flags for interaction followups.
-        ack: :class:`bool`
-            Whether to return a loading status,
-            requires you to resend request using,
-            :meth:`Interaction.edit`
-        followup: :class:`bool`
-            Whether the message is a followup and not a response.
-        **data:
-            Rest of the parameters are the same as,
-            :meth:`TextChannel.send`
+        .. note::
+            Refer to :meth:`Webhook.respond_with_message` for further guidance.
         """
-        if ack:
-            rmsType = InteractionCallback.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
-        else:
-            rmsType = InteractionCallback.CHANNEL_MESSAGE_WITH_SOURCE
+        return await self.hook.respond_with_message(**kwds)
 
-        payload = IMessageCreatePayload(**data)
+    async def send_followup(self, **kwds):
+        """|coro|
 
-        if not any(
-            i
-            for i in payload.dict()
-            if i in ["content", "files", "embeds", "sticker_ids"]
-        ):
-            raise ValueError(
-                "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
-            )
+        Sends a follow up message an interaction
 
-        if any(i for i in (payload.embeds or list()) if i.characters() > 6000):
-            raise ValueError("Embeds cannot contain more then 6000 characters")
+        .. note::
+            Refer to :meth:`Webhook.send_followup_message` for further guidance.
+        """
+        return await self.hook.send_followp(**kwds)
 
-        form_data = FormData()
-
-        if payload.files:
-            for index, file in enumerate(payload.files):
-
-                form_data.add_field(
-                    name=f"file{index}",
-                    value=file.fp,
-                    filename=file.filename,
-                    content_type="application/octet-stream",
-                )
-
-        if not followup:
-            payload = _FormPartHelper(type=rmsType, data=payload)
-
-        form_data.add_field(
-            name="payload_json",
-            value=payload.json(exclude={"data": {"files"}}),
-            content_type="application/json",
-        )
-
-        if not followup:
-            ending = "/callback"
-        else:
-            ending = "/"
-
-        await self.conn.request(
-            Route("POST", path=f"/interactions/{self.id}/{self.token}{ending}"),
-            data=form_data,
-        )
-
-    async def edit(self, *, ack: bool = False, **data) -> None:
+    async def edit_original_response(self, **kwds) -> None:
         """|coro|
 
         Edits original message created by interaction
 
-        Parameters
-        ----------
-        ack: :class:`bool`
-            ACK an interaction and edit the original message later;
-            the user does not see a loading state
-        **data:
-            Rest of the parameters are the same as,
-            :meth:`TextChannel.send`
+        .. note::
+            Refer to :meth:`Webhook.edit_message` for further guidance
         """
-        return await self.edit_response("@original", ack=ack, **data)
+        return await self.edit_response("@original", **kwds)
 
-    async def edit_response(
-        self, message_id: Snowflake, *, ack: bool = False, **data
-    ) -> None:
+    async def edit_message(self, message_id: Snowflake, **kwds) -> None:
         """|coro|
 
         Edits a follow up message sent by interaction
 
-        Parameters
-        ----------
-        message_id: :class:`Snowflake`
-            ID of message to edit
-        ack: :class:`bool`
-            ACK an interaction and edit the original message later;
-            the user does not see a loading state
-        **data:
-            Rest of the parameters are the same as,
-            :meth:`TextChannel.send`
+        .. note::
+            Refer to :meth:`Webhook.edit_message` for further guidance
         """
-        if ack:
-            rmsType = InteractionCallback.DEFERRED_UPDATE_MESSAGE
-        else:
-            rmsType = InteractionCallback.UPDATE_MESSAGE
-
-        payload = IMessageCreatePayload(**data)
-
-        if not any(
-            i
-            for i in payload.dict()
-            if i in ["content", "files", "embeds", "sticker_ids"]
-        ):
-            raise ValueError(
-                "Must provide one of content, file, embeds, sticker_ids inorder to send a message"
-            )
-
-        if any(i for i in (payload.embeds or list()) if i.characters() > 6000):
-            raise ValueError("Embeds cannot contain more then 6000 characters")
-
-        form_data = FormData()
-
-        if payload.files:
-            for index, file in enumerate(payload.files):
-
-                form_data.add_field(
-                    name=f"file{index}",
-                    value=file.fp,
-                    filename=file.filename,
-                    content_type="application/octet-stream",
-                )
-
-        form_data.add_field(
-            name="payload_json",
-            value=payload.json(exclude={"files"}),
-            content_type="application/json",
-        )
-
-        await self.conn.request(
-            Route(
-                "PATCH",
-                path=f"/webhooks/{self.application_id}/{self.token}/messages/{message_id}",
-            ),
-            data=form_data,
+        return await self.hook.edit_message(
+            message_id,
+            use_application_id=True,
+            **kwds
         )
