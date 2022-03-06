@@ -432,9 +432,7 @@ class Webhook(Hashable, pydantic.BaseModel):
             InteractionMessageCreate, {"files"}, **kwds
         )
 
-        r = await self.conn.request(route, data=form_data)
-
-        return WebhookMessage(conn=self.conn, webhook=self, **(await r.json()))
+        await self.conn.request(route, data=form_data)
 
     ## NOTE: Any overwrites
 
