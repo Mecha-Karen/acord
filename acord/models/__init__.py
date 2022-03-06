@@ -65,7 +65,6 @@ from .interaction import (
     InteractionSlashOption,
     InteractionData,
     Interaction,
-    IMessageFlags,
 )
 from .invite import Invite
 from .channels import (
