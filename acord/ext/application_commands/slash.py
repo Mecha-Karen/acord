@@ -264,7 +264,7 @@ class SlashBase(UDAppCommand):
         try:
             await callback(self, interaction, **kwds)
         except Exception as exc:
-            if on_error:
+            if on_error is not None:
                 try:
                     await on_error(
                         self, interaction, (type(exc), exc, exc.__traceback__)
