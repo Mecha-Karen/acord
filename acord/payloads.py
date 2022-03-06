@@ -22,6 +22,8 @@ from acord.bases import (
     ScheduledEventEntityType,
     ScheduledEventStatus,
     StagePrivacyLevel,
+    IMessageFlags,
+    InteractionCallback
 )
 from acord.bases.embeds import _rgb_to_hex
 from acord.ext.application_commands.option import SlashOption
@@ -59,6 +61,11 @@ def _file_to_image_data(file):
 class GenericWebsocketPayload(pydantic.BaseModel):
     op: int
     d: Any
+
+
+class FormPartHelper(pydantic.BaseModel):
+    type: InteractionCallback
+    data: Any
 
 
 class ChannelEditPayload(pydantic.BaseModel):
@@ -137,6 +144,10 @@ class MessageCreatePayload(pydantic.BaseModel):
 class WebhookMessageCreate(MessageCreatePayload):
     username: str = None
     avatar_url: pydantic.AnyHttpUrl = None
+
+
+class InteractionMessageCreate(MessageCreatePayload):
+    flags: IMessageFlags = 0
 
 
 class MessageEditPayload(pydantic.BaseModel):
