@@ -766,11 +766,11 @@ class Client(object):
         await vc.connect()
         await vc.listen()
 
-    def on_error(self, event_method, task: asyncio.Task = None):
+    def on_error(self, event_method, task: asyncio.Task = None, err = None):
         """|coro|
 
         Built in base error handler for events"""
-        err = sys.exc_info()
+        err = err or sys.exc_info()
         if task is not None:
             _err = task._exception
             if _err is not None and isinstance(_err, Exception):
