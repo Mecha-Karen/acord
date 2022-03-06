@@ -256,7 +256,9 @@ async def _handle_websocket(shard):
 
                 possible_exc = await asyncio.wait_for(fut, None)
                 if isinstance(possible_exc, Exception):
-                    client.on_error(f"app_cmd dispatcher : {udac.name}")
+                    client.on_error(f"app_cmd dispatcher : {udac.name}", err=
+                        (type(possible_exc), possible_exc, possible_exc.__traceback__)
+                    )
 
             client.dispatch("interaction_create", data)
 
