@@ -192,9 +192,8 @@ class HTTPClient(object):
 
         kwargs.update(kwds)
 
-        logger.debug(f"Sending Request: bucket={route.bucket} path={route.path}")
         resp = await self._session.request(method=route.method, url=route.url, **kwargs)
-        logger.info(f"Request made at {route.path} returned {resp.status}")
+        logger.info(f"Request made at {route.path:>20} returned {resp.status}")
 
         ratelimit_headers = parse_ratelimit_headers(resp.headers)
 
@@ -204,7 +203,7 @@ class HTTPClient(object):
         if 200 <= resp.status < 300:
             return resp
 
-        respData = await self.decodeResponse(resp)
+        respData = decodeResponse(await resp.read())
 
         if 500 <= resp.status < 600:
             raise DiscordError(str(respData))
