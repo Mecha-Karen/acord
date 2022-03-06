@@ -16,3 +16,10 @@ examples/components/persistent.py                   @Seniatical
 examples/components/tic-tac-toe.py                  @Seniatical
 examples/misc/guess.py                              @sldless
 examples/REST/raw.py                                @Seniatical
+
+# Guides - No index
+
+docs/source/guides/application_commands.rst         @Seniatical
+docs/source/guides/components.rst                   @Seniatical
+docs/source/guides/low_level_api.rst                @Seniatical
+docs/source/guides/presences.rst                    @Seniatical
