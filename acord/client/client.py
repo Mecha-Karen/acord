@@ -741,6 +741,7 @@ class Client(object):
         guild = Guild(conn=self.http, **(await resp.json()))
 
         self.cache.add_guild(guild)
+        return guild
 
     async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
         """|coro|
