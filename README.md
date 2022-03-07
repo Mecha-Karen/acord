@@ -12,9 +12,9 @@ License: **GPL-3.0 License** (see the LICENSE file for details) covers all files
 > Acord is coming out of ALPHA development, it is somewhat ready for production. However, there may be a few bugs with certain routes!
 
 ## Features
-* Flexible and customisable
+* Flexible and customizable
 * Proper caches and ratelimiters
-* Objects are customisable and can be exported with ease
+* Objects are customizable and can be exported with ease
 * ``async`` and ``await`` syntax
 * Always up to date with the discord API (v10)
 * Optimised in speed and memory
