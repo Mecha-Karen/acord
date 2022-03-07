@@ -82,8 +82,8 @@ class Client(object):
         Client user object
     application_commands: Dict[str, List[:class:`UDAppCommand`]]
         Mapping of registered application commands
-    shards: List[:class:`Shard`]
-        List of shards client is handling
+    shards: Dict[:class:`int`, :class:`Shard`]
+        Mapping of shards client is handling
 
         .. versionadded:: 0.2.3a0
     cache: :class:`Cache`
@@ -162,7 +162,7 @@ class Client(object):
         self.cache = cache
         self.gateway_ratelimiter = gateway_ratelimiter
 
-        self.shards = list()
+        self.shards = dict()
         self.max_concurrency = 0
         self.num_shards = None
 
@@ -344,6 +344,19 @@ class Client(object):
         self.cache.add_stage_instance(instance)
 
         return instance
+
+    def get_shard(self, guild_id: Snowflake) -> Optional[Shard]:
+        """Gets a shard from :attr:`Client.shards` using a guild id
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            Guild ID to use
+        """
+        shard_id = ((guild_id >> 22) % self.num_shards)
+        shard = self.shards.get(shard_id)
+        
+        return shard
 
     def register_application_command(
         self,
@@ -571,7 +584,7 @@ class Client(object):
             task = shard.listen(shard=shard)
             TASK_LIST.append(task)
 
-            self.shards.append(shard)
+            self.shards.update({i: shard})
             c += 1
 
             if c == self.max_concurrency:
