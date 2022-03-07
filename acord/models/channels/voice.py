@@ -40,7 +40,11 @@ class VoiceChannel(Channel):
     """ voice region id for the voice channel, automatic when set to null """
 
     async def join(
-        self, self_mute: bool = False, self_deaf: bool = False
+        self,
+        *,
+        self_mute: bool = False, 
+        self_deaf: bool = False,
+        wait: bool = True
     ) -> VoiceConnection:
         """|coro|
 
@@ -54,23 +58,32 @@ class VoiceChannel(Channel):
         self_deaf: :class:`bool`
             Whether to deafen client on join,
             doesn't mute unless specified!
+        wait: :class:`bool`
+            Whether to wait for the :class:`VoiceConnection` to be returned
 
         Returns
         -------
         Returns a :class:`VoiceConnection` object,
         which can directly be passed into a reciever/player
         """
-        await self.conn.client.update_voice_state(
+        shard = self.conn.client.get_shard(self.guild_id)
+
+        assert shard, "Cannot find allocated shard"
+
+        await shard.update_voice_state(
             guild_id=self.guild_id,
             channel_id=self.id,
             self_mute=self_mute,
             self_deaf=self_deaf,
         )
 
-        return await self.conn.client.wait_for(
+        if not wait:
+            return
+
+        return (await self.conn.client.wait_for(
             "voice_server_update",
             check=self._vc_check,
-        )
+        ))[0]
 
     def _vc_check(self, vc) -> bool:
         return vc.guild_id == str(self.guild_id)
