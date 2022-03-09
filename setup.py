@@ -49,8 +49,6 @@ packages = [
     "acord.ext",
     "acord.ext.application_commands",
     "acord.rest",
-    "acord.rest.client",
-    "acord.rest.server"
 ]
 
 extra_requires = {
