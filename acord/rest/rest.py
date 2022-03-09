@@ -1,7 +1,15 @@
 # Main RestAPI object
 from __future__ import annotations
+
 import asyncio
-from typing import Any, Optional, AsyncIterator
+from typing import (
+    Any,
+    Dict, 
+    Optional, 
+    AsyncIterator,
+    List,
+    Union
+)
 
 from acord import (
     Cache,
@@ -12,7 +20,9 @@ from acord import (
     Channel,
     ApplicationCommand,
     Snowflake,
+    UDAppCommand
 )
+from acord.errors import ApplicationCommandError
 from acord.utils import _d_to_channel
 from acord.core.http import HTTPClient
 from acord.core.abc import Route
@@ -75,16 +85,237 @@ class RestApi:
             client=self, token=self.token,
             loop=self.loop, **kwds
         )
+        self.application_commands: Dict[str, List[UDAppCommand]] = dict()
         self.user = None
 
         self._set_up = False
 
-    async def setup(self):
+    async def setup(
+        self,
+        *,
+        exclude: Union[set, dict] = {},
+        update_commands: bool = True
+    ) -> None:
         """ Setup the object, 
-        Should be called before any requests are made"""
+        Should be called before any requests are made
+        
+        Parameters
+        ----------
+        exclude: Union[:class:`str`, :class:`dict`]
+            A set of commands to exclude.
+
+            .. note::
+                If using a dict,
+                the key will be the command name and
+                the value will the type of command to exclude.
+        update_commands: :class:`bool`
+            Whether to update commands from :attr:`self.application_commands`
+        """
         assert not self._set_up, "Rest API has already been setup"
 
         await self.http.login()
+
+        if update_commands:
+            await self._bulk_write_app_commands(exclude)
+
+        self._set_up = True
+
+    async def close(self):
+        await self.http._session.close()
+
+    # Methods for application commands
+
+    def register_application_command(
+        self,
+        command: UDAppCommand,
+        *,
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True,
+    ) -> None:
+        """Registers application command internally before client is ran,
+        after client is ran this method is redundant.
+        Consider using :meth:`Client.create_application_command`.
+
+        Parameters
+        ----------
+        command: :class:`UDAppCommand`
+
+            .. note::
+                :class:`UDAppCommand` represents any class which inherits it,
+                this includes SlashBase.
+
+            Command to register internally, to be dispatched.
+        guild_ids: Union[List[:class:`int`], None]
+            Additional guild IDs to restrict command to,
+
+            if value is set to:
+                * ``None``: Reads from class (Default option)
+                * ``[]`` (Empty List): Makes it global
+
+            .. note::
+                If final value is false,
+                command will be registered globally
+
+        extend: :class:`bool`
+            Whether to extend current guild ids from the command class
+        """
+        if guild_ids and (extend and command.extend):
+            command.guild_ids = command.guild_ids + guild_ids
+        elif guild_ids:
+            command.guild_ids = guild_ids
+        elif extend == []:
+            command.guild_ids = []
+
+        exists = self.application_commands.get(command.name)
+        if exists:
+            c = []
+            if isinstance(exists, list):
+                check = any(i for i in exists if i.type == command.type)
+                c.extend(exists)
+            else:
+                check = exists.type == command.type
+                c.append(exists)
+
+            if check is True:
+                raise ApplicationCommandError("Duplicate application command provided")
+
+        else:
+            c = command
+
+        self.application_commands.update({command.name: command})
+
+    async def create_application_command(
+        self,
+        command: UDAppCommand,
+        *,
+        guild_ids: Union[List[int], None] = None,
+        extend: bool = True,
+    ) -> Union[ApplicationCommand, List[ApplicationCommand]]:
+        """|coro|
+
+        Creates an application command from a :class:`UDAppCommand` class.
+
+        .. note::
+            It can take up to an hour for discord to process the command!
+
+        Parameters
+        ----------
+        same as :meth:`Client.register_application_command`
+        """
+        # Add to cache
+        self.register_application_command(command, guild_ids=guild_ids, extend=extend)
+        d = command.json()
+
+        if not command.guild_ids:
+            r = await self.http.request(
+                Route("POST", path=f"/applications/{self.user.id}/commands"),
+                data=d,  # This is a string
+                headers={"Content-Type": "application/json"},
+            )
+            return ApplicationCommand(conn=self.http, **(await r.json()))
+
+        recvd = []
+
+        for guild_id in set(command.guild_ids):
+            r = await self.http.request(
+                Route(
+                    "POST",
+                    path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
+                ),
+                data=d,
+                headers={"Content-Type": "application/json"},
+            )
+
+            app_cmd = ApplicationCommand(conn=self.http, **(await r.json()))
+            recvd.append(app_cmd)
+
+        return recvd
+
+    async def bulk_update_global_app_commands(
+        self, commands: List[UDAppCommand]
+    ) -> None:
+        """|coro|
+
+        Updates global application commands in bulk
+
+        Parameters
+        ----------
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = f'[{", ".join([i.json() for i in commands])}]'
+        # [{..., }, {..., }]
+
+        await self.http.request(
+            Route("PUT", path=f"/applications/{self.user.id}/commands"),
+            data=json,
+            headers={"Content-Type": "application/json"},
+        )
+
+    async def bulk_update_guild_app_commands(
+        self,
+        guild_id: Snowflake,
+        commands: List[UDAppCommand],
+    ) -> None:
+        """|coro|
+
+        Updates application commands for a guild in bulk
+
+        Parameters
+        ----------
+        guild_id: :class:`Snowflake`
+            ID of target guild
+        commands: List[:class:`UDAppCommand`]
+            List of application commands to update
+        """
+        json = f'[{", ".join([i.json() for i in commands])}]'
+
+        await self.http.request(
+            Route(
+                "PUT",
+                path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
+                bucket=dict(guild_id=guild_id),
+            ),
+            data=json,
+            headers={"Content-Type": "application/json"},
+        )
+
+    async def _bulk_write_app_commands(self, exclude) -> None:
+        cmds = []
+        for name, commands in self.application_commands.items():
+            if name in exclude:
+                if not isinstance(exclude, dict):
+                    continue
+
+            if isinstance(commands, list):
+                cmds.extend(*set(commands))
+            else:
+                cmds.append(commands)
+
+        partitioned = {"global": []}
+
+        for command in cmds:
+            if command.name in exclude and isinstance(exclude, dict):
+                type = exclude[command.name]
+
+                if type == command.type:
+                    continue
+
+            if not command.guild_ids:
+                partitioned["global"].append(command)
+            else:
+                for guild_id in command.guild_ids:
+                    if guild_id not in partitioned:
+                        partitioned[guild_id] = []
+
+                    partitioned[guild_id].append(command)
+
+        global_ = partitioned.pop("global")
+        if global_:
+            await self.bulk_update_global_app_commands(global_)
+
+        for guild_id, commands in partitioned.items():
+            await self.bulk_update_guild_app_commands(guild_id, commands)
 
     # Cache
 
@@ -180,3 +411,9 @@ class RestApi:
         )
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        ...
