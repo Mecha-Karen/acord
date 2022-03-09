@@ -1,1 +1,1 @@
-from .client.core import RestApi
+from .rest import RestApi
