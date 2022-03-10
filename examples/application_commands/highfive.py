@@ -1,5 +1,4 @@
 """ Simple high five user command """
-""" Simple bookmark message command """
 from traceback import print_exception
 from typing import Any, List, Union
 from acord import Client, UserCommand, Intents, Interaction, User, Snowflake
