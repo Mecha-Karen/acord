@@ -606,6 +606,14 @@ class Client(object):
                 http_client=self.http
             )
 
+        if self.rest._set_up:
+            logger.info("Client.rest has already been set, skipping")
+        else:
+            self.loop.run_until_complete(self.rest.setup(
+                exclude=exclude_app_cmds, update_commands=update_app_commands
+            ))
+            logger.info("Finished setting up rest api for client")
+
         self.loop.run_until_complete(self.shard_handler(
             self._bulk_write_app_commands(exclude_app_cmds)
             if update_app_commands else None
