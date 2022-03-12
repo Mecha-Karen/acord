@@ -1,5 +1,5 @@
 # A simple base client for handling responses from discord
-from typing import Any, Coroutine, Dict, Iterator, List, Union, Callable, Optional
+from typing import AsyncIterator, Coroutine, Dict, Iterator, List, Union, Callable, Optional
 
 import asyncio
 import logging
@@ -117,6 +117,8 @@ class Client(object):
         .. versionadded:: 0.2.3a0
     guilds: List[:class:`Guilds`]
         List of guilds client has access to
+    rest: :class:`RestApi`
+        An instance of the Rest API object
     """
     cache: Cache
 
@@ -150,7 +152,9 @@ class Client(object):
         self.session_id = None
         self.gateway_version = None
         self.user = None
-        self.application_commands = dict()
+
+        self.http = None
+        self.rest = None
 
         # When connecting to VC, temporarily stores session_id
         self.awaiting_voice_connections = dict()
@@ -392,30 +396,11 @@ class Client(object):
         extend: :class:`bool`
             Whether to extend current guild ids from the command class
         """
-        if guild_ids and extend:
-            command.guild_ids = command.guild_ids + guild_ids
-        elif guild_ids:
-            command.guild_ids = guild_ids
-        elif extend == []:
-            command.guild_ids = []
-
-        exists = self.application_commands.get(command.name)
-        if exists:
-            c = []
-            if isinstance(exists, list):
-                check = any(i for i in exists if i.type == command.type)
-                c.extend(exists)
-            else:
-                check = exists.type == command.type
-                c.append(exists)
-
-            if check is True:
-                raise ApplicationCommandError("Duplicate application command provided")
-
-        else:
-            c = command
-
-        self.application_commands.update({command.name: command})
+        self.rest.register_application_command(
+            command=command,
+            guild_ids=guild_ids,
+            extend=extend
+        )
 
     async def create_application_command(
         self,
@@ -435,34 +420,11 @@ class Client(object):
         ----------
         same as :meth:`Client.register_application_command`
         """
-        # Add to cache
-        self.register_application_command(command, guild_ids=guild_ids, extend=extend)
-        d = command.json()
-
-        if not command.guild_ids:
-            r = await self.http.request(
-                Route("POST", path=f"/applications/{self.user.id}/commands"),
-                data=d,  # This is a string
-                headers={"Content-Type": "application/json"},
-            )
-            return ApplicationCommand(conn=self.http, **(await r.json()))
-
-        recvd = []
-
-        for guild_id in set(command.guild_ids):
-            r = await self.http.request(
-                Route(
-                    "POST",
-                    path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
-                ),
-                data=d,
-                headers={"Content-Type": "application/json"},
-            )
-
-            app_cmd = ApplicationCommand(conn=self.http, **(await r.json()))
-            recvd.append(app_cmd)
-
-        return recvd
+        return await self.rest.create_application_command(
+            command=command,
+            guild_ids=guild_ids,
+            extend=extend
+        )
 
     async def bulk_update_global_app_commands(
         self, commands: List[UDAppCommand]
@@ -476,14 +438,7 @@ class Client(object):
         commands: List[:class:`UDAppCommand`]
             List of application commands to update
         """
-        json = f'[{", ".join([i.json() for i in commands])}]'
-        # [{..., }, {..., }]
-
-        await self.http.request(
-            Route("PUT", path=f"/applications/{self.user.id}/commands"),
-            data=json,
-            headers={"Content-Type": "application/json"},
-        )
+        await self.rest.bulk_update_global_app_commands(commands=commands)
 
     async def bulk_update_guild_app_commands(
         self,
@@ -501,17 +456,7 @@ class Client(object):
         commands: List[:class:`UDAppCommand`]
             List of application commands to update
         """
-        json = f'[{", ".join([i.json() for i in commands])}]'
-
-        await self.http.request(
-            Route(
-                "PUT",
-                path=f"/applications/{self.user.id}/guilds/{guild_id}/commands",
-                bucket=dict(guild_id=guild_id),
-            ),
-            data=json,
-            headers={"Content-Type": "application/json"},
-        )
+        await self.rest.bulk_update_guild_app_commands(guild_id, commands=commands)
 
     async def _bulk_write_app_commands(self, exclude: set) -> None:
         cmds = []
@@ -622,6 +567,8 @@ class Client(object):
         asyncio_debug: :class:`bool`
             Whether to enable debugging on the current loop.
         """
+        from acord.rest import RestApi
+
         if asyncio_debug:
             self.loop.set_debug(True)
 
@@ -630,7 +577,7 @@ class Client(object):
         if not token:
             raise ValueError("No token provided")
 
-        if not hasattr(self, "http"):
+        if not self.http:
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
         
         self.http.client = self
@@ -650,6 +597,14 @@ class Client(object):
             raise
 
         self.token = token
+
+        if not self.rest:
+            self.rest = RestApi(
+                token=self.token,
+                loop=self.loop,
+                cache=self.cache,
+                http_client=self.http
+            )
 
         self.loop.run_until_complete(self.shard_handler(
             self._bulk_write_app_commands(exclude_app_cmds)
@@ -678,52 +633,37 @@ class Client(object):
 
     def get_message(self, channel_id: int, message_id: int) -> Optional[Message]:
         """Returns the message stored in the internal cache, may be outdated"""
-        return self.cache.get_message(channel_id, message_id)
+        return self.rest.get_message(channel_id, message_id)
 
     def get_user(self, user_id: int) -> Optional[User]:
         """Returns the user stored in the internal cache, may be outdated"""
-        return self.cache.get_user(user_id)
+        return self.rest.get_user(user_id)
 
     def get_guild(self, guild_id: int) -> Optional[Guild]:
         """Returns the guild stored in the internal cache, may be outdated"""
-        return self.cache.get_guild(guild_id)
+        return self.rest.get_guild(guild_id)
 
     def get_channel(self, channel_id: int) -> Optional[Channel]:
         """Returns the channel stored in the internal cache, may be outdated"""
-        return self.cache.get_channel(channel_id)
+        return self.rest.get_channel(channel_id)
 
     # NOTE: Fetch from API:
 
     async def fetch_user(self, user_id: int) -> Optional[User]:
         """Fetches user from API and caches it"""
-
-        resp = await self.http.request(Route("GET", path=f"/users/{user_id}"))
-        user = User(conn=self.http, **(await resp.json()))
-
-        self.cache.add_user(user)
-        return user
+        return await self.rest.fetch_user(user_id)
 
     async def fetch_channel(self, channel_id: int) -> Optional[Channel]:
         """Fetches channel from API and caches it"""
-
-        resp = await self.http.request(Route("GET", path=f"/channels/{channel_id}"))
-        channel, _ = _d_to_channel((await resp.json()), self.http)
-
-        self.cache.add_channel(channel)
-        return channel
+        return await self.rest.fetch_channel(channel_id)
 
     async def fetch_message(
         self, channel_id: int, message_id: int
     ) -> Optional[Message]:
         """Fetches message from API and caches it"""
-
-        resp = await self.http.request(
-            Route("GET", path=f"/channels/{channel_id}/messages/{message_id}")
+        return await self.rest.fetch_message(
+            channel_id, message_id
         )
-        message = Message(conn=self.http, **(await resp.json()))
-
-        self.cache.add_message(message)
-        return message
 
     async def fetch_guild(
         self, guild_id: int, *, with_counts: bool = False
@@ -734,26 +674,16 @@ class Client(object):
             If with_counts is set to ``True``, it will allow fields ``approximate_presence_count``,
             ``approximate_member_count`` to be used.
         """
-
-        resp = await self.http.request(
-            Route("GET", path=f"/guilds/{guild_id}", with_counts=bool(with_counts)),
+        return await self.rest.fetch_guild(
+            guild_id, with_counts=with_counts
         )
-        guild = Guild(conn=self.http, **(await resp.json()))
 
-        self.cache.add_guild(guild)
-        return guild
-
-    async def fetch_glob_app_commands(self) -> Iterator[ApplicationCommand]:
+    async def fetch_glob_app_commands(self) -> AsyncIterator[ApplicationCommand]:
         """|coro|
 
         Fetches all global application commands registered by the client
         """
-        r = await self.http.request(
-            Route("GET", path=f"/applications/{self.user.id}/commands"),
-        )
-
-        for d in await r.json():
-            yield ApplicationCommand(conn=self.http, **d)
+        return await self.rest.fetch_glob_app_commands()
 
     async def fetch_glob_app_command(self, command_id: Snowflake) -> ApplicationCommand:
         """|coro|
@@ -765,11 +695,11 @@ class Client(object):
         command_id: :class:`Snowflake`
             ID of command to fetch
         """
-        r = await self.http.request(
-            Route("GET", path=f"/applications/{self.user.id}/commands/{command_id}")
-        )
+        return await self.rest.fetch_glob_app_command(command_id)
 
-        return ApplicationCommand(conn=self.http, **(await r.json()))
+    @property
+    def application_commands(self) -> dict:
+        return self.rest.application_commands
 
     # NOTE: default event handlers
 
