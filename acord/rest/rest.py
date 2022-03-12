@@ -416,4 +416,4 @@ class RestApi:
         return self
 
     async def __aexit__(self, *_):
-        ...
+        return
