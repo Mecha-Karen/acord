@@ -32,6 +32,7 @@ class InteractionServer(ABC, BaseModel):
             await rest.setup()
 
         ...
+
     """
     host: str
     """ Host to run server off of """
@@ -40,20 +41,8 @@ class InteractionServer(ABC, BaseModel):
 
     endpoint_route: str = "/interactions"
     """ Route endpoints should be received from """
-    server: Any = None
-    """Server this client is currently using.
-
-    .. DANGER::
-        This param may be set but server must be an instance of :class:`~aiohttp.web.Application`.
-        Or any object which mirrors the functionality of this object.
-
-        .. note::
-            If your using the ABC and not a default implementation,
-            this may be whatever you like.
-
-            Else consider passing any parameters for :class:`~aiohttp.web.Application`
-            as kwargs.
-    """
+    application: Any = None
+    """Application this client is currently using."""
 
     @abstractmethod
     async def setup(self, **kwds) -> None:
@@ -71,10 +60,8 @@ class InteractionServer(ABC, BaseModel):
         """
 
     @abstractmethod
-    async def run_server(self, **kwds) -> None:
-        """|coro|
-
-        Runs server,
+    def run_server(self, **kwds) -> None:
+        """Runs server,
         any additional kwargs may be passed.
         """
 

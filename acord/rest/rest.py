@@ -23,6 +23,7 @@ from acord import (
     UDAppCommand
 )
 from acord.errors import ApplicationCommandError
+from acord.rest.abc import InteractionServer
 from acord.utils import _d_to_channel
 from acord.core.http import HTTPClient
 from acord.core.abc import Route
@@ -57,6 +58,11 @@ class RestApi:
         Cache to use to store objects fetched by API
     http_client: Any
         Any object which implements the same functionality as :class:`HTTPClient`
+    server: :class:`InteractionServer`
+        An intialised interaction server to use for handling interactions.
+        
+        If left as ``None``,
+        no interactions will be dealt with
     **kwds:
         Additional kwargs to be passed through :class:`HTTPClient`,
         if it has not been already provided.
@@ -74,7 +80,8 @@ class RestApi:
         *,
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
         cache: Cache = DefaultCache(),
-        http_client: Any = None,
+        http_client: HTTPClient = None,
+        server: InteractionServer = None,
         **kwds
     ) -> None:
         self.token = token
@@ -85,10 +92,12 @@ class RestApi:
             client=self, token=self.token,
             loop=self.loop, **kwds
         )
+        self.server = server
         self.application_commands: Dict[str, List[UDAppCommand]] = dict()
         self.user = None
 
         self._set_up = False
+        self.task = None
 
     async def setup(
         self,
@@ -298,7 +307,7 @@ class RestApi:
             if command.name in exclude and isinstance(exclude, dict):
                 type = exclude[command.name]
 
-                if type == command.type:
+                if type == "*" or type == command.type:
                     continue
 
             if not command.guild_ids:
