@@ -121,6 +121,7 @@ class Client(object):
         An instance of the Rest API object
     """
     cache: Cache
+    glob_app_store: dict = {}
 
     def __init__(
         self,
@@ -396,11 +397,30 @@ class Client(object):
         extend: :class:`bool`
             Whether to extend current guild ids from the command class
         """
-        self.rest.register_application_command(
-            command=command,
-            guild_ids=guild_ids,
-            extend=extend
-        )
+        if guild_ids and (extend and command.extend):
+            command.guild_ids = command.guild_ids + guild_ids
+        elif guild_ids:
+            command.guild_ids = guild_ids
+        elif extend == []:
+            command.guild_ids = []
+
+        exists = self.application_commands.get(command.name)
+        if exists:
+            c = []
+            if isinstance(exists, list):
+                check = any(i for i in exists if i.type == command.type)
+                c.extend(exists)
+            else:
+                check = exists.type == command.type
+                c.append(exists)
+
+            if check is True:
+                raise ApplicationCommandError("Duplicate application command provided")
+
+        else:
+            c = command
+
+        self.application_commands.update({command.name: command})
 
     async def create_application_command(
         self,
@@ -547,6 +567,7 @@ class Client(object):
         reconnect: bool = True,
         update_app_commands: bool = True,
         exclude_app_cmds: set = set(),
+        overwrite_rest_ac: bool = True,
         asyncio_debug: bool = False
     ):
         """Runs client, loop blocking.
@@ -564,6 +585,13 @@ class Client(object):
             Whether to update app commands, *in bulk*.
         exclude_app_cmds: :class:`set`
             A set of app names to stop being updated/created
+        overwrite_rest_ac: :class:`bool`
+            Whether to overwrite :attr:`Client.rest.application_commands` with our current ones.
+
+            .. note::
+                This will not be used if the rest client has already been setup.
+                Meaning any registered commands from the client will not be added,
+                so it's best to add your commands via your rest class.
         asyncio_debug: :class:`bool`
             Whether to enable debugging on the current loop.
         """
@@ -609,6 +637,9 @@ class Client(object):
         if self.rest._set_up:
             logger.info("Client.rest has already been set, skipping")
         else:
+            if overwrite_rest_ac:
+                self.rest.application_commands.update(self.application_commands)
+
             self.loop.run_until_complete(self.rest.setup(
                 exclude=exclude_app_cmds, update_commands=update_app_commands
             ))
@@ -707,6 +738,8 @@ class Client(object):
 
     @property
     def application_commands(self) -> dict:
+        if not self.rest:
+            return self.glob_app_store
         return self.rest.application_commands
 
     # NOTE: default event handlers
