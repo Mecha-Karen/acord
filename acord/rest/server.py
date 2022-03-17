@@ -24,7 +24,7 @@ def handle_incoming_request(client, public_key):
             d = await request.json()
 
             # Return an ACK if we receive one
-            if (type := d.get(type)) is not None and type == 1:
+            if (type := d.get("type")) is not None and type == 1:
                 return web.Response(
                     body='{"type": 1}',
                     content_type="application/json"
