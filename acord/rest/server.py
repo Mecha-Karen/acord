@@ -6,6 +6,10 @@ from aiohttp import web
 from .abc import InteractionServer as BaseServer
 from acord.models import Interaction
 
+try:
+    from orjson import loads
+except ImportError:
+    from json import loads
 
 try:
     from nacl.signing import VerifyKey
@@ -20,8 +24,6 @@ def handle_incoming_request(client, public_key):
     verify_key = VerifyKey(bytes.fromhex(public_key))
 
     async def _handler(request: web.Request) -> Any:
-        print(await request.text())
-        print(request.headers)
 
         try:
             signature = request.headers["X-Signature-Ed25519"]
@@ -29,14 +31,24 @@ def handle_incoming_request(client, public_key):
             body = await request.text()
 
             verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
-        except (BadSignatureError, KeyError):
+        except BadSignatureError:
+            return web.Response(
+                body="BAD REQUEST",
+                status=401,
+                reason="Invalid header values"
+            )
+        except KeyError:
             return web.Response(
                 body="BAD REQUEST",
                 status=400,
                 reason="Invalid headers"
             )
+        data = loads(body)
 
-        return web.Response(body="{'type': '1'}")
+        interaction = Interaction()
+
+        if data["type"] == 1:
+            return web.Response(body='{"type": 1}')
 
     return _handler
 
