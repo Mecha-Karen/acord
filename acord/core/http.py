@@ -209,7 +209,7 @@ class HTTPClient(object):
             raise DiscordError(str(respData))
 
         if resp.status == 429:
-            if respData["global"]:
+            if respData.get("global", False):
                 self.ratelimiter.global_lock_set(respData["retry_after"])
                 raise HTTPException(429, "HTTP API is being ratelimited globally")
 
