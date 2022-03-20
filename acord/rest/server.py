@@ -20,34 +20,23 @@ def handle_incoming_request(client, public_key):
     verify_key = VerifyKey(bytes.fromhex(public_key))
 
     async def _handler(request: web.Request) -> Any:
-        if request.content_type == "application/json":
-            d = await request.json()
-
-            # Return an ACK if we receive one
-            if (type := d.get("type")) is not None and type == 1:
-                return web.Response(
-                    body='{"type": 1}',
-                    content_type="application/json"
-                )
-            return web.Response(
-                body=f"BAD REQUEST",
-                status=400,
-                reason="Invalid payload body"
-            )
+        print(await request.text())
+        print(request.headers)
 
         try:
             signature = request.headers["X-Signature-Ed25519"]
             timestamp = request.headers["X-Signature-Timestamp"]
-        except KeyError:
-            return web.Response(status=400, body="BAD REQUEST", reason="Missing headers")
-        body = (await request.text()).decode("utf-8")
+            body = request.data.decode("utf-8")
 
-        try:
             verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
-        except BadSignatureError:
-            return web.Response(status=401, body="BAD REQUEST", reason="Invalid header values")
+        except (BadSignatureError, KeyError):
+            return web.Response(
+                body="BAD REQUEST",
+                status=400,
+                reason="Invalid headers"
+            )
 
-        print(body)
+        return web.Response(body="{'type': '1'}")
 
     return _handler
 
