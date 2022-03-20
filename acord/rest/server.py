@@ -26,7 +26,7 @@ def handle_incoming_request(client, public_key):
         try:
             signature = request.headers["X-Signature-Ed25519"]
             timestamp = request.headers["X-Signature-Timestamp"]
-            body = request.data.decode("utf-8")
+            body = (await request.text()).decode("utf-8")
 
             verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
         except (BadSignatureError, KeyError):
