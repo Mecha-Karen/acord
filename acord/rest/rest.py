@@ -421,6 +421,9 @@ class RestApi:
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
 
+    async def _dispatch_slash(self, interaction) -> None:
+        print("Executed")
+
     async def __aenter__(self):
         return self
 
