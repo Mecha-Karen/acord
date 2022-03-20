@@ -74,7 +74,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         self.hook = acord.Webhook(
             conn=self.conn,
             id=self.id,
-            type=self.type,
+            type=1,
             guild_id=self.guild_id,
             channel_id=self.channel_id,
             user=self.user or getattr(self.member, "user"),
