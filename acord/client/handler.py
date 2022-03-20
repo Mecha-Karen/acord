@@ -12,12 +12,6 @@ from acord.errors import *
 from acord.models import *
 from acord.bases import *
 
-from acord.rest.rest import(
-    get_slash_options,
-    get_command,
-    exec_handler
-)
-
 CLOSE_CODES = (WSMsgType.CLOSED, WSMsgType.CLOSING, WSMsgType.CLOSE)
 logger = logging.getLogger(__name__)
 
@@ -74,6 +68,12 @@ async def handle_websocket(shard):
 
 
 async def _handle_websocket(shard):
+    from acord.rest.rest import(
+        get_slash_options,
+        get_command,
+        exec_handler
+    )
+
     UNAVAILABLE = dict()
 
     ws = shard.ws
