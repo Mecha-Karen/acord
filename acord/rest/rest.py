@@ -252,7 +252,7 @@ class RestApi:
         else:
             c = command
 
-        self.application_commands.update({command.name: command})
+        self.application_commands.update({command.name: c})
 
     async def create_application_command(
         self,
