@@ -12,47 +12,15 @@ from acord.errors import *
 from acord.models import *
 from acord.bases import *
 
+from acord.rest.rest import(
+    get_slash_options,
+    get_command,
+    exec_handler
+)
+
 CLOSE_CODES = (WSMsgType.CLOSED, WSMsgType.CLOSING, WSMsgType.CLOSE)
 logger = logging.getLogger(__name__)
 
-
-def get_slash_options(interaction: Interaction) -> dict:
-    data = dict()
-
-    for option in interaction.data.options:
-        data.update({option.name: option})
-    return data
-
-
-def get_command(client, name: str, type):
-    udac = client.application_commands.get(name)
-
-    if udac is not None:
-        if isinstance(udac, list):
-            # Use this to find command
-            for i in udac:
-                if i.type == type:
-                    udac = i
-                    break
-
-    return udac
-
-
-async def exec_handler(handler, interaction, option):
-    _, dev_handle, on_error = handler.__autocomplete__
-    
-    try:
-        return await handler(interaction, option), dev_handle
-    except Exception as exc:
-        try:
-            await on_error(
-                interaction,
-                (type(exc), exc, exc.__traceback__)
-            )
-        except Exception:
-            logger.error("Failed to trigger on_error for autocomplete", exc_info=1)
-    
-    return None, None
 
 class Empty:
     def dict(client):
