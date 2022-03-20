@@ -46,11 +46,12 @@ def handle_incoming_request(client, public_key):
         data = loads(body)
 
         if data["type"] == 1:
-            interaction = Interaction(conn=client.http, **data)
-
-            await client._dispatch_interaction(interaction)
-
             return web.Response(body='{"type": 1}')
+
+        interaction = Interaction(conn=client.http, **data)
+        await client._dispatch_interaction(interaction)
+
+        return web.Response()
 
     return _handler
 
