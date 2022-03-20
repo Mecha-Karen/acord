@@ -95,6 +95,7 @@ class RestApi:
         self.server = server
         self.application_commands: Dict[str, List[UDAppCommand]] = dict()
         self.user = None
+        self.client = self  # Some objects use `conn.client`
 
         self._set_up = False
         self.task = None
