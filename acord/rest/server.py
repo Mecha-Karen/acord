@@ -45,9 +45,11 @@ def handle_incoming_request(client, public_key):
             )
         data = loads(body)
 
-        interaction = Interaction()
-
         if data["type"] == 1:
+            interaction = Interaction(conn=client, **data)
+
+            await client._dispatch_slash(interaction)
+
             return web.Response(body='{"type": 1}')
 
     return _handler
