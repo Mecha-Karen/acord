@@ -16,6 +16,8 @@ examples/components/persistent.py                   @Seniatical
 examples/components/tic-tac-toe.py                  @Seniatical
 examples/misc/guess.py                              @sldless
 examples/REST/raw.py                                @Seniatical
+examples/REST/rest-api-obj.py                       @Seniatical
+examples/REST/servers.py                            @Seniatical
 
 # Guides - No index
 
