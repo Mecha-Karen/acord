@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 from typing import (
-    Any,
     Dict, 
     Optional, 
     AsyncIterator,
@@ -20,13 +19,59 @@ from acord import (
     Channel,
     ApplicationCommand,
     Snowflake,
-    UDAppCommand
+    UDAppCommand,
+    InteractionType,
+    ApplicationCommandType,
 )
 from acord.errors import ApplicationCommandError
+from acord.models.interaction import Interaction
 from acord.rest.abc import InteractionServer
 from acord.utils import _d_to_channel
 from acord.core.http import HTTPClient
 from acord.core.abc import Route
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def get_slash_options(interaction: Interaction) -> dict:
+    data = dict()
+
+    for option in interaction.data.options:
+        data.update({option.name: option})
+    return data
+
+
+def get_command(client, name: str, type):
+    udac = client.application_commands.get(name)
+
+    if udac is not None:
+        if isinstance(udac, list):
+            # Use this to find command
+            for i in udac:
+                if i.type == type:
+                    udac = i
+                    break
+
+    return udac
+
+
+async def exec_handler(handler, interaction, option):
+    _, dev_handle, on_error = handler.__autocomplete__
+    
+    try:
+        return await handler(interaction, option), dev_handle
+    except Exception as exc:
+        try:
+            await on_error(
+                interaction,
+                (type(exc), exc, exc.__traceback__)
+            )
+        except Exception:
+            logger.error("Failed to trigger on_error for autocomplete", exc_info=1)
+    
+    return None, None
 
 
 class RestApi:
@@ -43,10 +88,12 @@ class RestApi:
         .. rubric:: Things not handling by this object
 
         * Events: Events are not dispatched by this object,
-                  so it is adviced to stay away from the VOICE API
-        * Interactions: Interactions cannot be received unless :param:`RestApi.server` is provided
-                        Servers are ran as a task,
-                        so make sure your code doesnt contain anything loop blocking
+                  so it is adviced to stay away from the VOICE API.
+
+                  .. note::
+                        To receive interactions override the clients `on_interaction_create` function.
+
+        * Interactions: Interactions cannot be received unless you have a running server
 
     Parameters
     ----------
@@ -63,6 +110,15 @@ class RestApi:
         
         If left as ``None``,
         no interactions will be dealt with
+    handle_interactions: :class:`bool`
+        Whether to parse interactions,
+        defaults to ``True``.
+
+        .. warning::
+            Setting this to ``False`` will remove the following functionalities:
+
+            * Dispatching application commands
+            * Handling autocompletes
     **kwds:
         Additional kwargs to be passed through :class:`HTTPClient`,
         if it has not been already provided.
@@ -82,6 +138,7 @@ class RestApi:
         cache: Cache = DefaultCache(),
         http_client: HTTPClient = None,
         server: InteractionServer = None,
+        handle_interactions: bool = True,
         **kwds
     ) -> None:
         self.token = token
@@ -92,10 +149,13 @@ class RestApi:
             client=self, token=self.token,
             loop=self.loop, **kwds
         )
+        self.http.client = self
+
+        self.handle_interactions = handle_interactions
+
         self.server = server
         self.application_commands: Dict[str, List[UDAppCommand]] = dict()
         self.user = None
-        self.client = self  # Some objects use `conn.client`
 
         self._set_up = False
         self.task = None
@@ -422,8 +482,86 @@ class RestApi:
 
         return ApplicationCommand(conn=self.http, **(await r.json()))
 
-    async def _dispatch_slash(self, interaction) -> None:
-        print("Executed")
+    # Other stuff
+
+    async def on_interaction_create(self, interaction: Interaction, /) -> None:
+        return
+
+    async def _dispatch_interaction(self, interaction: Interaction) -> None:
+        # Executes slash command internally from an interaction
+        if not self.handle_interactions:
+            return await self.on_interaction_create(interaction)
+
+        if interaction.type == InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE:
+            command = get_command(self, interaction.data.name, interaction.data.type)
+
+            if not command:
+                return
+            
+            handlers = command.__pre_calls__.get("__autocompleters__")
+
+            if handlers is None:
+                command.auto_complete_handlers()
+
+                handlers = command.__pre_calls__["__autocompleters__"]
+
+            d = []
+
+            for option in interaction.data.options:
+                if not option.focused:
+                    continue
+                handler = handlers.get("*", handlers.get(option.name))
+
+                if not handler:
+                    continue
+                result, dev_handled = await exec_handler(handler, interaction, option)
+
+                if dev_handled or not result:
+                    continue
+
+                if isinstance(result, list):
+                    d.extend(result)
+                else:
+                    d.append(result)
+
+            await interaction.respond_to_autocomplete(d)
+
+        elif interaction.type == InteractionType.APPLICATION_COMMAND:
+            if not command:
+                return
+
+            args, kwds = (), {}
+            if interaction.data.type == ApplicationCommandType.CHAT_INPUT:
+                kwds = get_slash_options(interaction)
+            elif interaction.data.type == ApplicationCommandType.MESSAGE:
+                message = self.get_message(interaction.channel_id, interaction.data.target_id)
+                if not message:
+                    message = interaction.data.target_id
+                args = (message,)
+            else:
+                user = interaction.get_user(interaction.data.target_id)
+                if not user:
+                    user = interaction.data.target_id
+                args = (user,)
+
+            fut = self.loop.create_future()
+            self.loop.create_task(
+                command.dispatcher(interaction, fut, *args, **kwds),
+                name=f"app_cmd dispatcher : {command.name}",
+            )
+
+            possible_exc = await asyncio.wait_for(fut, None)
+            if isinstance(possible_exc, Exception):
+                logger.exception(
+                    "Failed to run command %s", command.name,
+                    exc_info=(
+                        type(possible_exc),
+                        possible_exc,
+                        possible_exc.__traceback__
+                    )
+                )
+
+        await self.on_interaction_create(interaction)
 
     async def __aenter__(self):
         return self
