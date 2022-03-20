@@ -527,6 +527,7 @@ class RestApi:
             await interaction.respond_to_autocomplete(d)
 
         elif interaction.type == InteractionType.APPLICATION_COMMAND:
+            command = get_command(self, interaction.data.name, interaction.data.type)
             if not command:
                 return
 
