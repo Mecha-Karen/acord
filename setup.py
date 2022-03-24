@@ -2,10 +2,13 @@ from setuptools import setup
 import re
 import sys
 import os
+import platform
 
-versionInfo = sys.version_info
+version_info = sys.version_info
+sys_arch = platform.architecture()[0]
+u_sys = platform.system()
 
-if (versionInfo.major < 3) and (versionInfo.minor < 8):
+if (version_info.major < 3) and (version_info.minor < 8):
     sys.exit("Cannot install ACord on python version below 3.8, Please upgrade!")
 
 version = ""
@@ -66,6 +69,12 @@ except ImportError:
     # Wheel lib needed for binaries
     extra_requires["voice"].append("wheel")
 
+if sys_arch == "32-bit":
+    package_data = ["bin/libopus-0.x86.dll"]
+else:
+    package_data = ["bin/libopus-0.x64.dll"]
+ZIP_SAFE = False
+
 setup(
     name="ACord",
     version=version,
@@ -83,6 +92,10 @@ setup(
     license="GNU License",
     classifiers=classifiers,
     packages=packages,
+    package_data={
+        "acord": package_data
+    },
+    zip_safe=ZIP_SAFE,
     install_requires=["aiohttp", "pydantic"],
     extra_requires=extra_requires,
 )
