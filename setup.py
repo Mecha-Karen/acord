@@ -69,7 +69,7 @@ except ImportError:
     # Wheel lib needed for binaries
     extra_requires["voice"].append("wheel")
 
-if sys_arch == "32-bit":
+if sys_arch == "32bit":
     package_data = ["bin/libopus-0.x86.dll"]
 else:
     package_data = ["bin/libopus-0.x64.dll"]
