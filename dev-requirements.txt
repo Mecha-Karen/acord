@@ -2,4 +2,4 @@ pydata-sphinx-theme==0.8.1
 sphinx==4.4.0
 black==22.1.0
 flake8==4.0.1
-mypy==0.941
+mypy==0.942
