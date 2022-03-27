@@ -31,7 +31,7 @@ class BasePlayer(BaseTransport):
         conn: VoiceConnection,
         data: Union[BufferedIOBase, PathLike],
         encoder: Encoder = None,
-        **encoder_kwargs
+        **encoder_kwargs,
     ) -> None:
         if isinstance(data, File):
             data = data.fp
@@ -135,7 +135,9 @@ class BasePlayer(BaseTransport):
                     # Socket closed
                     return 1
 
-                await asyncio.sleep(getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE))
+                await asyncio.sleep(
+                    getFrameDur(len(packet), self.encoder.config.SAMPLING_RATE)
+                )
 
             except VoiceError as err:
                 if getattr(err, "closed", False):

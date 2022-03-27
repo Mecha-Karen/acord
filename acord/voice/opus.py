@@ -52,19 +52,13 @@ class Encoder(OpusEncoder):
         # NOTE: await further changes from PyOgg for bitrate and other funcs
 
     async def encode(self, pcm: bytes) -> bytes:
-        ef_frame_size = (
-            len(pcm)
-            // 2    # Sample Width
-            // self.config.CHANNELS
-        )
+        ef_frame_size = len(pcm) // 2 // self.config.CHANNELS  # Sample Width
 
         if ef_frame_size < self.config.EF_FRAME_SIZE:
             # If frame size is lower then desired config
             # Pad end of packet with silence
             # This should only be applicable at the end of audio files
             # Which is were you may notice that silence
-            pcm += (b"\x00"
-                    * (self.config.EF_FRAME_SIZE - ef_frame_size)
-            )
+            pcm += b"\x00" * (self.config.EF_FRAME_SIZE - ef_frame_size)
 
         return await self.loop.run_in_executor(None, super().encode, pcm)

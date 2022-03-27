@@ -23,7 +23,7 @@ from acord.bases import (
     ScheduledEventStatus,
     StagePrivacyLevel,
     IMessageFlags,
-    InteractionCallback
+    InteractionCallback,
 )
 from acord.bases.embeds import _rgb_to_hex
 from acord.ext.application_commands.option import SlashOption
@@ -35,6 +35,7 @@ from .models import (
     PartialChannel,
     ScheduledEventMetaData,
 )
+from acord.bases.enums.guild import GuildFeatures
 
 
 def _get_image_mimetype(data):
@@ -361,7 +362,7 @@ class WebhookCreatePayload(pydantic.BaseModel):
 
     @pydantic.validator("avatar")
     def _validate_av(cls, avatar) -> File:
-        assert avatar.is_closed() is False, "File must be open"     # type: ignore
+        assert avatar.is_closed() is False, "File must be open"  # type: ignore
         return avatar
 
     def dict(self, **kwargs) -> dict:
@@ -392,7 +393,7 @@ class WebhookEditPayload(pydantic.BaseModel):
 
     @pydantic.validator("avatar")
     def _validate_av(cls, avatar) -> File:
-        assert avatar.is_closed() is False, "File must be open"     # type: ignore
+        assert avatar.is_closed() is False, "File must be open"  # type: ignore
         return avatar
 
     def dict(self, **kwargs) -> dict:
@@ -447,6 +448,47 @@ class GuildTemplateCreatePayload(pydantic.BaseModel):
         return data
 
 
+class GuildEditPayload(pydantic.BaseModel):
+    name: Optional[str]
+    region: Optional[str]
+    verification_level: Optional[str]
+    default_message_notifications: Optional[str]
+    explicit_content_filter: Optional[int]
+    afk_channel_id: Optional[Snowflake]
+    afk_timeout: Optional[int]
+    icon: Optional[File]
+    owner_id: Optional[Snowflake]
+    splash: Optional[File]
+    discovery_splash: Optional[File]
+    banner: Optional[File]
+    system_channel_id: Optional[Snowflake]
+    system_channel_flags: Optional[Snowflake]
+    rules_channel_id: Optional[Snowflake]
+    public_updates_channel_id: Optional[Snowflake]
+    preferred_locale: Optional[str]
+    features: Optional[List[GuildFeatures]]
+    description: Optional[str]
+    premium_progress_bar_enabled: Optional[bool]
+
+    def dict(self, **kwargs) -> dict:
+        """:meta private:"""
+        kwargs.update({"exclude": {"icon", "splash", "discovery_splash", "banner"}})
+
+        data = super(GuildEditPayload, self).dict(**kwargs)
+
+        icon = self.icon
+        splash = self.splash
+        discovery_splash = self.discovery_splash
+        banner = self.banner
+
+        data["icon"] = _file_to_image_data(icon)
+        data["splash"] = _file_to_image_data(splash)
+        data["discovery_splash"] = _file_to_image_data(discovery_splash)
+        data["banner"] = _file_to_image_data(banner)
+
+        return data
+
+
 class TemplateCreatePayload(pydantic.BaseModel):
     name: str
     description: Optional[str]
@@ -494,11 +536,11 @@ class ScheduledEventEditPayload(ScheduledEventCreatePayload):
     # dont need to re-add validators
     # ignored types due to mypy not liking how some params are now optional
     entity_type: Optional[ScheduledEventEntityType]
-    name: Optional[str]                                 # type: ignore
+    name: Optional[str]  # type: ignore
     channel_id: Optional[Snowflake]
     entity_metadata: Optional[ScheduledEventMetaData]
     privacy_level: ScheduledEventPrivacyLevel
-    scheduled_start_time: Optional[datetime.datetime]   # type: ignore
+    scheduled_start_time: Optional[datetime.datetime]  # type: ignore
     scheduled_end_time: Optional[datetime.datetime]
     description: Optional[str]
     status: Optional[ScheduledEventStatus]

@@ -18,7 +18,7 @@ def _rgb_to_hex(rgb) -> str:
 
 
 class DiscordImageURL(pydantic.AnyUrl):
-    allowed_schemes = {'http', 'https', 'attachment'}
+    allowed_schemes = {"http", "https", "attachment"}
 
 
 class EmbedColor(Color):
@@ -78,9 +78,7 @@ class EmbedProvidor(pydantic.BaseModel):
 class Embed(pydantic.BaseModel):
     class Config(pydantic.BaseConfig):
         allow_population_by_field_name = True
-        fields = {
-            "color": {"alias": "colour"}
-        }
+        fields = {"color": {"alias": "colour"}}
 
     """An object representing a discord embed"""
 
@@ -208,7 +206,7 @@ class Embed(pydantic.BaseModel):
         """
         field = EmbedField(**data)
 
-        fields = self.fields    # type: List[EmbedField]
+        fields = self.fields  # type: List[EmbedField]
 
         if (len(fields) + 1) > 21:
             raise ValueError("Embed cannot contain more then 21 fields")

@@ -53,15 +53,17 @@ def _d_to_channel(DATA, conn):
     return channel
 
 
-def message_multipart_helper(payload_class, exclude, inner_key=None, **kwds) -> FormData:
+def message_multipart_helper(
+    payload_class, exclude, inner_key=None, **kwds
+) -> FormData:
     """Helper for sending multipart form messages"""
     r_payload = payload_class(**kwds)
     payload = getattr(r_payload, inner_key) if inner_key else r_payload
 
     if not any(i for i in REQUIRED_KEYS if getattr(payload, i) is not None):
-        raise ValueError("Message must contain one of: {}".format(
-            ", ".join(REQUIRED_KEYS)
-        ))
+        raise ValueError(
+            "Message must contain one of: {}".format(", ".join(REQUIRED_KEYS))
+        )
 
     if any(i for i in (payload.embeds or list()) if i.characters() > 6000):
         raise ValueError("Embeds cannot contain more then 6000 characters")
@@ -88,6 +90,7 @@ def message_multipart_helper(payload_class, exclude, inner_key=None, **kwds) -> 
     )
 
     return form
+
 
 def copy(obj, **kwds) -> Any:
     return deepcopy(obj, **kwds)

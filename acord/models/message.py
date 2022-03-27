@@ -14,7 +14,7 @@ from acord.models import (
     Snowflake,
     Attachment,
     Member,
-    PartialEmoji
+    PartialEmoji,
 )
 from acord.errors import APIObjectDepreciated
 
@@ -220,9 +220,8 @@ class Message(pydantic.BaseModel, Hashable):
             )
         )
         data = await res.json()
-        users = list(                                               # type: ignore
-            lambda user_data: User(conn=self.conn, **user_data),
-            data
+        users = list(  # type: ignore
+            lambda user_data: User(conn=self.conn, **user_data), data
         )
 
         return users
@@ -465,7 +464,7 @@ class Message(pydantic.BaseModel, Hashable):
 
 class WebhookMessage(Message):
     webhook: Any
-    """ Webhook this message was sent from """ 
+    """ Webhook this message was sent from """
 
     async def edit(self, *kwds) -> WebhookMessage:
         """|coro|
@@ -476,9 +475,7 @@ class WebhookMessage(Message):
             Refer to :meth:`Webhook.edit_message` for parameters
             and additional guidance.
         """
-        return await self.webhook.edit_message(
-            self.id, **kwds
-        )
+        return await self.webhook.edit_message(self.id, **kwds)
 
     async def delete(self, **kwds) -> None:
         """
@@ -488,6 +485,4 @@ class WebhookMessage(Message):
             Refer to :meth:`Webhook.delete_message` for parameters
             and additional guidance.
         """
-        return await self.webhook.delete_message(
-            self.id, **kwds
-        )
+        return await self.webhook.delete_message(self.id, **kwds)

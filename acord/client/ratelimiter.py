@@ -34,6 +34,7 @@ class GatewayRatelimiter(ABC, BaseModel):
             lock.increment(..., )
             return await request(..., )
     """
+
     max_requests: Tuple[int, int]
     """ A tuple containing the limit of requests allowed to be made, (rate, per) """
     current_requests: Dict[int, int] = {}
@@ -59,15 +60,14 @@ class GatewayRatelimiter(ABC, BaseModel):
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        traceback: Optional[TracebackType]
+        traceback: Optional[TracebackType],
     ) -> None:
         ...
 
-
     @abstractmethod
     def increment(self, key: int, lock_if_exceed: bool = False) -> None:
-        """ Increments the total number of requests 
-        
+        """Increments the total number of requests
+
         Parameters
         ----------
         key: :class:`int`
@@ -88,8 +88,8 @@ class GatewayRatelimiter(ABC, BaseModel):
 
     @abstractmethod
     def lock(self, key: int) -> None:
-        """ Locks ratelimiter till next refresh 
-        
+        """Locks ratelimiter till next refresh
+
         Parameters
         ----------
         key: :class:`int`
@@ -98,10 +98,10 @@ class GatewayRatelimiter(ABC, BaseModel):
 
     @abstractmethod
     async def hold_until_reset(self, key: int) -> None:
-        """ |coro|
-        
-        Blocks until the next reset 
-        
+        """|coro|
+
+        Blocks until the next reset
+
         Parameters
         ----------
         key: :class:`int`
@@ -111,7 +111,7 @@ class GatewayRatelimiter(ABC, BaseModel):
     @abstractmethod
     def add_shard(self, shard, overwrite: bool = False) -> None:
         """Adds a :class:`Shard` to the ratelimiter
-        
+
         Parameters
         ----------
         shard: :class:`Shard`
@@ -121,11 +121,9 @@ class GatewayRatelimiter(ABC, BaseModel):
 
 ## Default implementation
 
+
 class DefaultGatewayRatelimiter(GatewayRatelimiter):
-    max_requests: Tuple[int, int] = (
-        (120 - 3),
-        60
-    )
+    max_requests: Tuple[int, int] = ((120 - 3), 60)
 
     def __init__(self, **kwds) -> None:
         super().__init__(**kwds)
@@ -168,7 +166,7 @@ class DefaultGatewayRatelimiter(GatewayRatelimiter):
             self.tasks[key].pop("lock")
 
         task = loop.create_task(future())
-        
+
         if not tasks:
             self.task[key] = {"lock": task}
         else:
@@ -183,13 +181,13 @@ class DefaultGatewayRatelimiter(GatewayRatelimiter):
             await lock_task
         else:
             futs = self.tasks.get("futures")
-            
+
             if futs:
                 await futs[0]
             else:
                 # Spawn and wait
                 fut = loop.create_future()
-                
+
                 if futs is None:
                     self.tasks["futures"] = [fut]
                 else:
@@ -200,9 +198,9 @@ class DefaultGatewayRatelimiter(GatewayRatelimiter):
     def add_shard(self, shard, overwrite: bool = False) -> None:
         key = shard.ratelimit_key
 
-        if (shards := self.shards.get(key)):
+        if shards := self.shards.get(key):
             if shard in shards and overwrite:
-                shards.update((shard, ))
+                shards.update((shard,))
                 self.shards[key] = shards
         else:
             self.shards[key] = {shard}

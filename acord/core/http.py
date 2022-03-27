@@ -32,7 +32,11 @@ from acord.errors import (
 from acord.models import User
 from . import abc
 from .decoders import *
-from .ratelimiter import DefaultHTTPRatelimiter, HTTPRatelimiter, parse_ratelimit_headers
+from .ratelimiter import (
+    DefaultHTTPRatelimiter,
+    HTTPRatelimiter,
+    parse_ratelimit_headers,
+)
 from aiohttp import FormData
 
 logger = logging.getLogger(__name__)
@@ -82,7 +86,7 @@ class HTTPClient(object):
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop(),
         ratelimiter: HTTPRatelimiter = DefaultHTTPRatelimiter(
             max_requests=(10000, (60 * 10))
-        )
+        ),
     ) -> None:
         self.client = client
         self.token = token
@@ -112,17 +116,19 @@ class HTTPClient(object):
             .. warning::
                 You may not include ``connector`` and ``loop`` kwargs.
         """
-        self._session = aiohttp.ClientSession(connector=self.connector, loop=self.loop, **kwds)
+        self._session = aiohttp.ClientSession(
+            connector=self.connector, loop=self.loop, **kwds
+        )
 
         self.token = token or self.token
 
         if not self.token:
-            raise 
+            raise
 
         try:
             r = await self.request(abc.Route("GET", path="/users/@me"))
             r.raise_for_status()
-            
+
             logger.info("Client has successfully logged in")
         except HTTPException as exc:
             logger.error("Failed to login to discord, improper token passed")
@@ -135,7 +141,7 @@ class HTTPClient(object):
 
     async def logout(self):
         """|coro|
-        
+
         Logs client out from session"""
         logger.info("Logging user out")
         await self.request(abc.Route("POST", path="/auth/logout"))

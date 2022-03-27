@@ -151,7 +151,7 @@ class Member(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         await self.conn.request(
-            Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),    # type: ignore
+            Route("DELETE", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),  # type: ignore
             headers=headers,
         )
 
@@ -189,7 +189,7 @@ class Member(pydantic.BaseModel, Hashable):
             headers.update({"X-Audit-Log-Reason": reason})
 
         r = await self.conn.request(
-            Route("PATCH", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),     # type: ignore
+            Route("PATCH", path=f"/guilds/{self.guild_id}/members/{self.user.id}"),  # type: ignore
             headers=headers,
             data=payload,
         )
@@ -223,7 +223,7 @@ class Member(pydantic.BaseModel, Hashable):
         await self.conn.request(
             Route(
                 "PUT",
-                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",     # type: ignore
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",  # type: ignore
             ),
             headers=headers,
         )
@@ -273,7 +273,7 @@ class Member(pydantic.BaseModel, Hashable):
         await self.conn.request(
             Route(
                 "DELETE",
-                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",     # type: ignore
+                path=f"/guilds/{self.guild_id}/members/{self.user.id}/roles/{role.id}",  # type: ignore
             ),
             headers=headers,
         )

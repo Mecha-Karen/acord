@@ -7,15 +7,17 @@ from aiohttp import ClientSession
 from acord.bases.enums.interactions import InteractionCallback
 
 from acord.models import (
-    Snowflake, User, WebhookMessage,
+    Snowflake,
+    User,
+    WebhookMessage,
 )
 from acord.bases import Hashable, Modal
 from acord.payloads import (
     MessageEditPayload,
-    WebhookMessageCreate, 
+    WebhookMessageCreate,
     WebhookEditPayload,
     InteractionMessageCreate,
-    FormPartHelper
+    FormPartHelper,
 )
 from acord.ext.application_commands import AutoCompleteChoice
 from acord.core.abc import Route, buildURL
@@ -31,7 +33,7 @@ url_pattern = re.compile(
 
 class Webhook(Hashable, pydantic.BaseModel):
     """Representation of a discord webhook
-    
+
     This class can simply be used for sending simple messages,
     and editing and deleting them.
     Only **IF** you stick to the default session.
@@ -45,6 +47,7 @@ class Webhook(Hashable, pydantic.BaseModel):
         it is recommended to use the webhook class,
         instead of :class:`Interaction`
     """
+
     conn: Any
 
     id: Snowflake
@@ -88,9 +91,9 @@ class Webhook(Hashable, pydantic.BaseModel):
     ## NOTE: Default Methods
 
     async def fetch_message(
-        self, 
-        message_id: Snowflake, 
-        *, 
+        self,
+        message_id: Snowflake,
+        *,
         thread_id: Snowflake = None,
         use_application_id: bool = False,
     ) -> WebhookMessage:
@@ -105,7 +108,7 @@ class Webhook(Hashable, pydantic.BaseModel):
         thread_id: :class:`Snowflake`
             ID of thread message is in
         use_application_id: :class:`bool`
-            Whether to use the application id instead of the webhook id 
+            Whether to use the application id instead of the webhook id
             when fetching message
         """
         id = self.application_id if use_application_id else self.id
@@ -113,19 +116,19 @@ class Webhook(Hashable, pydantic.BaseModel):
         route = Route(
             "GET",
             path=f"webhooks/{id}/{self.token}/messages/{message_id}",
-            thread_id=thread_id
+            thread_id=thread_id,
         )
 
         r = await self.conn.request(route)
         return WebhookMessage(conn=self.conn, webhook=self, **(await r.json()))
 
     async def delete_message(
-        self, 
-        message_id: Snowflake, 
-        *, 
-        thread_id: Snowflake = None, 
+        self,
+        message_id: Snowflake,
+        *,
+        thread_id: Snowflake = None,
         reason: str = None,
-        use_application_id: bool = False
+        use_application_id: bool = False,
     ) -> None:
         """|coro|
 
@@ -152,7 +155,7 @@ class Webhook(Hashable, pydantic.BaseModel):
             Route(
                 "DELETE",
                 f"/webhooks/{id}/{self.token}/messages/{message_id}",
-                thread_id=thread_id
+                thread_id=thread_id,
             ),
             headers=headers,
         )
@@ -163,7 +166,7 @@ class Webhook(Hashable, pydantic.BaseModel):
         *,
         thread_id: Snowflake = None,
         use_application_id: bool = False,
-        **kwds
+        **kwds,
     ) -> WebhookMessage:
         """|coro|
 
@@ -182,26 +185,20 @@ class Webhook(Hashable, pydantic.BaseModel):
         use_application_id: :class:`bool`
             Whether to use the application ID instead of the Webhook ID
         """
-        form_data = message_multipart_helper(
-            MessageEditPayload, {"files"}, **kwds
-        )
+        form_data = message_multipart_helper(MessageEditPayload, {"files"}, **kwds)
         id = self.application_id if use_application_id else self.id
 
         route = Route(
             "PATCH",
             path=f"/webhooks/{id}/{self.token}/messages/{message_id}",
-            thread_id=thread_id
+            thread_id=thread_id,
         )
         r = await self.conn.request(route, data=form_data)
 
         return WebhookMessage(conn=self.conn, webhook=self, **(await r.json()))
 
     async def execute(
-        self,
-        *,
-        wait: bool = False,
-        thread_id: Snowflake = None,
-        **kwds
+        self, *, wait: bool = False, thread_id: Snowflake = None, **kwds
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -222,26 +219,19 @@ class Webhook(Hashable, pydantic.BaseModel):
         avatar_url: :class:`str`
             **URL** of avatar to override default avatar
         """
-        form_data = message_multipart_helper(
-            WebhookMessageCreate, {"files"},
-            **kwds
-        )
+        form_data = message_multipart_helper(WebhookMessageCreate, {"files"}, **kwds)
 
         route = Route(
             "POST",
             path=f"/webhooks/{self.id}/{self.token}",
             thread_id=thread_id,
-            wait=str(wait).lower()  # True -> true
+            wait=str(wait).lower(),  # True -> true
         )
 
         r = await self.conn.request(route, data=form_data)
 
         if wait:
-            return WebhookMessage(
-                conn=self.conn,
-                webhook=self,
-                **(await r.json())
-            )
+            return WebhookMessage(conn=self.conn, webhook=self, **(await r.json()))
 
     async def edit(
         self, *, reason: str = None, with_token: bool = True, auth: str = None, **kwds
@@ -284,13 +274,10 @@ class Webhook(Hashable, pydantic.BaseModel):
         r = await self.conn.request(
             Route("POST", path=f"/webhooks/{self.id}/{tk}"),
             headers=headers,
-            data=payload.json()
+            data=payload.json(),
         )
 
-        return Webhook(
-            conn=self.conn,
-            **(await r.json())
-        )
+        return Webhook(conn=self.conn, **(await r.json()))
 
     async def delete(
         self, *, reason: str = None, with_token: bool = True, auth: str = None
@@ -324,8 +311,7 @@ class Webhook(Hashable, pydantic.BaseModel):
             tk = self.token
 
         await self.conn.request(
-            Route("DELETE", path=f"/webhooks/{self.id}/{tk}"),
-            headers=headers
+            Route("DELETE", path=f"/webhooks/{self.id}/{tk}"), headers=headers
         )
 
     ## NOTE: For interactions
@@ -356,15 +342,13 @@ class Webhook(Hashable, pydantic.BaseModel):
         else:
             d_type = InteractionCallback.CHANNEL_MESSAGE_WITH_SOURCE
 
-        route = Route(
-            "POST",
-            path=f"/interactions/{self.id}/{self.token}/callback"
-        )
+        route = Route("POST", path=f"/interactions/{self.id}/{self.token}/callback")
         form_data = message_multipart_helper(
-            FormPartHelper, {"data": {"files"}},
+            FormPartHelper,
+            {"data": {"files"}},
             inner_key="data",
             data=InteractionMessageCreate(**kwds),
-            type=d_type
+            type=d_type,
         )
 
         await self.conn.request(route, data=form_data)
@@ -384,7 +368,7 @@ class Webhook(Hashable, pydantic.BaseModel):
         await self.conn.request(
             Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
             data=d.json(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
     async def respond_to_autocomplete(self, choices: List[AutoCompleteChoice]) -> None:
@@ -400,12 +384,14 @@ class Webhook(Hashable, pydantic.BaseModel):
         """
         d = {"choices": choices}
 
-        d = FormPartHelper(type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=d)
+        d = FormPartHelper(
+            type=InteractionCallback.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT, data=d
+        )
 
         await self.conn.request(
             Route("POST", path=f"/interactions/{self.id}/{self.token}/callback"),
             data=d.json(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
     async def send_followup_message(self, **kwds) -> None:
@@ -423,10 +409,7 @@ class Webhook(Hashable, pydantic.BaseModel):
             Flags for message
         """
 
-        route = Route(
-            "POST",
-            path=f"/webhooks/{self.application_id}/{self.token}"
-        )
+        route = Route("POST", path=f"/webhooks/{self.application_id}/{self.token}")
 
         form_data = message_multipart_helper(
             InteractionMessageCreate, {"files"}, **kwds

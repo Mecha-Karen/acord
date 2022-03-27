@@ -49,6 +49,7 @@ class UDPConnection(object):
         Any kwargs for connecting to the socket,
         type and family are overwritten.
     """
+
     def __init__(self, host, port, loop, client, vc_Ws, conn_id, **kwds) -> None:
         kwds.update({"type": socket.AF_INET, "family": socket.SOCK_DGRAM})
 
@@ -69,7 +70,7 @@ class UDPConnection(object):
         """|coro|
 
         Connects to the UDP port.
-        
+
         .. note::
             It will attempt to connect to the port 5 times before failing,
             this will only occur when it fails with codes 121 or 10060.
@@ -108,25 +109,25 @@ class UDPConnection(object):
         self._sock_event.set()
 
     def is_connected(self):
-        """ Whether the socket is connected """
+        """Whether the socket is connected"""
         return self._sock_event.is_set()
 
     async def wait_until_connected(self) -> None:
         """|coro|
-        
-        Wait until the socket has connected """
+
+        Wait until the socket has connected"""
         await self._sock_event.wait()
 
     async def close(self) -> None:
         """|coro|
 
-        Closes the socket connection """
+        Closes the socket connection"""
         logger.debug(f"Closing connection with {self.host}:{self.port}")
         await self._sock.close()
 
     async def read(self, *, limit: int = None, flags: int = 0) -> bytes:
         """|coro|
-        
+
         Reads from the socket stream
 
         Parameters

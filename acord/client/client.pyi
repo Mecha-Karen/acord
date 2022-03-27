@@ -1,20 +1,31 @@
 import asyncio
-from typing import Any, AsyncGenerator, Callable, Dict, List, Literal, Optional, Tuple, Union, overload
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    overload,
+)
 from acord.bases import _C
 
 from acord import (
-    User, 
-    Presence, 
-    Snowflake, 
-    StageInstance, 
+    User,
+    Presence,
+    Snowflake,
+    StageInstance,
     StagePrivacyLevel,
     Guild,
-    UDAppCommand, 
+    UDAppCommand,
     ApplicationCommand,
     VoiceConnection,
     Message,
     Channel,
-    Shard
+    Shard,
 )
 
 class Client(object):
@@ -102,10 +113,7 @@ class Client(object):
         reason: str,
     ) -> StageInstance: ...
     @overload
-    def register_application_command(
-        self,
-        command: UDAppCommand
-    ) -> None: ...
+    def register_application_command(self, command: UDAppCommand) -> None: ...
     @overload
     def register_application_command(
         self,
@@ -116,7 +124,7 @@ class Client(object):
     ) -> None: ...
     @overload
     async def create_application_command(
-        command: UDAppCommand
+        command: UDAppCommand,
     ) -> Union[ApplicationCommand, List[ApplicationCommand]]: ...
     @overload
     async def create_application_command(
@@ -127,7 +135,9 @@ class Client(object):
         extend: bool = True,
     ) -> Union[ApplicationCommand, List[ApplicationCommand]]: ...
     @overload
-    async def bulk_update_global_app_commands(self, commands: List[UDAppCommand]) -> None: ...
+    async def bulk_update_global_app_commands(
+        self, commands: List[UDAppCommand]
+    ) -> None: ...
     @overload
     async def bulk_update_guild_app_commands(
         self,
@@ -159,9 +169,13 @@ class Client(object):
         self, guild_id: int, *, with_counts: bool = False
     ) -> Optional[Guild]: ...
     @overload
-    async def fetch_glob_app_commands(self) -> AsyncGenerator[ApplicationCommand, None]: ...
+    async def fetch_glob_app_commands(
+        self,
+    ) -> AsyncGenerator[ApplicationCommand, None]: ...
     @overload
-    async def fetch_glob_app_command(self, command_id: Snowflake) -> ApplicationCommand: ...
+    async def fetch_glob_app_command(
+        self, command_id: Snowflake
+    ) -> ApplicationCommand: ...
     @overload
     async def gof_channel(self, channel_id: int) -> Optional[Channel]: ...
     @overload

@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 class KeepAlive(Thread, ABC):
     """Represents a keep alive handler.
-    
+
     .. DANGER::
-        If you are not overwriting :meth:`KeepAlive.run`, 
+        If you are not overwriting :meth:`KeepAlive.run`,
         you will need to provide the following attrs.
 
     Attributes
@@ -24,11 +24,12 @@ class KeepAlive(Thread, ABC):
         Time to wait between heartbeats,
         in seconds.
     """
+
     _ended: bool
     _interval: int
 
     def run(self):
-        """ Default .run function,
+        """Default .run function,
         calls :meth:`KeepAlive.send_heartbeat` every n seconds.
 
         .. note::
@@ -44,15 +45,15 @@ class KeepAlive(Thread, ABC):
 
     @abstractmethod
     def send_heartbeat(self):
-        """ Sends a heartbeat """
+        """Sends a heartbeat"""
 
     @abstractmethod
     def get_payload(self):
-        """ Gets heartbeat payload """
+        """Gets heartbeat payload"""
 
     @abstractmethod
     def ack(self):
-        """ Called when server responds with an ACK to our heartbeat """   
+        """Called when server responds with an ACK to our heartbeat"""
 
 
 class GatewayKeepAlive(KeepAlive):
@@ -85,7 +86,9 @@ class GatewayKeepAlive(KeepAlive):
         self.sent_at = time.perf_counter()
         self._waiting_for_ack = True
 
-        logger.info(f"Sent heartbeat for shard {self.shard.shard_id}, waiting {self._interval} seconds...")
+        logger.info(
+            f"Sent heartbeat for shard {self.shard.shard_id}, waiting {self._interval} seconds..."
+        )
 
     def get_payload(self):
         return {"op": gateway.HEARTBEAT, "d": self.shard.sequence}
