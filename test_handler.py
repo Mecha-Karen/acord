@@ -1,6 +1,6 @@
 import acord
 import os
-bot = acord.Bot(prefix="ab!",intents=acord.Intents.ALL)
+bot = acord.Commander(prefix="ab!",intents=acord.Intents.ALL)
 # access the acord bot object by:
 @bot.bot.on("ready")
 def awake():
@@ -9,4 +9,4 @@ def awake():
 async def test(ctx):
   return await ctx.author.send(content="ping!")
 
-bot.run(token="OTQ3NDM5Mzg5OTM4Njc5ODEw.YhtRsQ.hbtjE7CwxhDxv8vF1rII0UiwSos")
+bot.run(token=...)
