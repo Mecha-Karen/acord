@@ -22,6 +22,7 @@ from .client import (
     Cache,
     DefaultCache
 )
+from .Bot import Commander
 from .webhooks.webhook import Webhook, WebhookType
 from .voice.transports.base import BaseTransport
 from .voice.transports.reader import BaseReceiver
