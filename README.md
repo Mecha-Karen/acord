@@ -39,21 +39,7 @@ git clone https://github.com/Mecha-Karen/acord
 pip3 install .
 ```
 
-## Beta feature:
-Accord.Commander:
-```python
-import acord
-import os
-bot = acord.Commander(prefix="ab!",intents=acord.Intents.ALL)
-# access the acord bot object by:
 
-@bot.command()
-async def test(ctx):
-  return await ctx.author.send(content="ping!")
-
-bot.run(token=...)
-```
-This is a WIP feature and DOES NOT support anything else besides commands YET
 
 
 ## Examples
