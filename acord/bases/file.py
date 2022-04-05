@@ -54,7 +54,9 @@ class File(pydantic.BaseModel):
 
         return spoiler
 
-    def reset(self, seek: Optional[bool] = False, offset: int = 0, whence: int = 0) -> None:
+    def reset(
+        self, seek: Optional[bool] = False, offset: int = 0, whence: int = 0
+    ) -> None:
         """Resets a files position
 
         Parameters
@@ -66,7 +68,7 @@ class File(pydantic.BaseModel):
         """
         if not seek:
             return
-        self.fp.seek(offset, whence)    # type: ignore
+        self.fp.seek(offset, whence)  # type: ignore
 
     def read(self) -> Union[bytes, str]:
         """Reads file from start and closes it
@@ -76,11 +78,11 @@ class File(pydantic.BaseModel):
         position: :class:`int`
             change were to read file from
         """
-        data = self.fp.read()   # type: ignore
+        data = self.fp.read()  # type: ignore
 
         return data
 
     def close(self) -> None:
         """Closes the file, which prevents it from being sent again"""
-        self.fp.close()     # type: ignore
+        self.fp.close()  # type: ignore
         self.is_closed = True

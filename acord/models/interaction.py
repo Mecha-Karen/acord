@@ -11,7 +11,7 @@ from acord.bases import (
 )
 from acord.core.abc import Route
 from acord.ext.application_commands import (
-    ApplicationCommandType, 
+    ApplicationCommandType,
     ApplicationCommandOptionType,
     AutoCompleteChoice,
 )
@@ -103,10 +103,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         Fetches original message that was created when
         interaction responded.
         """
-        return await self.hook.fetch_message(
-            "@original", 
-            use_application_id=True
-        )
+        return await self.hook.fetch_message("@original", use_application_id=True)
 
     async def delete_original_response(self) -> None:
         """|coro|
@@ -114,10 +111,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         Deletes original message that was created when
         interaction responded
         """
-        return await self.hook.delete_message(
-            "@original",
-            use_application_id=True
-        )
+        return await self.hook.delete_message("@original", use_application_id=True)
 
     async def delete_response(self, message_id: Snowflake) -> None:
         """|coro|
@@ -129,10 +123,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         message_id: :class:`Snowflake`
             ID of message to delete
         """
-        return await self.hook.delete_message(
-            message_id,
-            use_application_id=True
-        )
+        return await self.hook.delete_message(message_id, use_application_id=True)
 
     async def fetch_message(self, message_id: Snowflake):
         """|coro|
@@ -144,10 +135,7 @@ class Interaction(pydantic.BaseModel, Hashable):
         message_id: :class:`Snowflake`
             ID of message to fetch
         """
-        return await self.hook.fetch_message(
-            message_id,
-            use_application_id=True
-        )
+        return await self.hook.fetch_message(message_id, use_application_id=True)
 
     async def respond_with_modal(self, modal: Modal) -> None:
         """|coro|
@@ -212,8 +200,4 @@ class Interaction(pydantic.BaseModel, Hashable):
         .. note::
             Refer to :meth:`Webhook.edit_message` for further guidance
         """
-        return await self.hook.edit_message(
-            message_id,
-            use_application_id=True,
-            **kwds
-        )
+        return await self.hook.edit_message(message_id, use_application_id=True, **kwds)

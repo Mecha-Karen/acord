@@ -1,5 +1,14 @@
 # A simple base client for handling responses from discord
-from typing import AsyncIterator, Coroutine, Dict, Iterator, List, Union, Callable, Optional
+from typing import (
+    AsyncIterator,
+    Coroutine,
+    Dict,
+    Iterator,
+    List,
+    Union,
+    Callable,
+    Optional,
+)
 
 import asyncio
 import logging
@@ -87,7 +96,7 @@ class Client(object):
 
         .. versionadded:: 0.2.3a0
     cache: :class:`Cache`
-        Cache of gateway objects, 
+        Cache of gateway objects,
         recommended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
 
@@ -120,6 +129,7 @@ class Client(object):
     rest: :class:`RestApi`
         An instance of the Rest API object
     """
+
     cache: Cache
     glob_app_store: dict = {}
 
@@ -134,7 +144,7 @@ class Client(object):
         encoding: Optional[str] = "JSON",
         compress: Optional[bool] = False,
         cache: Cache = DefaultCache(),
-        gateway_ratelimiter: GatewayRatelimiter = DefaultGatewayRatelimiter()
+        gateway_ratelimiter: GatewayRatelimiter = DefaultGatewayRatelimiter(),
     ) -> None:
 
         self.loop = loop
@@ -317,7 +327,9 @@ class Client(object):
 
         return asyncio.wait_for(fut, timeout=timeout)
 
-    async def create_stage_instance(self, *, reason: str = None, **data) -> StageInstance:
+    async def create_stage_instance(
+        self, *, reason: str = None, **data
+    ) -> StageInstance:
         """|coro|
 
         Creates a stage instance
@@ -358,9 +370,9 @@ class Client(object):
         guild_id: :class:`Snowflake`
             Guild ID to use
         """
-        shard_id = ((guild_id >> 22) % self.num_shards)
+        shard_id = (guild_id >> 22) % self.num_shards
         shard = self.shards.get(shard_id)
-        
+
         return shard
 
     def register_application_command(
@@ -441,9 +453,7 @@ class Client(object):
         same as :meth:`Client.register_application_command`
         """
         return await self.rest.create_application_command(
-            command=command,
-            guild_ids=guild_ids,
-            extend=extend
+            command=command, guild_ids=guild_ids, extend=extend
         )
 
     async def bulk_update_global_app_commands(
@@ -537,15 +547,13 @@ class Client(object):
                 url=GATEWAY_WEBHOOK_URL,
                 shard_id=i,
                 num_shards=self.num_shards,
-                client=self
+                client=self,
             )
 
             await shard.connect()
             await shard.receive_hello()
-            await shard.send_identity(
-                self.token, self.intents, self.presence
-            )
-            
+            await shard.send_identity(self.token, self.intents, self.presence)
+
             task = shard.listen(shard=shard)
             TASK_LIST.append(task)
 
@@ -568,7 +576,7 @@ class Client(object):
         update_app_commands: bool = True,
         exclude_app_cmds: set = set(),
         overwrite_rest_ac: bool = True,
-        asyncio_debug: bool = False
+        asyncio_debug: bool = False,
     ):
         """Runs client, loop blocking.
 
@@ -579,7 +587,7 @@ class Client(object):
             if :class:`Client.token` is not None it will be used as a fallback,
             just in case this token fails
         reconnect: :class:`bool`
-            Whether to reconnect it first connection fails, 
+            Whether to reconnect it first connection fails,
             defaults to ``True``.
         update_add_commands: :class:`bool`
             Whether to update app commands, *in bulk*.
@@ -607,7 +615,7 @@ class Client(object):
 
         if not self.http:
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
-        
+
         self.http.client = self
 
         # Login to create session
@@ -631,7 +639,7 @@ class Client(object):
                 token=self.token,
                 loop=self.loop,
                 cache=self.cache,
-                http_client=self.http
+                http_client=self.http,
             )
 
         if self.rest._set_up:
@@ -640,15 +648,20 @@ class Client(object):
             if overwrite_rest_ac:
                 self.rest.application_commands.update(self.application_commands)
 
-            self.loop.run_until_complete(self.rest.setup(
-                exclude=exclude_app_cmds, update_commands=update_app_commands
-            ))
+            self.loop.run_until_complete(
+                self.rest.setup(
+                    exclude=exclude_app_cmds, update_commands=update_app_commands
+                )
+            )
             logger.info("Finished setting up rest api for client")
 
-        self.loop.run_until_complete(self.shard_handler(
-            self._bulk_write_app_commands(exclude_app_cmds)
-            if update_app_commands else None
-        ))
+        self.loop.run_until_complete(
+            self.shard_handler(
+                self._bulk_write_app_commands(exclude_app_cmds)
+                if update_app_commands
+                else None
+            )
+        )
 
     async def disconnect(self):
         """|coro|
@@ -658,7 +671,7 @@ class Client(object):
         * Client spawned sessions
         * Shards
         * Voice Connections
-        """  
+        """
         logger.info("Disconnected from API, closing any open connections")
         await self.http.disconnect()
 
@@ -700,9 +713,7 @@ class Client(object):
         self, channel_id: int, message_id: int
     ) -> Optional[Message]:
         """Fetches message from API and caches it"""
-        return await self.rest.fetch_message(
-            channel_id, message_id
-        )
+        return await self.rest.fetch_message(channel_id, message_id)
 
     async def fetch_guild(
         self, guild_id: int, *, with_counts: bool = False
@@ -713,9 +724,7 @@ class Client(object):
             If with_counts is set to ``True``, it will allow fields ``approximate_presence_count``,
             ``approximate_member_count`` to be used.
         """
-        return await self.rest.fetch_guild(
-            guild_id, with_counts=with_counts
-        )
+        return await self.rest.fetch_guild(guild_id, with_counts=with_counts)
 
     async def fetch_glob_app_commands(self) -> AsyncIterator[ApplicationCommand]:
         """|coro|
@@ -751,7 +760,7 @@ class Client(object):
         await vc.connect()
         await vc.listen()
 
-    def on_error(self, event_method, task: asyncio.Task = None, err = None):
+    def on_error(self, event_method, task: asyncio.Task = None, err=None):
         """|coro|
 
         Built in base error handler for events"""

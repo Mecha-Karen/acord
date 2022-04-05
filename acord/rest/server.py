@@ -30,18 +30,14 @@ def handle_incoming_request(client, public_key):
             timestamp = request.headers["X-Signature-Timestamp"]
             body = await request.text()
 
-            verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
+            verify_key.verify(f"{timestamp}{body}".encode(), bytes.fromhex(signature))
         except BadSignatureError:
             return web.Response(
-                body="BAD REQUEST",
-                status=401,
-                reason="Invalid header values"
+                body="BAD REQUEST", status=401, reason="Invalid header values"
             )
         except KeyError:
             return web.Response(
-                body="BAD REQUEST",
-                status=400,
-                reason="Invalid headers"
+                body="BAD REQUEST", status=400, reason="Invalid headers"
             )
         data = loads(body)
 
@@ -89,12 +85,10 @@ class InteractionServer(BaseServer):
         Additional kwargs for :class:`~aiohttp.web.Application`,
         IF you have not provided the ``server`` param.
     """
+
     _internal: dict = {}
 
-    def __init__(
-        self,
-        **kwds
-    ) -> None:
+    def __init__(self, **kwds) -> None:
         if not nacl_imported:
             raise ImportError("PyNaCl is not installed")
 
@@ -113,28 +107,17 @@ class InteractionServer(BaseServer):
 
     async def setup(self, client, public_key) -> None:
         self.application.router.add_route(
-            "POST", self.endpoint_route, 
-            handle_incoming_request(
-                client,
-                public_key
-            )
+            "POST", self.endpoint_route, handle_incoming_request(client, public_key)
         )
 
-        self._internal.update({
-            "client": client,
-            "setup": True
-        })
+        self._internal.update({"client": client, "setup": True})
 
     def run_server(self, **kwds) -> None:
         client = self._internal.get("client", None)
 
         assert client is not None, "Server has not been setup"
 
-        kwds.update({
-            "loop": client.loop,
-            "host": self.host,
-            "port": self.port
-        })
+        kwds.update({"loop": client.loop, "host": self.host, "port": self.port})
 
         web.run_app(self.application, **kwds)
 

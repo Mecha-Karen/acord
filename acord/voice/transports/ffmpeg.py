@@ -14,31 +14,34 @@ from acord.errors import VoiceError
 
 
 logger = logging.getLogger(__name__)
-__all__ = (
-    "PIPED_PCM_FFMPEG_PLAYER",
-    "FfmpegPlayer"
-)
+__all__ = ("PIPED_PCM_FFMPEG_PLAYER", "FfmpegPlayer")
 
 
 PIPED_PCM_FFMPEG_PLAYER = (
-    '-loglevel', 'warning', 
-    '-i', '-', 
-    '-f', 's16le', 
-    '-ar', '48000', 
-    '-ac', '2', 
-    'pipe:1'
+    "-loglevel",
+    "warning",
+    "-i",
+    "-",
+    "-f",
+    "s16le",
+    "-ar",
+    "48000",
+    "-ac",
+    "2",
+    "pipe:1",
 )
 
 
 class FfmpegPlayer(BasePlayer):
-    def __init__(self, 
-        conn: VoiceConnection, 
-        source_file: Union[io.BufferedIOBase, os.PathLike], 
+    def __init__(
+        self,
+        conn: VoiceConnection,
+        source_file: Union[io.BufferedIOBase, os.PathLike],
         encoder: Encoder = None,
         executable: str = "ffmpeg",
         subprocess_args: tuple = (),
         subprocess_kwds: dict = {},
-        **encoder_kwds
+        **encoder_kwds,
     ) -> None:
         super().__init__(conn, source_file, encoder, **encoder_kwds)
         self.process: subprocess.Popen = None
@@ -65,8 +68,7 @@ class FfmpegPlayer(BasePlayer):
         logger.debug("Attempting to spawn ffmpeg process")
         try:
             self.process = subprocess.Popen(
-                args, creationflags=subprocess.CREATE_NO_WINDOW,
-                **kwds
+                args, creationflags=subprocess.CREATE_NO_WINDOW, **kwds
             )
             logger.info("successfully spawned ffmpeg process at %s", self.process.pid)
         except FileNotFoundError as exc:
@@ -81,14 +83,26 @@ class FfmpegPlayer(BasePlayer):
         try:
             self.process.kill()
         except Exception:
-            logger.exception(f"Failed to kill ffmpeg process at pid={self.process.pid}", exc_info=1)
-        
+            logger.exception(
+                f"Failed to kill ffmpeg process at pid={self.process.pid}", exc_info=1
+            )
+
         if self.process.poll() is None:
-            logger.info('ffmpeg process at pid=%s not terminated, waiting...', self.process.pid)
+            logger.info(
+                "ffmpeg process at pid=%s not terminated, waiting...", self.process.pid
+            )
             self.process.communicate()
-            logger.info('ffmpeg process at pid=%s has terminated with return code %s', self.process.pid, self.process.returncode)
+            logger.info(
+                "ffmpeg process at pid=%s has terminated with return code %s",
+                self.process.pid,
+                self.process.returncode,
+            )
         else:
-            logger.info('ffmpeg process at pid=%s has terminated successfully with return code %s', self.process.pid, self.process.returncode)
+            logger.info(
+                "ffmpeg process at pid=%s has terminated successfully with return code %s",
+                self.process.pid,
+                self.process.returncode,
+            )
 
     async def cleanup(self, *, reset: bool = True) -> None:
         super().cleanup()

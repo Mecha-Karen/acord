@@ -47,7 +47,7 @@ class Shard:
         Shards are enabled by default but only Shard 0 will receive dms
 
     .. note::
-        When providing a handler, 
+        When providing a handler,
         it must take care of reading the websocket,
         else see the implementation below.
 
@@ -114,7 +114,9 @@ class Shard:
     ratelimit_key: :class:`int`
         Ratelimit key used for bucket ratelimiting gateway requests
     """
-    def __init__(self,
+
+    def __init__(
+        self,
         url: str,
         shard_id: int,
         num_shards: int,
@@ -160,7 +162,7 @@ class Shard:
         token: :class:`str`
             Token to be used for identity packet
         **kwds:
-            Additional kwargs to be passed through ``ws_connect`` 
+            Additional kwargs to be passed through ``ws_connect``
         """
         logger.debug(f"Attempting to create a connection for shard {self.shard_id}")
 
@@ -188,9 +190,13 @@ class Shard:
         )
         self._keep_alive.start()
 
-        logger.info(f"Hello packet successfully received, beginning heartbeats for Shard {self.shard_id}")
+        logger.info(
+            f"Hello packet successfully received, beginning heartbeats for Shard {self.shard_id}"
+        )
 
-    async def send_identity(self, token: str, intents: int, presence: Presence = None) -> None:
+    async def send_identity(
+        self, token: str, intents: int, presence: Presence = None
+    ) -> None:
         """|coro|
 
         Sends an identity packet to discord
@@ -205,17 +211,16 @@ class Shard:
             An optional presence to update the client with
         """
         idn = IDENTITY_PCK.copy()
-        idn.update({
-            "token": token,
-            "intents": intents,
-            "presence": presence,
-            "shard": (self.shard_id, self.num_shards)
-        })
-
-        payload = GenericWebsocketPayload(
-            op=gateway.IDENTIFY,
-            d=idn
+        idn.update(
+            {
+                "token": token,
+                "intents": intents,
+                "presence": presence,
+                "shard": (self.shard_id, self.num_shards),
+            }
         )
+
+        payload = GenericWebsocketPayload(op=gateway.IDENTIFY, d=idn)
 
         async with self.ratelimiter as lock:
             if lock.exceeded(self.ratelimit_key):
@@ -235,7 +240,7 @@ class Shard:
             Any kwargs you pass through are sent to the handler
         """
         coro = self.handler(**kwds)
-        
+
         self.task = self.loop.create_task(coro)
         return self.task
 
@@ -277,14 +282,16 @@ class Shard:
 
         self.resuming = True
 
-        await self.ws.send_json({
-            "op": gateway.RESUME,
-            "d": {
-                "token": self.client.token,
-                "session_id": self.session_id,
-                "seq": self.sequence
+        await self.ws.send_json(
+            {
+                "op": gateway.RESUME,
+                "d": {
+                    "token": self.client.token,
+                    "session_id": self.session_id,
+                    "seq": self.sequence,
+                },
             }
-        })
+        )
 
         return self.ws
 

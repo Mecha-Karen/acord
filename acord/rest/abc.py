@@ -34,6 +34,7 @@ class InteractionServer(ABC, BaseModel):
         ...
 
     """
+
     host: str
     """ Host to run server off of """
     port: int
@@ -67,4 +68,4 @@ class InteractionServer(ABC, BaseModel):
 
     @abstractproperty
     def is_setup(self) -> bool:
-        """ Whether the server has been setup """
+        """Whether the server has been setup"""

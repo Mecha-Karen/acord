@@ -32,6 +32,7 @@ from acord.utils import _d_to_channel, _payload_dict_to_json
 from acord.payloads import (
     ChannelCreatePayload,
     GuildCreatePayload,
+    GuildEditPayload,
     RoleCreatePayload,
     RoleMovePayload,
     GuildTemplateCreatePayload,
@@ -1349,9 +1350,7 @@ class Guild(pydantic.BaseModel, Hashable):
 
         Leaves this guild
         """
-        await self.conn.request(
-            Route("DELETE", path=f"/users/@me/guilds/{self.id}")
-        )
+        await self.conn.request(Route("DELETE", path=f"/users/@me/guilds/{self.id}"))
 
     @classmethod
     async def create(cls, client, **data) -> Optional[Guild]:
@@ -1437,3 +1436,24 @@ class Guild(pydantic.BaseModel, Hashable):
         client must be owner
         """
         await self.conn.request(Route("DELETE", path=f"/guilds/{self.id}"))
+
+    async def modify_guild(self, *, reason: str = None, **data) -> Guild:
+        """|coro|
+
+        Modifies the guild settings
+        Returns the updated guild object on success
+        """
+
+        payload = GuildEditPayload(**data)
+        headers = {"Content-Type": "application/json"}
+
+        if reason is not None:
+            headers["X-Audit-Log-Reason"] = reason
+
+        r = await self.conn.request(
+            Route("PATCH", path=f"/guilds/{payload.id}"),
+            data=payload.json(),
+            headers=headers,
+        )
+
+        return Guild(conn=self.conn, **(await r.json()))

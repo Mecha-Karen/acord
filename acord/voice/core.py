@@ -4,7 +4,7 @@ from __future__ import annotations
 from asyncio import AbstractEventLoop, Event
 import asyncio
 from datetime import datetime
-from aiohttp import  WSMsgType
+from aiohttp import WSMsgType
 
 # For handling voice packets
 from struct import pack_into, pack
@@ -15,6 +15,7 @@ from .codes import OpCodes
 
 try:
     import nacl.secret
+
     _nacl = True
 except ImportError:
     _nacl = False
@@ -48,6 +49,7 @@ class VoiceConnection(object):
     disconnected: :class:`bool`
         Whether this connection is disconnected
     """
+
     supported_modes = (
         "xsalsa20_poly1305_lite",
         "xsalsa20_poly1305_suffix",
@@ -92,14 +94,14 @@ class VoiceConnection(object):
 
     async def wait_until_connected(self):
         """|coro|
-        
-        Waits until the voice connection is connected """
+
+        Waits until the voice connection is connected"""
         await self.connect_event.wait()
 
     async def wait_until_ready(self):
-        """|coro| 
-        
-        Waits until the voice connection is ready """ 
+        """|coro|
+
+        Waits until the voice connection is ready"""
         await self.wait_until_connected()
         await self.send_event.wait()
 

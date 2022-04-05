@@ -135,7 +135,7 @@ class SelectMenu(Component):
     @pydantic.validator("min_values", "max_values")
     def _validate_mv(cls, v):
         assert 0 <= v <= 25, "Value must be less then 25 and greater then 0"
-        
+
         return v
 
     def __init__(self, **data: Any) -> None:
@@ -183,7 +183,7 @@ class TextInput(Component):
 
     @pydantic.validator("min_length", "max_length")
     def _validate_lengths(cls, v) -> int:
-        assert 0 <= v <= 4000, "Lengths must be >= 0 but <= 4000" 
+        assert 0 <= v <= 4000, "Lengths must be >= 0 but <= 4000"
         return v
 
     @pydantic.validator("placeholder")
@@ -206,7 +206,7 @@ class Modal(pydantic.BaseModel):
 
     @pydantic.validator("components")
     def _validate_components(cls, v):
-        assert all(i for i in v if all(
-            j for j in i.components if j.__class__ == TextInput
-        )), "Modal can only contain text inputs!"
+        assert all(
+            i for i in v if all(j for j in i.components if j.__class__ == TextInput)
+        ), "Modal can only contain text inputs!"
         return v

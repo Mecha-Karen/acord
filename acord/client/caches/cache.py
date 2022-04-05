@@ -5,13 +5,7 @@ from ctypes import Union
 from typing import Any, Dict, Iterator, Optional
 from abc import ABC, abstractmethod
 from weakref import WeakValueDictionary
-from acord import (
-    User,
-    Guild,
-    Snowflake,
-    Message,
-    Channel
-)
+from acord import User, Guild, Snowflake, Message, Channel
 import pydantic
 
 from acord.models.channels.stage import StageInstance
@@ -52,6 +46,7 @@ class Cache(ABC, pydantic.BaseModel):
 
         client = Client(cache=MyCache())
     """
+
     sections: Dict[str, CacheData] = {}
     """ Mapping of cache sections for cache """
 
@@ -72,18 +67,18 @@ class Cache(ABC, pydantic.BaseModel):
 
     @abstractmethod
     def clear(self) -> None:
-        """ Clears the cache, 
-        make sure not to erase the constants. """
+        """Clears the cache,
+        make sure not to erase the constants."""
 
     # NOTE: Users
 
     @abstractmethod
     def users(self) -> Iterator[User]:
-        """ Returns all users that are currently cached. """
+        """Returns all users that are currently cached."""
 
     @abstractmethod
     def get_user(self, user_id: Snowflake, /) -> Optional[User]:
-        """ Gets a :class:`User` from the cache.
+        """Gets a :class:`User` from the cache.
 
         Parameters
         ----------
@@ -188,9 +183,11 @@ class Cache(ABC, pydantic.BaseModel):
     @abstractmethod
     def messages(self) -> Iterator[Message]:
         """Returns all messages that are cached"""
-    
+
     @abstractmethod
-    def get_message(self, channel_id: Snowflake, message_id: Snowflake, /) -> Optional[Message]:
+    def get_message(
+        self, channel_id: Snowflake, message_id: Snowflake, /
+    ) -> Optional[Message]:
         """Gets a :class:`Message` from the cache.
 
         Parameters
@@ -213,7 +210,9 @@ class Cache(ABC, pydantic.BaseModel):
         """
 
     @abstractmethod
-    def remove_message(self, channel_id: Snowflake, message_id: Snowflake, *args) -> Optional[Message]:
+    def remove_message(
+        self, channel_id: Snowflake, message_id: Snowflake, *args
+    ) -> Optional[Message]:
         """Removes a :class:`Message` from the cache.
 
         Parameters

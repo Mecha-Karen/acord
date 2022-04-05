@@ -19,9 +19,7 @@ class StageInstanceInvite(pydantic.BaseModel, Hashable):
 class Invite(pydantic.BaseModel, Hashable):
     class Config:
         allow_population_by_field_name = True
-        fields = {
-            "expires_at": {"alias": "max_age"}
-        }
+        fields = {"expires_at": {"alias": "max_age"}}
 
     conn: Any  # Connection object - For internal use
 
@@ -81,9 +79,7 @@ class Invite(pydantic.BaseModel, Hashable):
         """
         params = {k: str(v).lower() for k, v in params.items()}
 
-        async with client.http.request(
-            Route("GET", path=f"/invites/{code}")
-        ) as r:
+        async with client.http.request(Route("GET", path=f"/invites/{code}")) as r:
             return cls(conn=client.http, **(await r.json()))
 
     async def delete(self, *, reason: str) -> None:

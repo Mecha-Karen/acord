@@ -18,6 +18,7 @@ def decompressResponse(msg):
 
     return msg
 
+
 def decodeResponse(data) -> dict:
     if type(data) is bytes:
         try:

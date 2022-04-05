@@ -2,13 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import (
-    Dict, 
-    Optional, 
-    AsyncIterator,
-    List,
-    Union
-)
+from typing import Dict, Optional, AsyncIterator, List, Union
 
 from acord import (
     Cache,
@@ -59,18 +53,15 @@ def get_command(client, name: str, type):
 
 async def exec_handler(handler, interaction, option):
     _, dev_handle, on_error = handler.__autocomplete__
-    
+
     try:
         return await handler(interaction, option), dev_handle
     except Exception as exc:
         try:
-            await on_error(
-                interaction,
-                (type(exc), exc, exc.__traceback__)
-            )
+            await on_error(interaction, (type(exc), exc, exc.__traceback__))
         except Exception:
             logger.error("Failed to trigger on_error for autocomplete", exc_info=1)
-    
+
     return None, None
 
 
@@ -107,7 +98,7 @@ class RestApi:
         Any object which implements the same functionality as :class:`HTTPClient`
     server: :class:`InteractionServer`
         An intialised interaction server to use for handling interactions.
-        
+
         If left as ``None``,
         no interactions will be dealt with
     handle_interactions: :class:`bool`
@@ -130,6 +121,7 @@ class RestApi:
             * token
             * loop
     """
+
     def __init__(
         self,
         token: str,
@@ -139,15 +131,14 @@ class RestApi:
         http_client: HTTPClient = None,
         server: InteractionServer = None,
         handle_interactions: bool = True,
-        **kwds
+        **kwds,
     ) -> None:
         self.token = token
         self.loop = loop
         self.cache = cache
 
         self.http = http_client or HTTPClient(
-            client=self, token=self.token,
-            loop=self.loop, **kwds
+            client=self, token=self.token, loop=self.loop, **kwds
         )
         self.http.client = self
 
@@ -161,14 +152,11 @@ class RestApi:
         self.task = None
 
     async def setup(
-        self,
-        *,
-        exclude: Union[set, dict] = {},
-        update_commands: bool = True
+        self, *, exclude: Union[set, dict] = {}, update_commands: bool = True
     ) -> None:
-        """ Setup the object, 
+        """Setup the object,
         Should be called before any requests are made
-        
+
         Parameters
         ----------
         exclude: Union[:class:`str`, :class:`dict`]
@@ -425,7 +413,9 @@ class RestApi:
         self.cache.add_channel(channel)
         return channel
 
-    async def fetch_message(self, channel_id: int, message_id: int, /) -> Optional[Message]:
+    async def fetch_message(
+        self, channel_id: int, message_id: int, /
+    ) -> Optional[Message]:
         """Fetches message from API and caches it"""
 
         resp = await self.http.request(
@@ -466,7 +456,9 @@ class RestApi:
         for d in await r.json():
             yield ApplicationCommand(conn=self.http, **d)
 
-    async def fetch_glob_app_command(self, command_id: Snowflake, /) -> ApplicationCommand:
+    async def fetch_glob_app_command(
+        self, command_id: Snowflake, /
+    ) -> ApplicationCommand:
         """|coro|
 
         Fetches a global application command registered by the client
@@ -497,7 +489,7 @@ class RestApi:
 
             if not command:
                 return
-            
+
             handlers = command.__pre_calls__.get("__autocompleters__")
 
             if handlers is None:
@@ -535,7 +527,9 @@ class RestApi:
             if interaction.data.type == ApplicationCommandType.CHAT_INPUT:
                 kwds = get_slash_options(interaction)
             elif interaction.data.type == ApplicationCommandType.MESSAGE:
-                message = self.get_message(interaction.channel_id, interaction.data.target_id)
+                message = self.get_message(
+                    interaction.channel_id, interaction.data.target_id
+                )
                 if not message:
                     message = interaction.data.target_id
                 args = (message,)
@@ -554,12 +548,13 @@ class RestApi:
             possible_exc = await asyncio.wait_for(fut, None)
             if isinstance(possible_exc, Exception):
                 logger.exception(
-                    "Failed to run command %s", command.name,
+                    "Failed to run command %s",
+                    command.name,
                     exc_info=(
                         type(possible_exc),
                         possible_exc,
-                        possible_exc.__traceback__
-                    )
+                        possible_exc.__traceback__,
+                    ),
                 )
 
         await self.on_interaction_create(interaction)

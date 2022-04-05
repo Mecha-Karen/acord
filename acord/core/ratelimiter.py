@@ -20,7 +20,7 @@ def parse_ratelimit_headers(headers: dict) -> dict:
     Parameters
     ----------
     headers: :class:`dict`
-        Headers received from the response 
+        Headers received from the response
     """
     d = {}
 
@@ -104,7 +104,7 @@ class HTTPRatelimiter(ABC, BaseModel):
         bucket: :class:`str`
             Bucket to check
         """
-    
+
     @abstractmethod
     async def hold_bucket(self, bucket: str, /) -> None:
         """Waits until this bucket is no longer ratelimited
@@ -122,7 +122,7 @@ class HTTPRatelimiter(ABC, BaseModel):
         Parameters
         ----------
         released_at: :class:`int`
-            Time in seconds till lock is lifted 
+            Time in seconds till lock is lifted
         """
 
     @abstractmethod
@@ -131,9 +131,11 @@ class HTTPRatelimiter(ABC, BaseModel):
 
     @abstractmethod
     def should_lock(self) -> bool:
-        """ Checks whether requests should be locked """
+        """Checks whether requests should be locked"""
+
 
 # Default implementations
+
 
 class DefaultHTTPRatelimiter(HTTPRatelimiter):
     current_requests: int = 0
@@ -180,7 +182,7 @@ class DefaultHTTPRatelimiter(HTTPRatelimiter):
     def global_lock_set(self, released_at: int, /) -> None:
         if self.global_lock is True:
             raise RuntimeError("Lock has already been set")
-        
+
         self.global_lock = True
         self.locked_until = released_at
 

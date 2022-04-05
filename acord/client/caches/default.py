@@ -3,14 +3,7 @@ from __future__ import annotations
 
 import typing
 from weakref import WeakValueDictionary
-from acord.models import (
-    Snowflake,
-    User,
-    Guild,
-    Channel,
-    Message,
-    StageInstance
-)
+from acord.models import Snowflake, User, Guild, Channel, Message, StageInstance
 
 from .cache import CacheData, Cache
 
@@ -19,7 +12,7 @@ SECTIONS = {
     "users": WeakValueDictionary(),
     "guilds": {},
     "channels": {},
-    "stage_instances": {}
+    "stage_instances": {},
 }
 
 
@@ -71,7 +64,7 @@ class DefaultCache(Cache):
     def get_guild(self, guild_id: Snowflake, /):
         if not isinstance(guild_id, int):
             raise TypeError("Guild ID must be an int")
-        
+
         cache = self["guilds"]
 
         return cache.get(guild_id)
@@ -79,7 +72,7 @@ class DefaultCache(Cache):
     def add_guild(self, guild: Guild, /) -> None:
         if not isinstance(guild, Guild):
             raise TypeError("guild must be an instance of Guild")
-        
+
         cache = self["guilds"]
 
         cache[guild.id] = guild
@@ -93,7 +86,7 @@ class DefaultCache(Cache):
         return cache.pop(guild_id, *args)
 
     # NOTE: Channels
-    
+
     def channels(self) -> typing.Iterator[Channel]:
         cache = self["channels"]
 
@@ -102,7 +95,7 @@ class DefaultCache(Cache):
     def get_channel(self, channel_id: Snowflake, /) -> typing.Optional[Channel]:
         if not isinstance(channel_id, int):
             raise TypeError("Channel ID must be an int")
-        
+
         cache = self["channels"]
 
         return cache.get(channel_id)
@@ -110,7 +103,7 @@ class DefaultCache(Cache):
     def add_channel(self, channel: Channel, /) -> None:
         if not isinstance(channel, Channel):
             raise TypeError("Channel must be an instance of Channel")
-        
+
         cache = self["channels"]
 
         cache[channel.id] = channel
@@ -130,7 +123,9 @@ class DefaultCache(Cache):
 
         return cache.values()
 
-    def get_message(self, channel_id: Snowflake, message_id: Snowflake, /) -> typing.Optional[Message]:
+    def get_message(
+        self, channel_id: Snowflake, message_id: Snowflake, /
+    ) -> typing.Optional[Message]:
         if not isinstance(channel_id, int):
             raise TypeError("Channel ID must be an int")
         if not isinstance(message_id, int):
@@ -148,7 +143,9 @@ class DefaultCache(Cache):
 
         cache[f"{message.channel_id}:{message.id}"] = message
 
-    def remove_message(self, channel_id: Snowflake, message_id: Snowflake, *args) -> typing.Optional[Message]:
+    def remove_message(
+        self, channel_id: Snowflake, message_id: Snowflake, *args
+    ) -> typing.Optional[Message]:
         if not isinstance(channel_id, int):
             raise TypeError("Channel ID must be an int")
         if not isinstance(message_id, int):
@@ -167,7 +164,7 @@ class DefaultCache(Cache):
     def get_stage_instance(self, id: Snowflake, /) -> typing.Optional[StageInstance]:
         if not isinstance(id, Snowflake):
             raise TypeError("StageInstance ID must be an int")
-        
+
         cache = self["stage_instances"]
 
         return cache.get(id)
@@ -180,10 +177,12 @@ class DefaultCache(Cache):
 
         cache[stage_instance.id] = stage_instance
 
-    def remove_stage_instance(self, id: Snowflake, *args) -> typing.Union[StageInstance, typing.Any]:
+    def remove_stage_instance(
+        self, id: Snowflake, *args
+    ) -> typing.Union[StageInstance, typing.Any]:
         if not isinstance(id, Snowflake):
             raise TypeError("StageInstance ID must be an int")
-        
+
         cache = self["stage_instances"]
 
         return cache.pop(id, *args)

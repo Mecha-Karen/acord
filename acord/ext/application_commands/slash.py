@@ -33,8 +33,9 @@ def get_methods(cls):
         else:
             if not callable(j):
                 continue
-        
+
         yield j
+
 
 class SlashBase(UDAppCommand):
     """Base class for creating slash commands.
@@ -294,7 +295,7 @@ class SlashBase(UDAppCommand):
 
                 # if option not in hndlrs:
                 #     hndlrs.update({option: []})
-                # 
+                #
                 # hndlrs[option].append(i)
 
         if cache:

@@ -5,9 +5,7 @@ from .flags.channels import ChannelTypes, VoiceQuality
 from .flags.permissions import Permissions
 from .flags.message import MessageFlags
 from .flags.guild import SystemChannelFlags
-from .flags.minors import (
-    IMessageFlags
-)
+from .flags.minors import IMessageFlags
 
 from .enums.guild import (
     GuildMessageNotification,
@@ -46,11 +44,11 @@ from .embeds import (
     EmbedColor,
 )
 from .components import (
-    Component, 
-    SelectOption, 
-    SelectMenu, 
-    Button, 
-    ActionRow, 
+    Component,
+    SelectOption,
+    SelectMenu,
+    Button,
+    ActionRow,
     TextInput,
     Modal,
 )

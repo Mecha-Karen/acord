@@ -40,11 +40,7 @@ class VoiceChannel(Channel):
     """ voice region id for the voice channel, automatic when set to null """
 
     async def join(
-        self,
-        *,
-        self_mute: bool = False, 
-        self_deaf: bool = False,
-        wait: bool = True
+        self, *, self_mute: bool = False, self_deaf: bool = False, wait: bool = True
     ) -> VoiceConnection:
         """|coro|
 
@@ -80,10 +76,12 @@ class VoiceChannel(Channel):
         if not wait:
             return
 
-        return (await self.conn.client.wait_for(
-            "voice_server_update",
-            check=self._vc_check,
-        ))[0]
+        return (
+            await self.conn.client.wait_for(
+                "voice_server_update",
+                check=self._vc_check,
+            )
+        )[0]
 
     def _vc_check(self, vc) -> bool:
         return vc.guild_id == str(self.guild_id)

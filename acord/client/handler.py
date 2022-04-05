@@ -44,9 +44,13 @@ def close_code_handler(code: int) -> None:
     elif code == gateway.INVALID_SHARD:
         raise GatewayError("An invalid shard was sent")
     elif code == gateway.SHARD_REQUIRED:
-        raise GatewayError("Your client has too many guilds, enable sharding to continue!")
+        raise GatewayError(
+            "Your client has too many guilds, enable sharding to continue!"
+        )
     elif code == gateway.INVALID_GATEWAY_VER:
-        raise GatewayError("Looks like the gateway version is incorrect, don't mess with acord.core.abc!")
+        raise GatewayError(
+            "Looks like the gateway version is incorrect, don't mess with acord.core.abc!"
+        )
     elif code == gateway.INVALID_INTENTS:
         raise GatewayError("Invalid intent sent, check what you sent")
     elif code == gateway.DISALLOWED_INTENT:
@@ -55,7 +59,7 @@ def close_code_handler(code: int) -> None:
 
 async def handle_websocket(shard):
     _ = "err"
-    # define err here just in case an error occurred 
+    # define err here just in case an error occurred
 
     try:
         _ = await _handle_websocket(shard)
@@ -68,11 +72,7 @@ async def handle_websocket(shard):
 
 
 async def _handle_websocket(shard):
-    from acord.rest.rest import(
-        get_slash_options,
-        get_command,
-        exec_handler
-    )
+    from acord.rest.rest import get_slash_options, get_command, exec_handler
 
     UNAVAILABLE = dict()
 
@@ -84,8 +84,10 @@ async def _handle_websocket(shard):
 
         if message.type in CLOSE_CODES:
             # Connection lost!
-            logger.info(f"Websocket connection has been closed, resuming if possible : code={message.data}")
-            
+            logger.info(
+                f"Websocket connection has been closed, resuming if possible : code={message.data}"
+            )
+
             _ = close_code_handler(message.data)
 
             if _ == "sequence":
@@ -100,7 +102,6 @@ async def _handle_websocket(shard):
 
         if client.dispatch_on_recv:
             client.dispatch("socket_receive", message)
-
 
         data = decodeResponse(message.data)
 
@@ -119,13 +120,10 @@ async def _handle_websocket(shard):
         if OPERATION == gateway.INVALIDSESSION:
 
             if shard.resuming:
-                await shard.send_identity(
-                    client.token, client.intents,
-                    client.presence
-                )
+                await shard.send_identity(client.token, client.intents, client.presence)
 
                 shard.resuming = False
-            
+
             else:
                 logger.error("Gateway refused connection due to an invalid session")
 
@@ -195,7 +193,6 @@ async def _handle_websocket(shard):
 
                 await data.respond_to_autocomplete(d)
 
-
             elif data.type == InteractionType.APPLICATION_COMMAND:
                 udac = get_command(client, data.data.name, data.data.type)
 
@@ -224,8 +221,13 @@ async def _handle_websocket(shard):
 
                 possible_exc = await asyncio.wait_for(fut, None)
                 if isinstance(possible_exc, Exception):
-                    client.on_error(f"app_cmd dispatcher : {udac.name}", err=
-                        (type(possible_exc), possible_exc, possible_exc.__traceback__)
+                    client.on_error(
+                        f"app_cmd dispatcher : {udac.name}",
+                        err=(
+                            type(possible_exc),
+                            possible_exc,
+                            possible_exc.__traceback__,
+                        ),
                     )
 
             client.dispatch("interaction_create", data)
@@ -259,7 +261,9 @@ async def _handle_websocket(shard):
             client.dispatch("message_create", message)
 
         elif EVENT == "MESSAGE_UPDATE":
-            pre_existing: Message = client.get_message(int(DATA["channel_id"]), int(DATA["id"]))
+            pre_existing: Message = client.get_message(
+                int(DATA["channel_id"]), int(DATA["id"])
+            )
             if not pre_existing:
                 client.dispatch("partial_message_update", DATA)
                 continue
@@ -270,29 +274,37 @@ async def _handle_websocket(shard):
             client.dispatch("message_update", message)
 
         elif EVENT == "MESSAGE_DELETE":
-            message = client.cache.remove_message(int(DATA["channel_id"]), int(DATA["id"]), None)
+            message = client.cache.remove_message(
+                int(DATA["channel_id"]), int(DATA["id"]), None
+            )
             if message:
                 client.dispatch("message_delete", message)
             else:
-                client.dispatch("partial_message_delete",
+                client.dispatch(
+                    "partial_message_delete",
                     Snowflake(DATA["channel_id"]),
                     Snowflake(DATA["id"]),
-                    Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None
+                    Snowflake(DATA["guild_id"])
+                    if DATA["guild_id"] is not None
+                    else None,
                 )
 
         elif EVENT == "MESSAGE_DELETE_BULK":
             messages = [
                 (
-                    client.cache.remove_message(int(DATA["channel_id"]), int(DATA["id"]), None)
+                    client.cache.remove_message(
+                        int(DATA["channel_id"]), int(DATA["id"]), None
+                    )
                     or Snowflake(id)
                 )
                 for id in DATA["ids"]
             ]
 
-            client.dispatch("bulk_message_delete", 
-                messages, 
+            client.dispatch(
+                "bulk_message_delete",
+                messages,
                 Snowflake(DATA["channel_id"]),
-                Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None
+                Snowflake(DATA["guild_id"]) if DATA["guild_id"] is not None else None,
             )
 
         elif EVENT == "MESSAGE_REACTION_ADD":
@@ -310,7 +322,9 @@ async def _handle_websocket(shard):
                 "message_reactions_clear",
                 Snowflake(DATA["channel_id"]),
                 Snowflake(DATA["message_id"]),
-                Snowflake(DATA["guild_id"]) if DATA.get("guild_id") is not None else None
+                Snowflake(DATA["guild_id"])
+                if DATA.get("guild_id") is not None
+                else None,
             )
 
         elif EVENT == "MESSAGE_REACTION_REMOVE_EMOJI":
@@ -376,7 +390,7 @@ async def _handle_websocket(shard):
             user = User(conn=client.http, **DATA["user"])
 
             guild.members.pop(user.id, None)
-            
+
             client.cache.add_user(user)
             client.dispatch("guild_ban", guild, user)
 
@@ -435,7 +449,7 @@ async def _handle_websocket(shard):
         elif EVENT == "GUILD_MEMBER_REMOVE":
             guild = client.get_guild(int(DATA["guild_id"]))
             user = User(conn=client.http, **DATA["user"])
-            
+
             if guild is not None:
                 user = guild.members.pop(user.id, user)
             else:
@@ -454,7 +468,7 @@ async def _handle_websocket(shard):
             if not b_member:
                 b_member = await guild.fetch_member(int(DATA["user"]["id"]))
             a_member = b_member.copy(update=DATA)
-            
+
             client.dispatch("member_update", b_member, a_member, guild)
 
         elif EVENT == "GUILD_ROLE_CREATE":
@@ -519,15 +533,12 @@ async def _handle_websocket(shard):
         elif EVENT == "ON_INTEGRATION_DELETE":
             integration_id = Snowflake(DATA["id"])
             guild_id = Snowflake(DATA["guild_id"])
-            
-            if (application_id := DATA.pop("application_id", None)):
+
+            if application_id := DATA.pop("application_id", None):
                 application_id = Snowflake(application_id)
 
             client.dispatch(
-                "guild_integration_delete",
-                integration_id,
-                guild_id,
-                application_id
+                "guild_integration_delete", integration_id, guild_id, application_id
             )
 
         # NOTE: Invites
@@ -540,17 +551,12 @@ async def _handle_websocket(shard):
         elif EVENT == "ON_INVITE_DELETE":
             channel_id = Snowflake(DATA["channel_id"])
             code = DATA["code"]
-            
+
             if guild_id := DATA.pop("guild_id", None):
                 guild_id = Snowflake(guild_id)
 
-            client.dispatch(
-                "invite_delete",
-                code,
-                channel_id,
-                guild_id
-            )
-    
+            client.dispatch("invite_delete", code, channel_id, guild_id)
+
         # NOTE: channels
 
         elif EVENT == "CHANNEL_CREATE":
