@@ -87,7 +87,7 @@ class Client(object):
 
         .. versionadded:: 0.2.3a0
     cache: :class:`Cache`
-        Cache of gateway objects, 
+        Cache of gateway objects,
         recommended to fetch using built in methods,
         e.g. :meth:`Client.get_user`.
 
@@ -126,6 +126,7 @@ class Client(object):
     def __init__(
         self,
         *,
+        prefix: Optional[str] = ".",
         token: Optional[str] = None,
         dispatch_on_recv: bool = False,
         intents: Optional[Union[Intents, int]] = 0,
@@ -136,7 +137,10 @@ class Client(object):
         cache: Cache = DefaultCache(),
         gateway_ratelimiter: GatewayRatelimiter = DefaultGatewayRatelimiter()
     ) -> None:
-
+        self.prefix = prefix
+        self.cmds = {}
+        self.current = []
+        self.events = {}
         self.loop = loop
         self.token = token
         self.dispatch_on_recv = dispatch_on_recv
@@ -214,7 +218,83 @@ class Client(object):
                 return func
 
         return inner
+    def command(self,name=None,aliases=[],description="",) -> Callable[[commander],commander]:
+      self.current = [name,aliases,description]
 
+
+      def _command(cmd:commander) -> commander:
+        name = self.current[0]
+        aliases = self.current[1]
+        desc = self.current[2]
+        if name == None:
+          name = cmd.__name__
+
+
+
+        args = cmd.__code__.co_varnames
+        argsr = []
+
+
+        for arg in args:
+          argsr.append(arg)
+        args = argsr
+        self.cmds[name] = {}
+        self.cmds[name]["func"] = cmd
+        self.cmds[name]["args"] = args
+        self.cmds[name]["aliases"] = aliases
+        self.cmds[name]["description"] = desc
+        self.current = []
+
+
+        return cmd
+
+      return _command
+    def launch(self,**kwargs):
+      @self.on("message_create")
+      async def on_message_create(message: acord.Message):
+
+        # Listen to all message, if content == ".ping"
+        if message.content.startswith(self.prefix):
+          # Return "Pong!"
+          q = message.content.split(" ")
+          cmd = q[0].replace(self.prefix,"")
+          args = q[1:]
+          cd = None
+          def get_cmd(cmd,cmds):
+            for cm in cmds:
+              if cmd == cm or self.cmd in cmds[cm]["aliases"]:
+                return cmds[cm]
+              else:
+                return None
+          cd = get_cmd(cmd,self.cmds)
+          if cd == None:
+            return
+          k = {}
+          k["ctx"] = message
+
+          ar = cd["args"]
+          c = 0
+          try:
+            for arg in ar:
+              if arg.startswith("*"):
+                k[arg] = args[c:]
+              else:
+
+                k[arg] = args[c]
+              c += 1
+          except IndexError:
+            ok = ""
+
+          f = cd["func"]
+
+          try:
+            await f(**k)
+          except Exception as e:
+            print(f"ERROR -> {cmd} @\n`{e}`")
+      try:
+        self.run(**kwargs)
+      except Exception as e:
+        print(f"ERROR -> Bot.run @\n`{e}`")
     def dispatch(self, event_name: str, *args, **kwargs) -> None:
         """Dispatch a registered event
 
@@ -360,7 +440,7 @@ class Client(object):
         """
         shard_id = ((guild_id >> 22) % self.num_shards)
         shard = self.shards.get(shard_id)
-        
+
         return shard
 
     def register_application_command(
@@ -545,7 +625,7 @@ class Client(object):
             await shard.send_identity(
                 self.token, self.intents, self.presence
             )
-            
+
             task = shard.listen(shard=shard)
             TASK_LIST.append(task)
 
@@ -579,7 +659,7 @@ class Client(object):
             if :class:`Client.token` is not None it will be used as a fallback,
             just in case this token fails
         reconnect: :class:`bool`
-            Whether to reconnect it first connection fails, 
+            Whether to reconnect it first connection fails,
             defaults to ``True``.
         update_add_commands: :class:`bool`
             Whether to update app commands, *in bulk*.
@@ -607,7 +687,7 @@ class Client(object):
 
         if not self.http:
             self.http = HTTPClient(self, loop=self.loop, token=self.token)
-        
+
         self.http.client = self
 
         # Login to create session
@@ -658,7 +738,7 @@ class Client(object):
         * Client spawned sessions
         * Shards
         * Voice Connections
-        """  
+        """
         logger.info("Disconnected from API, closing any open connections")
         await self.http.disconnect()
 
